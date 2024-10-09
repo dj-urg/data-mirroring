@@ -1,10 +1,11 @@
-version: '3.9'
+version: '3'
 services:
   flask_app:
     build: .
     ports:
       - "5001:5001"
     volumes:
-      - .:/app:ro  # Optional, use ':ro' to make it read-only in production
+      - ./user_uploads:/app/user_uploads  # Maps your local user_uploads to container
+      - ./data:/app/data  # Maps a writable local data folder to /app/data inside the container
     environment:
       - FLASK_ENV=production  # Add environment variables here if needed

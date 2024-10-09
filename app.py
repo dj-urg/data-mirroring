@@ -24,12 +24,12 @@ else:
 logger = logging.getLogger()
 
 BASE_DIR = os.getenv('APP_BASE_DIR', os.path.dirname(os.path.abspath(__file__)))
-if not BASE_DIR:
-    logger.warning('APP_BASE_DIR not set, defaulting to current directory.')
 
-download_dir = os.path.join(BASE_DIR, 'platforms', 'downloads')
-upload_dir = os.path.join(BASE_DIR, 'user_uploads')
-os.makedirs(download_dir, exist_ok=True) 
+# Use a writable directory within your project folder
+download_dir = os.path.join(BASE_DIR, 'downloads')  # Change to a writable path
+upload_dir = os.path.join(BASE_DIR, 'uploads')  # Change to a writable path
+
+os.makedirs(download_dir, exist_ok=True)
 os.makedirs(upload_dir, exist_ok=True)
 
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # Set max upload size to 16MB

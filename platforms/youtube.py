@@ -4,6 +4,7 @@ import logging
 import os
 import time
 
+# Configure the logger
 FLASK_ENV = os.getenv('FLASK_ENV', 'development')
 
 if FLASK_ENV == 'production':
@@ -12,10 +13,14 @@ else:
     logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(levelname)s: %(message)s')
 logger = logging.getLogger()
 
-# Base directory for saving files
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-download_dir = os.path.join(BASE_DIR, 'downloads')
-os.makedirs(download_dir, exist_ok=True)  # Create directory if it doesn't exist
+BASE_DIR = os.getenv('APP_BASE_DIR', os.path.dirname(os.path.abspath(__file__)))
+
+# Use a writable directory within your project folder
+download_dir = os.path.join(BASE_DIR, 'downloads')  # Change to a writable path
+upload_dir = os.path.join(BASE_DIR, 'uploads')  # Change to a writable path
+
+os.makedirs(download_dir, exist_ok=True)
+os.makedirs(upload_dir, exist_ok=True)
 
 def process_youtube_file(files):
     """Processes multiple YouTube JSON data files and merges them into a single DataFrame."""
