@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Mirroring Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        body {
+            background-color: #ECF0F1;
+            font-family: 'Helvetica, Arial, sans-serif';
+            color: #2C3E50;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #2C3E50;
+            margin-bottom: 20px;
+            font-size: 2.8em;
+            font-weight: bold;
+            letter-spacing: 0.05em;
+        }
+        .container {
+            max-width: 850px;
+            margin: auto;
+            padding: 40px;
+            background-color: #FFFFFF;
+            border-radius: 12px;
+            box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        p {
+            text-align: justify;
+            color: #2C3E50;
+            font-size: 1.2em;
+            line-height: 1.7;
+            margin-bottom: 30px;
+        }
+        a {
+            color: #3498DB;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .center {
+            text-align: center;
+            margin-top: 40px;
+        }
+        button {
+            padding: 15px 30px;
+            font-size: 18px;
+            cursor: pointer;
+            background-color: #3498DB;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #2980B9;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Data Mirroring: Reflective and Reflexive Agency through Data Donations</h1>
+
+    <div class="container" id="project-description">
+        <p>
+            Welcome to the Data Mirroring research project, developed by Daniel Jurg, Sarah Vis, and Ike Picone at the Vrije Universiteit Brussel as part of the 
+            <a href="https://smit.research.vub.be/en/research-areas/news-uses-strategies-engagements" target="_blank">NUSE-Unit</a>. 
+            This project aims to facilitate user reflection on social media usage through data conversion and visualization. The application transforms Data Download Packages (DDPs) provided by social media platforms like TikTok, Instagram, and YouTube into a more human-readable format. 
+            By processing a subset of the DDP, the application offers users insights into their data while ensuring the removal of sensitive personal information. 
+            Data processing occurs in real-time, guaranteeing that personal information is never stored on any server. 
+            Data extraction within the Data Mirroring application is designed to integrate with the 4CAT: Capture and Analysis Toolkit (Peeters & Hagen, 2022), enhancing the analysis of social media data. 
+            For more information about the project, please visit our 
+            <a href="https://github.com/dj-urg/data-mirroring-overview" target="_blank">GitHub repository</a>.
+            Finally, for a detailed overview on how to use this application, please follow this instruction sheet.
+        </p>
+    </div>
+
+    <div class="center">
+        <a href="{{ url_for('platform_selection') }}" class="button-link">
+            Proceed to Dashboard
+        </a>
+    </div>       
+</body>
+</html>

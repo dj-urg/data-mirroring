@@ -1,0 +1,31 @@
+# Python virtual environment
+venv/
+
+# Build directories
+dist/
+node_modules/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Downloads and user-uploaded data
+platforms/downloads/
+user_uploads/
+
+# Log files
+*.log
+error_logs.log
+
+# Main.js and package files
+main.js
+package.json
+package-lock.json
+
+# Environment variables
+.env
+
+# Miscellaneous system files
+.DS_Store

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Platform Selection</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"> <!-- Font Awesome for icons -->
+    <style>
+        .selected {
+            background-color: #3498DB; /* Highlight color */
+            color: white; /* Text color change */
+            border: 2px solid #2980B9; /* Darker border on selection */
+            transition: background-color 0.3s, color 0.3s; /* Smooth transition */
+        }
+        .description {
+            text-align: center;
+            font-size: 1.2em;
+            margin-top: 20px;
+            color: #2C3E50;
+            display: none; /* Initially hidden */
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2 class="center">Select a Platform</h2>
+        <p class="center" style="margin-bottom: 30px;">
+            Please select the platform from which you want to extract your data. 
+            The application will process your selected Data Download Package (DDP) 
+            and transform it into a more human-readable format.
+        </p>
+        <form id="platformForm" class="center">
+            <div class="platform-options">
+                <label id="youtubeLabel">
+                    <input type="radio" name="platform" value="youtube" class="platform-radio" onclick="showDescription('youtube')">
+                    <i class="fab fa-youtube platform-icon"></i> YouTube
+                </label>
+                <label id="instagramLabel">
+                    <input type="radio" name="platform" value="instagram" class="platform-radio" onclick="showDescription('instagram')">
+                    <i class="fab fa-instagram platform-icon"></i> Instagram
+                </label>
+                <label id="tiktokLabel">
+                    <input type="radio" name="platform" value="tiktok" class="platform-radio" onclick="showDescription('tiktok')">
+                    <i class="fab fa-tiktok platform-icon"></i> TikTok
+                </label>
+            </div>
+            <div class="center">
+                <input type="button" value="Continue" onclick="goToDashboard()" class="button">
+            </div>
+            <p id="platformDescription" class="description"></p>
+        </form>
+    </div>
+
+    <script>
+        function goToDashboard() {
+            const platform = document.querySelector('input[name="platform"]:checked');
+            if (platform) {
+                window.location.href = "/dashboard/" + platform.value;  // Redirects to /dashboard/youtube or /dashboard/instagram
+            } else {
+                alert("Please select a platform before proceeding.");
+            }       
+        }
+
+        function showDescription(platform) {
+            const descriptions = {
+                youtube: "YouTube is a video-sharing platform where users can upload, share, and view videos.",
+                instagram: "Instagram is a photo and video-sharing social networking service.",
+                tiktok: "TikTok is a social media platform for creating, sharing, and discovering short music videos."
+            };
+            const platformDescription = document.getElementById("platformDescription");
+            platformDescription.textContent = descriptions[platform];
+            platformDescription.style.display = "block"; // Show the description
+
+            // Reset styles
+            document.getElementById("youtubeLabel").classList.remove("selected");
+            document.getElementById("instagramLabel").classList.remove("selected");
+            document.getElementById("tiktokLabel").classList.remove("selected");
+
+            // Highlight selected platform
+            document.getElementById(platform + "Label").classList.add("selected");
+        }
+    </script>
+</body>
+</html>

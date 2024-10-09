@@ -1,0 +1,210 @@
+/* Body Styling */
+body {
+    background-color: #ECF0F1;
+    font-family: 'Helvetica, Arial, sans-serif';
+    color: #2C3E50;
+    margin: 0;
+    padding: 20px;
+}
+
+/* Headers */
+h1 {
+    text-align: center;
+    color: #2C3E50;
+    margin-bottom: 20px;
+    font-size: 2.8em;
+    font-weight: bold;
+    letter-spacing: 0.05em;
+}
+
+/* Containers */
+.container {
+    max-width: 850px;
+    margin: auto;
+    padding: 40px;
+    background-color: #FFFFFF;
+    border-radius: 12px;
+    box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Paragraphs */
+p {
+    text-align: justify;
+    color: #2C3E50;
+    font-size: 1.2em;
+    line-height: 1.7;
+    margin-bottom: 30px;
+}
+
+/* Links */
+a {
+    color: #3498DB;
+    text-decoration: none;
+    font-weight: bold;
+}
+a:hover {
+    text-decoration: underline;
+}
+
+/* Buttons */
+button, .btn-success {
+    padding: 15px 30px;
+    font-size: 18px;
+    cursor: pointer;
+    background-color: #3498DB;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+}
+button:hover, .btn-success:hover {
+    background-color: #2980B9;
+}
+
+/* Centered Elements */
+.center {
+    text-align: center;
+    margin-top: 40px;
+}
+
+/* Platform Selection Styling */
+.platform-options {
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+    margin-bottom: 20px;
+}
+.platform-radio {
+    display: none; /* Hide radio buttons */
+}
+label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    margin: 10px 0;
+    padding: 10px;
+    border: 1px solid #BDC3C7;
+    border-radius: 5px;
+    background-color: #FFFFFF;
+    transition: background-color 0.3s ease;
+}
+label:hover {
+    background-color: #f0f0f0;
+}
+.platform-icon {
+    font-size: 24px;
+    margin-right: 10px;
+}
+
+/* Data Table Styling */
+table {
+    font-size: 0.9rem;
+    table-layout: fixed;
+    word-wrap: break-word;
+}
+table td {
+    padding: 10px;
+    vertical-align: middle;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+table tr {
+    background-color: #f9f9f9;
+    border-bottom: 1px solid #ddd;
+}
+table tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+table tr:hover {
+    background-color: #f1f1f1;
+}
+
+/* Links within Table */
+td a {
+    color: #007bff;
+    text-decoration: none;
+    word-break: break-all;
+}
+td a:hover {
+    text-decoration: underline;
+}
+
+/* Cards */
+.card {
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Data Insights Section */
+.alert-info {
+    font-size: 1.2em;
+    padding: 15px;
+    margin-top: 20px;
+}
+
+/* Channel Chart */
+#channelChart {
+    margin-top: 40px;
+}
+
+/* Upload Form */
+#uploadForm {
+    margin-top: 20px;
+    margin-bottom: 30px;
+}
+
+/* Style for platform-specific dashboard headers */
+.platform-header {
+    margin-top: 20px;
+    padding: 20px;
+    background-color: #f5f5f5;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+.platform-logo {
+    width: 60px;
+    height: 60px;
+    margin-bottom: 10px;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.platform-title {
+    font-size: 2.5rem;
+    color: #2c3e50;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+.platform-description {
+    font-size: 1.2rem;
+    color: #7f8c8d;
+    text-align: center;
+}
+
+/* Customize each platform's style */
+.youtube-theme .platform-header {
+    background-color: #f9e5e5; /* Light red */
+}
+
+.instagram-theme .platform-header {
+    background-color: #f8e9ff; /* Light purple */
+}
+
+.button-link {
+    display: inline-block;
+    padding: 15px 30px;
+    font-size: 18px;
+    text-align: center;
+    color: #ffffff;
+    background-color: #3498DB;
+    text-decoration: none;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+}
+
+.button-link:hover {
+    background-color: #2980B9;
+}
