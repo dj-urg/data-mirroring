@@ -8,10 +8,6 @@ Data Mirror 3.0 is a Flask-based web application that allows users to upload and
 - **File Upload**: Upload multiple JSON files for each platform.
 - **Data Processing**: Generates insights and visualizations from uploaded platform data.
 - **Download CSV**: After processing, you can download a CSV file of the results.
-- **Logging**: Provides detailed logging in development mode and warning-level logs in production mode.
-- **Error Handling**: Captures and logs errors to ensure smooth processing.
-- **Graceful Shutdown**: Handles clean shutdown with signal handling.
-
 ## Setup
 
 ### Prerequisites
