@@ -1,5 +1,4 @@
 from flask import Flask, render_template, request, send_file, url_for
-from flask_talisman import Talisman
 from flask_cors import CORS
 import os
 import logging
@@ -12,9 +11,6 @@ from platforms.tiktok import process_tiktok_file
 
 app = Flask(__name__)
 CORS(app)
-
-# Enable Talisman for HTTPS redirection
-Talisman(app, force_https=True)
 
 # Set FLASK_ENV from environment variables, default to 'development'
 FLASK_ENV = os.getenv('FLASK_ENV', 'development')
