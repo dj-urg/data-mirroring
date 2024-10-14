@@ -1,5 +1,4 @@
-from flask import Flask, render_template, request, send_file, url_for
-from flask_talisman import Talisman
+from flask import Flask, render_template, request, send_file, url_for,redirect
 from flask_cors import CORS
 import os
 import logging
@@ -12,15 +11,6 @@ from platforms.tiktok import process_tiktok_file
 
 app = Flask(__name__)
 CORS(app)
-
-# Allow Font Awesome CDN
-csp = {
-    'default-src': ["'self'"],
-    'style-src': ["'self'", "https://cdnjs.cloudflare.com"],
-    'script-src': ["'self'", "'unsafe-inline'"],
-}
-
-Talisman(app, content_security_policy=csp, content_security_policy_report_only=True)
 
 # Set FLASK_ENV from environment variables, default to 'development'
 FLASK_ENV = os.getenv('FLASK_ENV', 'development')
@@ -63,6 +53,11 @@ allowed_extensions = {'json'}
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in allowed_extensions
+
+@app.before_request
+def enforce_https():
+    if request.scheme != "https":
+        return redirect(request.url.replace("http://", "https://"))
 
 @app.before_request
 def log_request_info():
