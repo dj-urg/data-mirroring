@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, send_file, url_for,redirect, Response
+from flask import Flask, render_template, request, send_file, redirect, Response
 from flask_cors import CORS
 import os
 import logging
@@ -6,7 +6,7 @@ import signal
 import sys
 import atexit
 import io
-import pandas as pd
+import tempfile
 from platforms.youtube import process_youtube_file
 from platforms.instagram import process_instagram_file
 from platforms.tiktok import process_tiktok_file
@@ -35,6 +35,9 @@ upload_dir = os.path.join(BASE_DIR, 'uploads')  # Change to a writable path
 os.makedirs(download_dir, exist_ok=True)
 os.makedirs(upload_dir, exist_ok=True)
 
+secret_key = os.urandom(24)  # Generates a random 24-byte string
+app.secret_key = secret_key  # Set the secret key for session management
+
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # Set max upload size to 16MB
 
 def graceful_shutdown(signal, frame):
@@ -58,7 +61,7 @@ def allowed_file(filename):
 
 @app.before_request
 def enforce_https():
-    if request.scheme != "https":
+    if FLASK_ENV == 'production' and request.scheme != "https":
         return redirect(request.url.replace("http://", "https://"))
 
 @app.before_request
@@ -126,6 +129,11 @@ def dashboard(platform):
             if df.empty:
                 return render_template(f'dashboard_{platform}.html', error="No valid data found in the uploaded files.")
             
+                        # Create a secure temporary file for the CSV
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.csv') as tmp_file:
+                df.to_csv(tmp_file.name, index=False)
+                temp_file_path = tmp_file.name  # Get the file path for later use
+            
             first_five_rows = df.head(5).to_html(classes='data', header="true", index=False)
 
             return render_template(
@@ -135,7 +143,7 @@ def dashboard(platform):
                 plot_data=plot_data if plot_data else {},
                 uploaded_files=[file.filename for file in files],
                 has_valid_data=has_valid_data,
-                csv_content=csv_content  # Pass the CSV content to the template
+                csv_file_path=temp_file_path  # Pass the CSV content to the template
             )
         
         except Exception as e:
@@ -145,24 +153,21 @@ def dashboard(platform):
     return render_template('platform_selection.html')
 
 # Route to download the CSV file
-@app.route('/download_csv')
+@app.route('/download_csv', methods=['GET'])
 def download_csv():
-    csv_content = request.args.get('csv_content')
+    temp_file_path = request.args.get('file_path')
 
-    # Check if csv_content is provided
-    if csv_content:
-        # Convert the string content to a DataFrame
-        # Assuming the CSV data is comma-separated
-        df = pd.read_csv(io.StringIO(csv_content))
+    # Check if the file exists and is secure to serve
+    if temp_file_path and os.path.exists(temp_file_path):
+        # Send the file and ensure it's deleted after being sent
+        response = send_file(temp_file_path, as_attachment=True, download_name='output_youtube.csv', mimetype='text/csv')
         
-        # Create a BytesIO object to hold the CSV data
-        output = io.BytesIO()
-        df.to_csv(output, index=False)
-        output.seek(0)
+        # Securely delete the file after sending
+        os.remove(temp_file_path)
 
-        return send_file(output, as_attachment=True, download_name='output.csv', mimetype='text/csv')
+        return response
 
-    return Response("No CSV content provided", status=400)
+    return Response("No CSV content available", status=400)
 
 # Define the port
 PORT = int(os.getenv('PORT', 5001))  # Default to 5000 for local development

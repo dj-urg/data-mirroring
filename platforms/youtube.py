@@ -2,7 +2,7 @@ import json
 import pandas as pd
 import logging
 import os
-import io
+import tempfile
 
 # Configure the logger
 FLASK_ENV = os.getenv('FLASK_ENV', 'development')
@@ -26,7 +26,7 @@ def process_youtube_file(files):
     """Processes multiple YouTube JSON data files and returns insights and plot data."""
     try:
         all_data = []
-        
+
         for file in files:
             data = json.load(file)
             flattened_data = []
@@ -75,15 +75,14 @@ def process_youtube_file(files):
         }
 
         has_valid_data = not df.empty
-        
-        # Generate CSV content in memory
-        csv_buffer = io.StringIO()
-        df.to_csv(csv_buffer, index=False)
-        csv_content = csv_buffer.getvalue()
-        csv_buffer.close()
 
-        # Return the DataFrame, CSV content, insights, and plot data
-        return df, csv_content, insights, plot_data, has_valid_data
+        # Save the CSV content to a temporary file
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.csv') as tmp_file:
+            df.to_csv(tmp_file.name, index=False)  # Save DataFrame directly to the temp file
+            temp_file_path = tmp_file.name  # Store the path for later use
+
+        # Return the DataFrame, temporary file path, insights, and plot data
+        return df, temp_file_path, insights, plot_data, has_valid_data
 
     except Exception as e:
         logger.error(f"Error processing YouTube data: {type(e).__name__} - {str(e)}")

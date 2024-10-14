@@ -63,8 +63,8 @@
 
                 <!-- Centering the button -->
                 <div class="d-flex justify-content-center">
-                    {% if csv_content %}
-                    <a href="data:text/csv;charset=utf-8,{{ csv_content | url_encode }}" class="btn btn-primary btn-sm" style="padding: 8px 15px; border-radius: 5px;" download="output_youtube.csv">
+                    {% if csv_file_path %}
+                    <a href="{{ url_for('download_csv', file_path=csv_file_path) }}" class="btn btn-primary btn-sm" style="padding: 8px 15px; border-radius: 5px;">
                         Download CSV
                     </a>
                     {% endif %}
@@ -95,6 +95,7 @@
                 document.getElementById('dataTable').classList.remove('d-none');
                 document.getElementById('download').classList.remove('d-none');
                 document.getElementById('visualization').classList.remove('d-none');
+                document.getElementById('uploadSpinner').classList.remove('d-none');
             }, 500); // Adjust timeout if necessary
         };
     </script>
