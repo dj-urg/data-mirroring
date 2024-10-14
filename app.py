@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, send_file, url_for,redirect
+from flask import Flask, render_template, request, send_file, url_for,redirect, Response
 from flask_cors import CORS
 import os
 import logging
@@ -91,7 +91,6 @@ def info():
 def data_processing_info():
     return render_template('data_processing_info.html')
 
-# Route for the dashboard, based on platform selection
 @app.route('/dashboard/<platform>', methods=['GET', 'POST'])
 def dashboard(platform):
     if request.method == 'GET':
@@ -108,22 +107,17 @@ def dashboard(platform):
         if not files or files[0].filename == '':
             return render_template(f'dashboard_{platform}.html', error="No files uploaded.")
         
-        # Check if all files are JSON
         for file in files:
             if not allowed_file(file.filename):
                 return render_template(f'dashboard_{platform}.html', error="Only JSON files are allowed.")
         
-        # Process files based on the platform
         try:
             if platform == 'youtube':
-                df, csv_file_path, insights, plot_data, has_valid_data = process_youtube_file(files)
-                # Check if plot_data is empty or None
-                if not plot_data or not plot_data.get('years'):
-                    return render_template('dashboard_youtube.html', error="No valid plot data available.")
+                df, csv_content, insights, plot_data, has_valid_data = process_youtube_file(files)
             elif platform == 'instagram':
-                df, csv_file_path, insights, plot_data, has_valid_data = process_instagram_file(files)
+                df, csv_content, insights, plot_data, has_valid_data = process_instagram_file(files)
             elif platform == 'tiktok':
-                df, csv_file_path, insights, plot_data, has_valid_data = process_tiktok_file(files)
+                df, csv_content, insights, plot_data, has_valid_data = process_tiktok_file(files)
             else:
                 return "Invalid platform", 400
 
@@ -131,15 +125,15 @@ def dashboard(platform):
                 return render_template(f'dashboard_{platform}.html', error="No valid data found in the uploaded files.")
             
             first_five_rows = df.head(5).to_html(classes='data', header="true", index=False)
-            
+
             return render_template(
                 f'dashboard_{platform}.html',
-                insights=insights, 
-                csv_file_path=url_for('download_file', filename=os.path.basename(csv_file_path)) if has_valid_data else None,
+                insights=insights,
                 data=first_five_rows,
                 plot_data=plot_data if plot_data else {},
                 uploaded_files=[file.filename for file in files],
-                has_valid_data=has_valid_data  # Pass the boolean to the template
+                has_valid_data=has_valid_data,
+                csv_content=csv_content  # Pass the CSV content to the template
             )
         
         except Exception as e:
@@ -149,14 +143,17 @@ def dashboard(platform):
     return render_template('platform_selection.html')
 
 # Route to download the CSV file
-@app.route('/download_file/<filename>')
-def download_file(filename):
-    file_path = os.path.join(download_dir, filename)
-    if os.path.exists(file_path):
-        return send_file(file_path, as_attachment=True)
-    else:
-        logger.error(f"File {filename} not found at {file_path}")
-        return "File not found", 404
+@app.route('/download_csv')
+def download_csv():
+    csv_content = request.args.get('csv_content')
+    if csv_content:
+        response = Response(
+            csv_content,
+            mimetype='text/csv',
+            headers={"Content-Disposition": "attachment;filename=output_youtube.csv"}
+        )
+        return response
+    return "No data available", 404
 
 # Define the port
 PORT = int(os.getenv('PORT', 5001))  # Default to 5000 for local development

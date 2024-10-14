@@ -41,7 +41,7 @@
 
         <!-- Uploaded Data Section -->
         {% if has_valid_data %}
-        <div class="card mt-3 d-none" id="dataTable"> <!-- Initially hidden with d-none -->
+        <div class="card mt-3" id="dataTable"> <!-- Now visible when valid data exists -->
             <div class="card-body">
                 <!-- Responsive table container -->
                 <div class="table-responsive" style="max-height: 400px; overflow: auto;">
@@ -63,11 +63,9 @@
 
                 <!-- Centering the button -->
                 <div class="d-flex justify-content-center">
-                    {% if csv_file_path %}
-                    <a href="{{ csv_file_path }}" class="btn btn-primary btn-sm" style="padding: 8px 15px; border-radius: 5px;" download>
+                    <a href="/download_csv?csv_content={{ csv_content | tojson | safe }}" class="btn btn-primary btn-sm" style="padding: 8px 15px; border-radius: 5px;"> 
                         Download CSV
                     </a>
-                    {% endif %}
                 </div>
             </div>
         </div>
