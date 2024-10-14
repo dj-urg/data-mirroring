@@ -1,20 +1,159 @@
 {% extends 'base.html' %}
 
-{% block title %}Welcome to Data Mirroring{% endblock %}
+{% block title %}TikTok Dashboard{% endblock %}
 
 {% block content %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>TikTok Dashboard</title>
-</head>
-<body>
-    <h1>TikTok Dashboard</h1>
-    <p>This is the dashboard for TikTok data visualization.</p>
+    <div class="platform-header text-center mb-4">
+        <img src="https://img.icons8.com/color/96/000000/tiktok.png" alt="TikTok Logo" class="platform-logo">
+        <h1 class="platform-title">TikTok Dashboard</h1>
+    </div>
 
-    <!-- Link to download sample data for TikTok -->
-    <a href="/download/sample_data.csv">Download TikTok Data</a>
-</body>
-</html>
+    <div class="container mt-5">
+
+        <!-- Simple Upload Form Section -->
+        <div class="card mt-3">
+            <div class="card-body">
+                <p class="text-center mb-2">
+                    Please upload your downloaded data from TikTok in <strong>JSON format</strong>.
+                </p>
+                <form id="uploadForm" action="" method="post" enctype="multipart/form-data" class="d-flex flex-column align-items-center">
+                    <input type="file" name="file" accept=".json" multiple required class="form-control-file d-inline-block mb-2">
+                    <input type="submit" value="Upload Data and Process" class="btn btn-primary btn-sm" style="padding: 6px 12px; border-radius: 4px;">
+                </form>
+            </div>
+        </div>
+
+        <!-- Insights Section -->
+        {% if insights %}
+        <div class="card mt-3 d-none" id="insights"> <!-- Initially hidden -->
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <p>Total Videos: <strong>{{ insights.total_videos }}</strong></p>
+                    <p>Data Time Frame: 
+                        <strong>{{ insights.time_frame_start }}</strong>
+                        to 
+                        <strong>{{ insights.time_frame_end }}</strong>
+                    </p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Uploaded Data Section -->
+        {% if has_valid_data %}
+        <div class="card mt-3 d-none" id="dataTable"> <!-- Initially hidden with d-none -->
+            <div class="card-body">
+                <!-- Responsive table container -->
+                <div class="table-responsive" style="max-height: 400px; overflow: auto;">
+                    <table class="table table-bordered table-hover table-striped table-sm" style="width: 100%;">
+                        <tbody>
+                            {{ data | safe }} <!-- Render the DataFrame as an HTML table -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- CSV Download Section with Explanation -->
+        <div class="card mt-3"> <!-- Card for consistency -->
+            <div class="card-body text-center">
+                <p class="mb-2">
+                    You can download your processed TikTok data in <strong>CSV format</strong> for further inspection or data donation.
+                </p>
+
+                <!-- Centering the button -->
+                <div class="d-flex justify-content-center">
+                    {% if csv_file_path %}
+                    <a href="{{ csv_file_path }}" class="btn btn-primary btn-sm" style="padding: 8px 15px; border-radius: 5px;" download>
+                        Download CSV
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Visualization Section: Most Watched Sources Per Year -->
+        {% if plot_data and plot_data.years %}
+        <div class="card mt-3 d-none" id="visualization"> <!-- Initially hidden with d-none -->
+            <div class="card-body">
+                <div id="sourceChart" class="mt-3"></div>
+            </div>
+        </div>
+        {% endif %}
+
+    </div>
+
+    <!-- Conditionally render JavaScript if plot_data exists -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script>
+        document.getElementById('uploadForm').onsubmit = function() {
+            // Simulate file upload process
+            setTimeout(function() {
+                // Show insights, table, and download sections after processing
+                document.getElementById('insights').classList.remove('d-none');
+                document.getElementById('dataTable').classList.remove('d-none');
+                document.getElementById('visualization').classList.remove('d-none');
+            }, 500);  // Adjust timeout for actual processing time
+        };
+    </script>
+
+    <!-- Plotly script to render chart if plot_data is available -->
+    {% if plot_data and plot_data.years %}
+        <script>
+            const sourceData = JSON.parse(`{{ plot_data | tojson | safe }}`);
+            if (sourceData.years.length > 0 && sourceData.view_counts.length > 0 && sourceData.sources.length > 0) {
+                const traces = [];
+                const colors = [
+                    '#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf'
+                ];
+
+                for (let i = 0; i < sourceData.sources.length; i++) {
+                    const trace = {
+                        x: [sourceData.years[i]],
+                        y: [sourceData.view_counts[i]],
+                        type: 'bar',
+                        name: sourceData.sources[i],
+                        text: [sourceData.sources[i]],
+                        hoverinfo: 'text+y',
+                        marker: {
+                            color: colors[i % colors.length],
+                            opacity: 0.85,
+                            line: {
+                                width: 1.5,
+                                color: 'rgba(0,0,0,0.8)'
+                            }
+                        }
+                    };
+                    traces.push(trace);
+                }
+
+                const layout = {
+                    title: 'Top Sources Per Year',
+                    xaxis: { 
+                        title: 'Year',
+                        tickvals: [...new Set(sourceData.years)],
+                        tickangle: -45
+                    },
+                    yaxis: { 
+                        title: 'Total Engagements',
+                        rangemode: 'tozero',
+                        gridcolor: 'rgba(200, 200, 200, 0.3)'
+                    },
+                    barmode: 'group',
+                    bargap: 0.2,
+                    bargroupgap: 0.15,
+                    showlegend: true
+                };
+
+                Plotly.newPlot('sourceChart', traces, layout);
+            } else {
+                console.error("Insufficient or invalid data to display the chart.");
+            }
+        </script>
+    {% else %}
+        <script>
+            console.log("No valid plot data available for rendering.");
+        </script>
+    {% endif %}
 {% endblock %}

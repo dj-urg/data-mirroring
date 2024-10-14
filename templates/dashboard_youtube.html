@@ -10,35 +10,38 @@
 
     <div class="container mt-5">
 
-        <!-- Upload Form Section -->
-        <div class="card">
+        <!-- Simple Upload Form Section -->
+        <div class="card mt-3">
             <div class="card-body">
-                <form id="uploadForm" action="" method="post" enctype="multipart/form-data" class="text-center">
+                <p class="text-center mb-2">
+                    Please upload your downloaded data from the platform in <strong>JSON format</strong>.
+                </p>
+                <form id="uploadForm" action="" method="post" enctype="multipart/form-data" class="d-flex flex-column align-items-center">
                     <input type="file" name="file" accept=".json" multiple required class="form-control-file d-inline-block mb-2">
-                    <input type="submit" value="Upload" class="btn btn-primary ml-2">
+                    <input type="submit" value="Upload Data and Process" class="btn btn-primary btn-sm" style="padding: 6px 12px; border-radius: 4px;">
                 </form>
             </div>
         </div>
 
-        <!-- Data Insights Section -->
-        <div class="card d-none" id="insights">
+        <!-- Insights Section -->
+        {% if insights %}
+        <div class="card mt-3 d-none" id="insights"> <!-- Initially hidden -->
             <div class="card-body">
                 <div class="alert alert-info">
-                    {% if insights %}
-                        <p>Total Videos: <strong>{{ insights.total_videos }}</strong></p>
-                        <p>Data Time Frame: 
-                            <strong>{{ insights.time_frame_start }}</strong>
-                            to 
-                            <strong>{{ insights.time_frame_end }}</strong>
-                        </p>
-                    {% endif %}
+                    <p>Total Videos: <strong>{{ insights.total_videos }}</strong></p>
+                    <p>Data Time Frame: 
+                        <strong>{{ insights.time_frame_start }}</strong>
+                        to 
+                        <strong>{{ insights.time_frame_end }}</strong>
+                    </p>
                 </div>
             </div>
         </div>
+        {% endif %}
 
         <!-- Uploaded Data Section -->
         {% if has_valid_data %}
-        <div class="card mt-3">
+        <div class="card mt-3 d-none" id="dataTable"> <!-- Initially hidden with d-none -->
             <div class="card-body">
                 <!-- Responsive table container -->
                 <div class="table-responsive" style="max-height: 400px; overflow: auto;">
@@ -48,11 +51,20 @@
                         </tbody>
                     </table>
                 </div>
+            </div>
+        </div>
 
-                <!-- Padding between table and button -->
-                <div class="text-center mt-3" style="padding-top: 15px;">
+        <!-- CSV Download Section with Explanation -->
+        <div class="card mt-3"> <!-- Card for consistency -->
+            <div class="card-body text-center">
+                <p class="mb-2">
+                    You can download your processed data in <strong>CSV format</strong> for further inspection or data donation.
+                </p>
+
+                <!-- Centering the button -->
+                <div class="d-flex justify-content-center">
                     {% if csv_file_path %}
-                    <a href="{{ csv_file_path }}" class="btn btn-success btn-sm" style="padding: 8px 15px; border-radius: 5px;" download>
+                    <a href="{{ csv_file_path }}" class="btn btn-primary btn-sm" style="padding: 8px 15px; border-radius: 5px;" download>
                         Download CSV
                     </a>
                     {% endif %}
@@ -62,11 +74,13 @@
         {% endif %}
 
         <!-- Visualization Section: Most Watched Channels Per Year -->
-        <div class="card d-none" id="visualization">
+        {% if plot_data and plot_data.years %}
+        <div class="card mt-3 d-none" id="visualization"> <!-- Initially hidden with d-none -->
             <div class="card-body">
                 <div id="channelChart" class="mt-3"></div>
             </div>
         </div>
+        {% endif %}
 
     </div>
 
@@ -95,7 +109,6 @@
                     '#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf'
                 ];  // Define a set of distinct colors
 
-                // Loop through all data to create traces
                 for (let i = 0; i < channelData.channels.length; i++) {
                     const trace = {
                         x: [channelData.years[i]],  // Year for this specific channel
@@ -103,12 +116,12 @@
                         type: 'bar',
                         name: channelData.channels[i],  // Channel name as trace name
                         text: [channelData.channels[i]],  // Channel name for hover info
-                        hoverinfo: 'text+y',  // Show only the year and views
+                        hoverinfo: 'text+y',
                         marker: {
                             color: colors[i % colors.length],  // Rotate colors based on index
-                            opacity: 0.85,  // Slightly transparent bars
+                            opacity: 0.85,
                             line: {
-                                width: 1.5,  // Thin border for bars
+                                width: 1.5,
                                 color: 'rgba(0,0,0,0.8)'  // Dark border
                             }
                         }
@@ -129,10 +142,10 @@
                         rangemode: 'tozero',  // Start y-axis at zero
                         gridcolor: 'rgba(200, 200, 200, 0.3)'  // Light grid lines for better clarity
                     },
-                    barmode: 'group',  // Group bars by year
-                    bargap: 0.2,  // Space between bars
-                    bargroupgap: 0.15,  // Space between bar groups
-                    showlegend: true  // Show legend for channels
+                    barmode: 'group',
+                    bargap: 0.2,
+                    bargroupgap: 0.15,
+                    showlegend: true
                 };
 
                 // Render the chart with Plotly

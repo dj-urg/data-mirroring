@@ -1,12 +1,115 @@
 import json
 import pandas as pd
+import logging
+import os
+import time
 
-def process_tiktok_file(file):
-    # Read the JSON file
-    data = json.load(file)
-    # Convert to DataFrame
-    df = pd.json_normalize(data)
-    # Save to CSV
-    csv_file_path = 'downloads/output.csv'
-    df.to_csv(csv_file_path, index=False)
-    return df, csv_file_path
+# Configure the logger
+FLASK_ENV = os.getenv('FLASK_ENV', 'development')
+
+if FLASK_ENV == 'production':
+    logging.basicConfig(level=logging.WARNING, format='%(asctime)s %(levelname)s: %(message)s')
+else:
+    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(levelname)s: %(message)s')
+logger = logging.getLogger()
+
+BASE_DIR = os.getenv('APP_BASE_DIR', os.path.dirname(os.path.abspath(__file__)))
+
+# Use a writable directory within your project folder
+download_dir = os.path.join(BASE_DIR, 'downloads')  # Change to a writable path
+upload_dir = os.path.join(BASE_DIR, 'uploads')  # Change to a writable path
+
+os.makedirs(download_dir, exist_ok=True)
+os.makedirs(upload_dir, exist_ok=True)
+
+def process_tiktok_file(files):
+    """Processes multiple TikTok JSON data files and merges them into a single DataFrame."""
+    try:
+        # Initialize an empty list to hold data from all files
+        all_data = []
+        
+        # Loop through each file in the files list
+        for file in files:
+            # Read the file content
+            data = json.load(file)
+            flattened_data = []
+
+            # Flatten the data structure and extract relevant fields
+            for video in data.get('Activity', {}).get('Video Browsing History', {}).get('VideoList', []):
+                # Convert timestamp using pd.to_datetime
+                timestamp = pd.to_datetime(video.get('Date', ''), errors='coerce')  # Coerce invalid formats to NaT
+                
+                flattened_data.append({
+                    'video_title': video.get('Title', 'No Title'),
+                    'video_url': video.get('Link', ''),
+                    'timestamp': timestamp,
+                    'source': 'Browsing'
+                })
+
+            # Append the data to the all_data list
+            all_data.extend(flattened_data)
+
+        # Convert to DataFrame
+        df = pd.DataFrame(all_data)
+
+        # Format the 'timestamp' column to only include date (YYYY-MM-DD)
+        df['timestamp'] = df['timestamp'].dt.date
+
+        # Drop rows where timestamp is NaT (invalid dates)
+        valid_timestamps = df['timestamp'].dropna()
+
+        # If valid timestamps exist, get the earliest and latest dates
+        if not valid_timestamps.empty:
+            time_frame_start = valid_timestamps.min()  # Already in date format
+            time_frame_end = valid_timestamps.max()  # Already in date format
+        else:
+            time_frame_start, time_frame_end = 'N/A', 'N/A'
+        
+        # Save to CSV (with the timestamp formatted as date)
+        csv_file_path = 'output_tiktok.csv'
+        full_csv_path = os.path.join(download_dir, 'output_tiktok.csv')
+        df.to_csv(full_csv_path, index=False)
+        time.sleep(1)
+
+        # Log after saving the file
+        if os.path.exists(full_csv_path):
+            logger.info(f"CSV file saved successfully at: {full_csv_path}")
+        else:
+            logger.error(f"Failed to save CSV file at: {full_csv_path}")
+
+        # Generate insights
+        insights = {
+            'total_videos': len(df),
+            'time_frame_start': time_frame_start,
+            'time_frame_end': time_frame_end
+        }
+
+        # Extract the year from the timestamp
+        df['year'] = pd.to_datetime(df['timestamp']).dt.year
+
+        # Group by year and source, and count the occurrences of each source per year
+        source_data = df.groupby(['year', 'source']).size().reset_index(name='view_counts')
+
+        # For each year, select the top sources
+        top_sources_per_year = source_data.groupby('year').apply(lambda x: x.nlargest(10, 'view_counts')).reset_index(drop=True)
+
+        # Prepare data for visualization
+        plot_data = {
+            'years': top_sources_per_year['year'].tolist(),
+            'view_counts': top_sources_per_year['view_counts'].tolist(),
+            'sources': top_sources_per_year['source'].tolist()
+        }
+
+        # Ensure there are no None values in plot_data
+        if not plot_data['years'] or not plot_data['view_counts'] or not plot_data['sources']:
+            logger.error("Plot data contains incomplete values.")
+            plot_data = {}  # Reset plot_data if it's malformed
+
+        has_valid_data = not df.empty
+        # Return the DataFrame, CSV file path, insights, and plot data
+        return df, csv_file_path, insights, plot_data, has_valid_data
+
+    except Exception as e:
+        # Only log the type of the error without any data content
+        logger.error(f"Error processing TikTok data: {type(e).__name__} - {str(e)}")
+        raise ValueError(f"Error processing TikTok data: {type(e).__name__} - Check logs for details")

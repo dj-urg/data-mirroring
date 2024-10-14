@@ -6,10 +6,12 @@
     <div class="container">
         <h2 class="center">Select a Platform</h2>
         <p class="center" style="margin-bottom: 30px;">
-            Please select the platform from which you want to extract your data. 
-            The application will process your selected Data Download Package (DDP) 
-            and transform it into a more human-readable format.
-        </p>
+            Select the platform from which you want to visualize and convert your data. Once you've made a selection, 
+            a link to the data request page will appear. The application will process your Data Download Package (DDP), 
+            transforming it into a more user-friendly format. Please note that this application expects your data to be downloaded as JSON.
+            For more information on how to request your data, 
+            please click <a href="https://docs.google.com/document/d/1EQH0vSKQAIReHbdhfv-6OmnA3Oeh-qnvZg9CDvWhOA4/edit?tab=t.0" target="_blank">here</a>.
+        </p>        
         <form id="platformForm" class="center">
             <div class="platform-options">
                 <label id="youtubeLabel">
@@ -26,7 +28,7 @@
                 </label>
             </div>
             <div class="center">
-                <input type="button" value="Continue" onclick="goToDashboard()" class="button">
+                <input type="button" value="Continue" onclick="goToDashboard()" class="button-link">
             </div>
             <p id="platformDescription" class="description"></p>
         </form>
@@ -44,12 +46,12 @@
 
         function showDescription(platform) {
             const descriptions = {
-                youtube: "YouTube is a video-sharing platform where users can upload, share, and view videos.",
-                instagram: "Instagram is a photo and video-sharing social networking service.",
-                tiktok: "TikTok is a social media platform for creating, sharing, and discovering short music videos."
+                youtube: "More information on how to request your YouTube data can be found <a href='https://support.google.com/youtube/answer/9315727?hl=en' target='_blank'>here</a>.",
+                instagram: "More information on how to request your Instagram data can be found <a href='https://help.instagram.com/181231772500920?helpref=faq_content' target='_blank'>here</a>.",
+                tiktok: "More information on how to request your TikTok data can be found <a href='https://support.tiktok.com/en/account-and-privacy/personalized-ads-and-data/requesting-your-data' target='_blank'>here</a>."
             };
             const platformDescription = document.getElementById("platformDescription");
-            platformDescription.textContent = descriptions[platform];
+            platformDescription.innerHTML = descriptions[platform]; // Use innerHTML to render HTML content
             platformDescription.style.display = "block"; // Show the description
 
             // Reset styles
