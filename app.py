@@ -10,7 +10,7 @@ from platforms.instagram import process_instagram_file
 from platforms.tiktok import process_tiktok_file
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/*": {"origins": ["https://data-mirror-72f6ffc87917.herokuapp.com", "https://cdnjs.cloudflare.com"]}})
 
 # Set FLASK_ENV from environment variables, default to 'development'
 FLASK_ENV = os.getenv('FLASK_ENV', 'development')
