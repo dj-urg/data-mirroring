@@ -34,6 +34,10 @@
                         to 
                         <strong>{{ insights.time_frame_end }}</strong>
                     </p>
+                    <p>Morning Activity (6 AM - 12 PM): <strong>{{ insights.morning_activity }}</strong></p>
+                    <p>Afternoon Activity (12 PM - 6 PM): <strong>{{ insights.afternoon_activity }}</strong></p>
+                    <p>Evening Activity (6 PM - 12 AM): <strong>{{ insights.evening_activity }}</strong></p>
+                    <p>Night Activity (12 AM - 6 AM): <strong>{{ insights.night_activity }}</strong></p>
                 </div>
             </div>
         </div>
@@ -63,8 +67,8 @@
 
                 <!-- Centering the button -->
                 <div class="d-flex justify-content-center">
-                    {% if csv_file_path %}
-                    <a href="{{ csv_file_path }}" class="btn btn-primary btn-sm" style="padding: 8px 15px; border-radius: 5px;" download>
+                    {% if csv_file_name %}
+                    <a href="{{ url_for('download_csv', filename=csv_file_name) }}" class="btn btn-primary btn-sm" style="padding: 8px 15px; border-radius: 5px;">
                         Download CSV
                     </a>
                     {% endif %}
@@ -73,14 +77,23 @@
         </div>
         {% endif %}
 
-        <!-- Visualization Section: Most Watched Sources Per Year -->
-        {% if plot_data and plot_data.years %}
-        <div class="card mt-3 d-none" id="visualization"> <!-- Initially hidden with d-none -->
-            <div class="card-body">
-                <div id="sourceChart" class="mt-3"></div>
-            </div>
+    <!-- Visualization Section: Most Watched Sources Per Year -->
+    {% if plot_data %}
+    <div class="card mt-3 d-none" id="visualization"> <!-- Initially hidden with d-none -->
+        <div class="card-body">
+            <div id="sourceChart" class="mt-3"></div>
         </div>
-        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Visualization Section: Heatmap for TikTok Activity by Hour of the Day -->
+    {% if plot_data %}
+    <div class="card mt-3 d-none" id="heatmapVisualization"> <!-- Initially hidden with d-none -->
+        <div class="card-body">
+            <div id="hourlyHeatmap" class="mt-3"></div>
+        </div>
+    </div>
+    {% endif %}
 
     </div>
 
@@ -94,14 +107,17 @@
                 document.getElementById('insights').classList.remove('d-none');
                 document.getElementById('dataTable').classList.remove('d-none');
                 document.getElementById('visualization').classList.remove('d-none');
+                document.getElementById('heatmapVisualization').classList.remove('d-none');
             }, 500);  // Adjust timeout for actual processing time
         };
     </script>
 
-    <!-- Plotly script to render chart if plot_data is available -->
-    {% if plot_data and plot_data.years %}
+    <!-- Plotly script to render bar chart if plot_data for source chart is available -->
+    {% if plot_data %}
         <script>
-            const sourceData = JSON.parse(`{{ plot_data | tojson | safe }}`);
+            // Declare the variable once
+            let sourceData = JSON.parse(`{{ plot_data | tojson | safe }}`);
+
             if (sourceData.years.length > 0 && sourceData.view_counts.length > 0 && sourceData.sources.length > 0) {
                 const traces = [];
                 const colors = [
@@ -151,9 +167,51 @@
                 console.error("Insufficient or invalid data to display the chart.");
             }
         </script>
-    {% else %}
-        <script>
-            console.log("No valid plot data available for rendering.");
-        </script>
     {% endif %}
+
+        <!-- Visualization Section: Heatmap for TikTok Activity by Hour -->
+        {% if plot_data %}
+        <div class="card mt-3" id="heatmapVisualization">
+            <div class="card-body">
+                <div id="hourlyHeatmap" class="mt-3"></div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Plotly script to render heatmap -->
+        {% if plot_data %}
+        <script>
+        console.log("Starting heatmap rendering...");  // Log when heatmap rendering starts
+
+        // Check if sourceData has hours and activity_counts
+        if (sourceData.hours && sourceData.activity_counts) {
+            console.log("sourceData.hours:", sourceData.hours);  // Log hours
+            console.log("sourceData.activity_counts:", sourceData.activity_counts);  // Log activity counts
+
+            const heatmapData = {
+                x: sourceData.hours,  // Hours of the day
+                y: ['Activity'],  // Single row for activity
+                z: [sourceData.activity_counts],  // 2D array for activity counts
+                type: 'heatmap',
+                colorscale: 'YlOrRd'
+            };
+
+            console.log("Heatmap data:", heatmapData);  // Log the entire heatmap data being sent to Plotly
+
+            const layout = {
+                title: 'Activity Heatmap by Hour',
+                xaxis: { title: 'Hour of the Day' },
+                yaxis: { title: 'Activity' }
+            };
+
+            // Render the heatmap
+            Plotly.newPlot('hourlyHeatmap', [heatmapData], layout);
+
+            console.log("Heatmap rendered successfully.");  // Log after rendering
+
+        } else {
+            console.error("No valid data for the heatmap. sourceData.hours or sourceData.activity_counts is missing.");
+        }
+        </script>
+        {% endif %}
 {% endblock %}

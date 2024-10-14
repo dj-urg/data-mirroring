@@ -63,8 +63,8 @@
 
                 <!-- Centering the button -->
                 <div class="d-flex justify-content-center">
-                    {% if csv_file_path %}
-                    <a href="{{ url_for('download_csv', file_path=csv_file_path) }}" class="btn btn-primary btn-sm" style="padding: 8px 15px; border-radius: 5px;">
+                    {% if csv_file_name %}
+                    <a href="{{ url_for('download_csv', filename=csv_file_name) }}" class="btn btn-primary btn-sm">
                         Download CSV
                     </a>
                     {% endif %}

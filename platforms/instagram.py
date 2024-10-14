@@ -2,7 +2,8 @@ import json
 import pandas as pd
 import logging
 import os
-import time
+import tempfile
+import uuid
 
 # Configure the logger
 FLASK_ENV = os.getenv('FLASK_ENV', 'development')
@@ -12,15 +13,6 @@ if FLASK_ENV == 'production':
 else:
     logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(levelname)s: %(message)s')
 logger = logging.getLogger()
-
-BASE_DIR = os.getenv('APP_BASE_DIR', os.path.dirname(os.path.abspath(__file__)))
-
-# Use a writable directory within your project folder
-download_dir = os.path.join(BASE_DIR, 'downloads')  # Change to a writable path
-upload_dir = os.path.join(BASE_DIR, 'uploads')  # Change to a writable path
-
-os.makedirs(download_dir, exist_ok=True)
-os.makedirs(upload_dir, exist_ok=True)
 
 def process_instagram_file(files):
     """Processes multiple Instagram JSON files and merges them into one CSV."""
@@ -38,6 +30,7 @@ def process_instagram_file(files):
                 
                 if key in data:
                     for item in data[key]:
+                        # Process each section (existing logic remains unchanged)
                         if key == 'saved_saved_media':
                             flat_instagram_data.append({
                                 'title': item.get('title', 'No Title'),
@@ -88,16 +81,15 @@ def process_instagram_file(files):
 
         # If valid timestamps exist, get the earliest and latest dates
         if not valid_timestamps.empty:
-            time_frame_start = valid_timestamps.min()  # Already in date format
-            time_frame_end = valid_timestamps.max()  # Already in date format
+            time_frame_start = valid_timestamps.min()
+            time_frame_end = valid_timestamps.max()
         else:
             time_frame_start, time_frame_end = 'N/A', 'N/A'
-        
-        # Save to CSV (with the timestamp formatted as date)
-        csv_file_path = 'output_instagram.csv'
-        full_csv_path = os.path.join(download_dir, 'output_instagram.csv')
-        df.to_csv(full_csv_path, index=False)
-        time.sleep(1)
+
+        # Generate a unique filename using UUID and save CSV to a temporary file
+        unique_filename = f"{uuid.uuid4()}.csv"  # Create a unique filename
+        temp_file_path = os.path.join(tempfile.gettempdir(), unique_filename)  # Save to temp dir
+        df.to_csv(temp_file_path, index=False)
 
         # Generate insights
         insights = {
@@ -124,8 +116,8 @@ def process_instagram_file(files):
 
         logger.info(f"Processed Instagram data with plot data: {plot_data}")
 
-        # Return the DataFrame, CSV file path, insights, and plot data
-        return df, csv_file_path, insights, plot_data
+        # Return the DataFrame, unique filename, insights, and plot data
+        return df, unique_filename, insights, plot_data
 
     except Exception as e:
         logger.error(f"Error processing Instagram data: {e}")
