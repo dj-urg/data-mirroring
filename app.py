@@ -5,6 +5,8 @@ import logging
 import signal
 import sys
 import atexit
+import io
+import pandas as pd
 from platforms.youtube import process_youtube_file
 from platforms.instagram import process_instagram_file
 from platforms.tiktok import process_tiktok_file
@@ -146,14 +148,21 @@ def dashboard(platform):
 @app.route('/download_csv')
 def download_csv():
     csv_content = request.args.get('csv_content')
+
+    # Check if csv_content is provided
     if csv_content:
-        response = Response(
-            csv_content,
-            mimetype='text/csv',
-            headers={"Content-Disposition": "attachment;filename=output_youtube.csv"}
-        )
-        return response
-    return "No data available", 404
+        # Convert the string content to a DataFrame
+        # Assuming the CSV data is comma-separated
+        df = pd.read_csv(io.StringIO(csv_content))
+        
+        # Create a BytesIO object to hold the CSV data
+        output = io.BytesIO()
+        df.to_csv(output, index=False)
+        output.seek(0)
+
+        return send_file(output, as_attachment=True, download_name='output.csv', mimetype='text/csv')
+
+    return Response("No CSV content provided", status=400)
 
 # Define the port
 PORT = int(os.getenv('PORT', 5001))  # Default to 5000 for local development

@@ -63,7 +63,7 @@
 
                 <!-- Centering the button -->
                 <div class="d-flex justify-content-center">
-                    <a href="/download_csv?csv_content={{ csv_content | tojson | safe }}" class="btn btn-primary btn-sm" style="padding: 8px 15px; border-radius: 5px;"> 
+                    <a href="{{ url_for('download_csv', csv_content=csv_data) }}" class="btn btn-primary btn-sm" style="padding: 8px 15px; border-radius: 5px;"> 
                         Download CSV
                     </a>
                 </div>
