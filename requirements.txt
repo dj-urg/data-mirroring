@@ -3,10 +3,13 @@ click==8.1.7
 Flask==3.0.3
 Flask-Cors==5.0.0
 flask-talisman==1.1.0
+gunicorn==23.0.0
 itsdangerous==2.2.0
 Jinja2==3.1.4
 MarkupSafe==3.0.1
+nodejs==0.1.1
 numpy==2.1.2
+optional-django==0.1.0
 packaging==24.1
 pandas==2.2.3
 plotly==5.24.1

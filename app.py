@@ -157,7 +157,9 @@ def download_file(filename):
         logger.error(f"File {filename} not found at {file_path}")
         return "File not found", 404
 
-PORT = int(os.getenv('PORT', 5001))
+# Define the port
+PORT = int(os.getenv('PORT', 5001))  # Default to 5000 for local development
+
 if __name__ == '__main__':
     logger.info(f'Starting Flask app on port {PORT}')
     app.run(port=PORT, host='0.0.0.0', debug=True, threaded=True)
