@@ -15,18 +15,12 @@ CORS(app)
 
 # Allow Font Awesome CDN
 csp = {
-    'default-src': [
-        "'self'",
-        'https://cdnjs.cloudflare.com'
-    ],
-    'style-src': [
-        "'self'",
-        'https://cdnjs.cloudflare.com',
-        "'unsafe-inline'"  # Allow inline styles if necessary
-    ]
+    'default-src': ["'self'"],
+    'style-src': ["'self'", "https://cdnjs.cloudflare.com"],
+    'script-src': ["'self'", "'unsafe-inline'"],
 }
 
-Talisman(app, content_security_policy=csp)
+Talisman(app, content_security_policy=csp, content_security_policy_report_only=True)
 
 # Set FLASK_ENV from environment variables, default to 'development'
 FLASK_ENV = os.getenv('FLASK_ENV', 'development')
