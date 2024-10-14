@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Data Mirroring Dashboard{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"> <!-- Font Awesome for icons -->
+</head>
+<body>
+
+    <!-- Header with Navigation -->
+    <header>
+        <nav>
+            <ul>
+                <li><a href="{{ url_for('landing_page') }}">Home</a></li>
+                <li><a href="{{ url_for('platform_selection') }}">Dashboards</a></li>
+                <li><a href="{{ url_for('info') }}">Project Info</a></li>
+                <li><a href="{{ url_for('data_processing_info') }}">Data Processing</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Main Content Area -->
+    <main>
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <!-- Footer Section -->
+    <footer>
+        <p class="copyright-text">&copy; 2024 Data Mirroring Project</p>
+    </footer>    
+
+</body>
+</html>

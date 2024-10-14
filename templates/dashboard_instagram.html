@@ -1,38 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Instagram Dashboard</title>
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <style>
-        h1, h2 {
-            text-align: center;
-        }
-        .card {
-            margin-bottom: 20px;
-        }
-        .btn-success {
-            padding: 10px 20px;
-            font-size: 1.2em;
-            margin-top: 20px;
-        }
-        .table-responsive {
-            margin-bottom: 30px;
-        }
-        #engagementChart {
-            margin-top: 40px;
-        }
-        .alert-info {
-            font-size: 1.2em;
-            padding: 15px;
-            margin-top: 20px;
-        }
-    </style>
-</head>
-<body>
+{% extends 'base.html' %}
 
+{% block title %}Welcome to Data Mirroring{% endblock %}
+
+{% block content %}
 <div class="container mt-5">
 
     <!-- Page Title -->
@@ -162,3 +132,4 @@
 
 </body>
 </html>
+{% endblock %}

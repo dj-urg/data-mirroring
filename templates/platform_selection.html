@@ -1,29 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Platform Selection</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"> <!-- Font Awesome for icons -->
-    <style>
-        .selected {
-            background-color: #3498DB; /* Highlight color */
-            color: white; /* Text color change */
-            border: 2px solid #2980B9; /* Darker border on selection */
-            transition: background-color 0.3s, color 0.3s; /* Smooth transition */
-        }
-        .description {
-            text-align: center;
-            font-size: 1.2em;
-            margin-top: 20px;
-            color: #2C3E50;
-            display: none; /* Initially hidden */
-        }
-    </style>
-</head>
-<body>
+{% extends 'base.html' %}
 
+{% block title %}Platform Selection{% endblock %}
+
+{% block content %}
     <div class="container">
         <h2 class="center">Select a Platform</h2>
         <p class="center" style="margin-bottom: 30px;">
@@ -82,5 +61,4 @@
             document.getElementById(platform + "Label").classList.add("selected");
         }
     </script>
-</body>
-</html>
+{% endblock %}

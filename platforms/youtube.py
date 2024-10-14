@@ -110,8 +110,9 @@ def process_youtube_file(files):
             logger.error("Plot data contains incomplete values.")
             plot_data = {}  # Reset plot_data if it's malformed
 
+        has_valid_data = not df.empty
         # Return the DataFrame, CSV file path, insights, and plot data
-        return df, csv_file_path, insights, plot_data
+        return df, csv_file_path, insights, plot_data, has_valid_data
 
     except Exception as e:
             # Only log the type of the error without any data content

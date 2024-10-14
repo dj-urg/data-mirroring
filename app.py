@@ -75,6 +75,16 @@ def landing_page():
 def platform_selection():
     return render_template('platform_selection.html')
 
+# Route for information about the project
+@app.route('/info')
+def info():
+    return render_template('info.html')
+
+# Route for information about the project
+@app.route('/data_processing_info')
+def data_processing_info():
+    return render_template('data_processing_info.html')
+
 # Route for the dashboard, based on platform selection
 @app.route('/dashboard/<platform>', methods=['GET', 'POST'])
 def dashboard(platform):
@@ -100,12 +110,12 @@ def dashboard(platform):
         # Process files based on the platform
         try:
             if platform == 'youtube':
-                df, csv_file_path, insights, plot_data = process_youtube_file(files)
+                df, csv_file_path, insights, plot_data, has_valid_data = process_youtube_file(files)
                 # Check if plot_data is empty or None
                 if not plot_data or not plot_data.get('years'):
                     return render_template('dashboard_youtube.html', error="No valid plot data available.")
             elif platform == 'instagram':
-                df, csv_file_path, insights, plot_data = process_instagram_file(files)
+                df, csv_file_path, insights, plot_data, has_valid_data = process_instagram_file(files)
             else:
                 return "Invalid platform", 400
 
@@ -117,10 +127,11 @@ def dashboard(platform):
             return render_template(
                 f'dashboard_{platform}.html',
                 insights=insights, 
-                csv_file_path=url_for('download_file', filename=os.path.basename(csv_file_path)),
+                csv_file_path=url_for('download_file', filename=os.path.basename(csv_file_path)) if has_valid_data else None,
                 data=first_five_rows,
                 plot_data=plot_data if plot_data else {},
-                uploaded_files=[file.filename for file in files]
+                uploaded_files=[file.filename for file in files],
+                has_valid_data=has_valid_data  # Pass the boolean to the template
             )
         
         except Exception as e:
