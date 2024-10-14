@@ -63,9 +63,11 @@
 
                 <!-- Centering the button -->
                 <div class="d-flex justify-content-center">
-                    <a href="{{ url_for('download_csv', csv_content=csv_data) }}" class="btn btn-primary btn-sm" style="padding: 8px 15px; border-radius: 5px;"> 
+                    {% if csv_content %}
+                    <a href="data:text/csv;charset=utf-8,{{ csv_content | url_encode }}" class="btn btn-primary btn-sm" style="padding: 8px 15px; border-radius: 5px;" download="output_youtube.csv">
                         Download CSV
                     </a>
+                    {% endif %}
                 </div>
             </div>
         </div>
