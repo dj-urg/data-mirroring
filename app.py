@@ -42,6 +42,8 @@ if FLASK_ENV == 'production':
     app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024 # Limit file upload size to 16 MB
     app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=30)  # Set session timeout to 30 minutes
     app.config['WTF_CSRF_CHECK_REFERRER'] = False  # Disable CSRF check for referrer
+    app.config['WTF_CSRF_SSL_STRICT'] = False
+    app.secret_key = os.getenv('SECRET_KEY')
 
 else:
     # Development mode: No need for HTTPS
@@ -59,10 +61,6 @@ logger = logging.getLogger()
 
 # Define the base directory for file storage
 BASE_DIR = os.getenv('APP_BASE_DIR', os.path.dirname(os.path.abspath(__file__)))
-
-# Set a secret key for session management
-secret_key = os.getenv('SECRET_KEY', os.urandom(24))  # Attempt to retrieve the SECRET_KEY from environment variables
-app.secret_key = secret_key  # Assign it to the Flask app
 
 # Initialize rate limiter
 limiter = Limiter(
