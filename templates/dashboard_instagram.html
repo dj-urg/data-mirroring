@@ -17,6 +17,7 @@
                     Please upload your downloaded Instagram data in <strong>JSON format</strong>.
                 </p>
                 <form id="uploadForm" action="" method="post" enctype="multipart/form-data" class="d-flex flex-column align-items-center">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <input type="file" name="file" accept=".json" multiple required class="form-control-file d-inline-block mb-2">
                     <input type="submit" value="Upload Data and Process" class="btn btn-primary btn-sm" style="padding: 6px 12px; border-radius: 4px;">
                 </form>

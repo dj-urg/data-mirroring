@@ -58,6 +58,7 @@
         <h1>Enter Access Code</h1>
         <form method="POST">
             <input type="text" name="code" placeholder="Enter your access code" required>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"> <!-- CSRF token -->
             <button type="submit">Submit</button>
         </form>
         {% if error %}
