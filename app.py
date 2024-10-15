@@ -1,5 +1,7 @@
-from flask import Flask, render_template, request, send_file, redirect, session, abort
+from flask import Flask, render_template, request, send_file, redirect, session
 from flask_cors import CORS
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 import os
 import logging
 import signal
@@ -17,16 +19,16 @@ app = Flask(__name__)
 # Enable Cross-Origin Resource Sharing (CORS) for specific origins
 CORS(app, resources={r"/*": {"origins": ["https://data-mirror-72f6ffc87917.herokuapp.com", "https://cdnjs.cloudflare.com"]}})
 
-# Set session lifetime (e.g., 60 minutes)
-app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=60)
-
 # Get environment setting (default to 'production')
 FLASK_ENV = os.getenv('FLASK_ENV', 'production')
 
 # Set session cookie configurations based on environment
 if FLASK_ENV == 'production':
     app.config['SESSION_COOKIE_SECURE'] = True  # Only transmit cookies over HTTPS
-    app.config['SESSION_COOKIE_HTTPONLY'] = True  # Prevent access to session cookies via JavaScript
+    app.config['SESSION_COOKIE_HTTPONLY'] = True # Prevent access to session cookies via JavaScript
+    app.config['SESSION_COOKIE_SAMESITE'] = 'Strict'  # Prevent CSRF attacks
+    app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=60)    # Set session lifetime to 60 minutes
+    app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024 # Limit file upload size to 16 MB
 else:
     # Development mode: No need for HTTPS
     app.config['SESSION_COOKIE_SECURE'] = False
@@ -44,26 +46,40 @@ logger = logging.getLogger()
 # Define the base directory for file storage
 BASE_DIR = os.getenv('APP_BASE_DIR', os.path.dirname(os.path.abspath(__file__)))
 
-# Define upload and download directories
-download_dir = os.path.join(BASE_DIR, 'downloads')
-upload_dir = os.path.join(BASE_DIR, 'uploads')
-
-# Create the directories if they don't exist
-os.makedirs(download_dir, exist_ok=True)
-os.makedirs(upload_dir, exist_ok=True)
-
 # Set a secret key for session management
 secret_key = os.urandom(24)
 app.secret_key = secret_key
 
-# Set the maximum upload size to 16MB
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
+# Initialize rate limiter
+limiter = Limiter(
+    get_remote_address,
+    app=app,
+    default_limits=["200 per day", "50 per hour"]  # Adjust based on your needs
+)
+
+@app.after_request
+def apply_security_headers(response):
+    response.headers["Content-Security-Policy"] = (
+        "default-src 'self'; "
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.plot.ly; "  # Allow unsafe-eval for Plotly
+        "style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; "  # Allow Font Awesome and inline styles
+        "img-src 'self' https://img.icons8.com data:; "  # Allow images from your domain, icons8, and data URIs
+        "font-src 'self' https://cdnjs.cloudflare.com; "  # Allow Font Awesome fonts
+        "object-src 'none';"  # Disallow object embedding
+    )
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    return response
 
 # Gracefully shut down the app
 def graceful_shutdown(signal, frame):
     if FLASK_ENV != 'production':
         logger.info("Graceful shutdown initiated")
     sys.exit(0)
+
+signal.signal(signal.SIGINT, graceful_shutdown)
+signal.signal(signal.SIGTERM, graceful_shutdown)
 
 def cleanup():
     if FLASK_ENV != 'production':
@@ -98,8 +114,13 @@ def log_request_info():
 # General error handler to log exceptions
 @app.errorhandler(Exception)
 def handle_exception(e):
-    logger.error(f"An error occurred: {type(e).__name__}")
-    return "An internal error occurred", 500
+    if FLASK_ENV != 'production':
+        # Show detailed error information in development
+        return f"Error: {str(e)}", 500
+    else:
+        # Show a generic error message in production
+        logger.error(f"An internal error occurred: {e}")
+        return "An internal error occurred. Please try again later.", 500
 
 # Landing page route
 @app.route('/')
@@ -123,6 +144,7 @@ def data_processing_info():
 
 # Dashboard route that selects platform and handles both GET and POST
 @app.route('/dashboard/<platform>', methods=['GET', 'POST'])
+@limiter.limit("10 per minute")     # Rate limit to 10 requests per minute
 def dashboard(platform):
     if request.method == 'GET':
         return render_dashboard_template(platform)
@@ -199,10 +221,12 @@ def handle_platform_file_processing(platform, files):
 def save_csv_temp_file(df):
     with tempfile.NamedTemporaryFile(delete=False, suffix='.csv') as tmp_file:
         df.to_csv(tmp_file.name, index=False)
+        tmp_file.close()
         return tmp_file.name
 
 # Route to download the processed CSV file
 @app.route('/download_csv/<filename>', methods=['GET'])
+@limiter.limit("5 per minute")  # Limit to 5 downloads per minute
 def download_csv(filename):
     # Construct the full file path for the temporary file
     temp_file_path = os.path.join(tempfile.gettempdir(), filename)
@@ -224,6 +248,19 @@ def download_csv(filename):
 @app.before_request
 def make_session_permanent():
     session.permanent = True
+    
+# Teardown request function for cleaning up files
+@app.teardown_request
+def cleanup_temp_files(exception=None):
+    # Clean up the temporary files after the request finishes
+    temp_file_path = session.get('csv_file', None)
+    if temp_file_path and os.path.exists(temp_file_path):
+        try:
+            os.remove(temp_file_path)
+        except Exception as e:
+            logger.error(f"Failed to delete temp file: {e}")
+        finally:
+            session.pop('csv_file', None)  # Ensure session is cleaned up
 
 # Define the port to run the app on
 PORT = int(os.getenv('PORT', 5001))  # Default to 5001 for local development
