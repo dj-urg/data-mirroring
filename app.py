@@ -41,6 +41,7 @@ if FLASK_ENV == 'production':
     app.config['SESSION_COOKIE_SAMESITE'] = 'Strict'  # Prevent CSRF attacks
     app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024 # Limit file upload size to 16 MB
     app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=30)  # Set session timeout to 30 minutes
+    app.config['WTF_CSRF_CHECK_REFERRER'] = False  # Disable CSRF check for referrer
 
 else:
     # Development mode: No need for HTTPS
