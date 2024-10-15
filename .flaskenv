@@ -1,1 +1,3 @@
 FLASK_ENV=development
+ACCESS_CODE=data-mirroring-2024
+SECRET_KEY=your_generated_secret_key_here

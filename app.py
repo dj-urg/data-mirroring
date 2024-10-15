@@ -1,17 +1,22 @@
-from flask import Flask, render_template, request, send_file, redirect, session
+from flask import Flask, render_template, request, send_file, redirect, session, url_for, send_from_directory
 from flask_cors import CORS
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+from flask_wtf.csrf import CSRFProtect
+from functools import wraps
+from datetime import timedelta
 import os
 import logging
 import signal
 import sys
 import atexit
 import tempfile
-from datetime import timedelta
+from dotenv import load_dotenv
 from platforms.youtube import process_youtube_file
 from platforms.instagram import process_instagram_file
 from platforms.tiktok import process_tiktok_file
+
+load_dotenv()  # Load environment variables from .env file
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -19,16 +24,24 @@ app = Flask(__name__)
 # Enable Cross-Origin Resource Sharing (CORS) for specific origins
 CORS(app, resources={r"/*": {"origins": ["https://data-mirror-72f6ffc87917.herokuapp.com", "https://cdnjs.cloudflare.com"]}})
 
+csrf = CSRFProtect(app)  # Initialize CSRF protection
+
 # Get environment setting (default to 'production')
 FLASK_ENV = os.getenv('FLASK_ENV', 'production')
+
+# Route to serve the favicon    
+@app.route('/favicon.ico')
+def favicon():
+    return send_from_directory(os.path.join(app.root_path, 'static'), 'favicon.ico')    
 
 # Set session cookie configurations based on environment
 if FLASK_ENV == 'production':
     app.config['SESSION_COOKIE_SECURE'] = True  # Only transmit cookies over HTTPS
     app.config['SESSION_COOKIE_HTTPONLY'] = True # Prevent access to session cookies via JavaScript
     app.config['SESSION_COOKIE_SAMESITE'] = 'Strict'  # Prevent CSRF attacks
-    app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=60)    # Set session lifetime to 60 minutes
     app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024 # Limit file upload size to 16 MB
+    app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=30)  # Set session timeout to 30 minutes
+
 else:
     # Development mode: No need for HTTPS
     app.config['SESSION_COOKIE_SECURE'] = False
@@ -47,8 +60,8 @@ logger = logging.getLogger()
 BASE_DIR = os.getenv('APP_BASE_DIR', os.path.dirname(os.path.abspath(__file__)))
 
 # Set a secret key for session management
-secret_key = os.urandom(24)
-app.secret_key = secret_key
+secret_key = os.getenv('SECRET_KEY', os.urandom(24))  # Attempt to retrieve the SECRET_KEY from environment variables
+app.secret_key = secret_key  # Assign it to the Flask app
 
 # Initialize rate limiter
 limiter = Limiter(
@@ -63,14 +76,46 @@ def apply_security_headers(response):
         "default-src 'self'; "
         "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.plot.ly; "  # Allow unsafe-eval for Plotly
         "style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; "  # Allow Font Awesome and inline styles
-        "img-src 'self' https://img.icons8.com data:; "  # Allow images from your domain, icons8, and data URIs
-        "font-src 'self' https://cdnjs.cloudflare.com; "  # Allow Font Awesome fonts
-        "object-src 'none';"  # Disallow object embedding
+        "img-src 'self' https://img.icons8.com data:; "  # Allow images from your domain and icons8
+        "font-src 'self' data: https://cdnjs.cloudflare.com; "  # Allow Font Awesome fonts
+        "object-src 'none'; "  # Disallow object embedding
+        "frame-ancestors 'none'; "  # Prevent your site from being embedded in iframes
     )
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    response.headers["Referrer-Policy"] = "no-referrer"
+    response.headers["Feature-Policy"] = "geolocation 'self'; microphone 'none'"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+
     return response
+
+# Code entry route
+@app.route('/enter-code', methods=['GET', 'POST'])
+def enter_code():
+    ACCESS_CODE = os.getenv('ACCESS_CODE')
+    if request.method == 'POST':
+        code = request.form.get('code')
+        if code == ACCESS_CODE:
+            session['authenticated'] = True  # Set authenticated status in the session
+            return redirect(url_for('landing_page'))
+        else:
+            return render_template('enter_code.html', error="Invalid access code.")
+    return render_template('enter_code.html')
+
+# Logout route
+@app.route('/logout')
+def logout():
+    session.clear()  # Clear the session
+    return redirect(url_for('enter_code'))  # Redirect to the login page
+
+def requires_authentication(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if not session.get('authenticated'):
+            return redirect(url_for('enter_code'))  # Redirect to enter code if not authenticated
+        return f(*args, **kwargs)
+    return decorated_function
 
 # Gracefully shut down the app
 def graceful_shutdown(signal, frame):
@@ -121,29 +166,34 @@ def handle_exception(e):
         # Show a generic error message in production
         logger.error(f"An internal error occurred: {e}")
         return "An internal error occurred. Please try again later.", 500
-
+    
 # Landing page route
 @app.route('/')
+@requires_authentication
 def landing_page():
     return render_template('homepage.html')
 
 # Platform selection page route
 @app.route('/platform-selection')
+@requires_authentication
 def platform_selection():
     return render_template('platform_selection.html')
 
 # Information page route
 @app.route('/info')
+@requires_authentication
 def info():
     return render_template('info.html')
 
 # Data processing information page route
 @app.route('/data_processing_info')
+@requires_authentication
 def data_processing_info():
     return render_template('data_processing_info.html')
 
 # Dashboard route that selects platform and handles both GET and POST
 @app.route('/dashboard/<platform>', methods=['GET', 'POST'])
+@requires_authentication
 @limiter.limit("10 per minute")     # Rate limit to 10 requests per minute
 def dashboard(platform):
     if request.method == 'GET':
@@ -243,11 +293,6 @@ def download_csv(filename):
         return response
 
     return "File not found", 404
-
-# Make the session permanent for its defined lifetime
-@app.before_request
-def make_session_permanent():
-    session.permanent = True
     
 # Teardown request function for cleaning up files
 @app.teardown_request
