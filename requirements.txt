@@ -41,3 +41,4 @@ tzdata==2024.2
 Werkzeug==3.0.4
 wrapt==1.16.0
 WTForms==3.1.2
+pysankey2==2.0.1

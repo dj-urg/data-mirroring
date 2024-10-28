@@ -6,12 +6,15 @@ import tempfile
 import uuid
 
 # Configure the logger
-FLASK_ENV = os.getenv('FLASK_ENV', 'development')
+FLASK_ENV = os.getenv('FLASK_ENV', 'production')  # Default to 'production'
 
 if FLASK_ENV == 'production':
+    # Disable logging in production except for warnings and errors
     logging.basicConfig(level=logging.WARNING, format='%(asctime)s %(levelname)s: %(message)s')
 else:
+    # Enable detailed logging for development
     logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(levelname)s: %(message)s')
+
 logger = logging.getLogger()
 
 def process_instagram_file(files):
@@ -120,5 +123,5 @@ def process_instagram_file(files):
         return df, unique_filename, insights, plot_data
 
     except Exception as e:
-        logger.error(f"Error processing Instagram data: {e}")
-        raise ValueError(f"Error processing Instagram data: {e}")
+        logger.warning(f"Error occurred: {type(e).__name__} - {str(e)}")  # Avoid logging sensitive data
+        raise ValueError("An internal error occurred. Please try again.")

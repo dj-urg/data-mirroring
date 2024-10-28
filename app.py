@@ -16,18 +16,20 @@ from platforms.youtube import process_youtube_file
 from platforms.instagram import process_instagram_file
 from platforms.tiktok import process_tiktok_file
 
-load_dotenv()  # Load environment variables from .env file
+load_dotenv()
 
 # Initialize Flask app
 app = Flask(__name__)
 
-# Enable Cross-Origin Resource Sharing (CORS) for specific origins
-CORS(app, resources={r"/*": {"origins": ["https://data-mirror-72f6ffc87917.herokuapp.com", "https://cdnjs.cloudflare.com"]}})
+app.secret_key = os.getenv('SECRET_KEY')  # Set the secret key for session management
 
 csrf = CSRFProtect(app)  # Initialize CSRF protection
 
+# Enable Cross-Origin Resource Sharing (CORS) for specific origins
+CORS(app, resources={r"/*": {"origins": ["https://data-mirror-72f6ffc87917.herokuapp.com", "https://cdnjs.cloudflare.com"]}})
+
 # Get environment setting (default to 'production')
-FLASK_ENV = os.getenv('FLASK_ENV', 'production')
+FLASK_ENV = os.getenv('FLASK_ENV', 'development')
 
 # Route to serve the favicon    
 @app.route('/favicon.ico')
@@ -43,20 +45,18 @@ if FLASK_ENV == 'production':
     app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=30)  # Set session timeout to 30 minutes
     app.config['WTF_CSRF_CHECK_REFERRER'] = False  # Disable CSRF check for referrer
     app.config['WTF_CSRF_SSL_STRICT'] = False
-    app.secret_key = os.getenv('SECRET_KEY')
-
 else:
     # Development mode: No need for HTTPS
     app.config['SESSION_COOKIE_SECURE'] = False
-    app.config['SESSION_COOKIE_HTTPONLY'] = True  # Always prevent JavaScript access
+    app.config['SESSION_COOKIE_HTTPONLY'] = True
 
-# Configure logging based on environment
 if FLASK_ENV == 'production':
+    # Disable logging in production except for warnings and errors
     logging.basicConfig(level=logging.WARNING, format='%(asctime)s %(levelname)s: %(message)s')
 else:
+    # Enable detailed logging for development
     logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(levelname)s: %(message)s')
 
-# Create logger
 logger = logging.getLogger()
 
 # Define the base directory for file storage
@@ -229,7 +229,7 @@ def handle_platform_file_processing(platform, files):
     try:
         # Process files based on the selected platform
         if platform == 'youtube':
-            df, unique_filename, insights, plot_data, has_valid_data = process_youtube_file(files)
+            df, unique_filename, insights, bump_chart_name, heatmap_name, has_valid_data = process_youtube_file(files)
         elif platform == 'instagram':
             df, unique_filename, insights, plot_data, has_valid_data = process_instagram_file(files)
         elif platform == 'tiktok':
@@ -255,7 +255,8 @@ def handle_platform_file_processing(platform, files):
             f'dashboard_{platform}.html',
             insights=insights,
             data=first_five_rows,
-            plot_data=plot_data if plot_data else {},
+            plot_data=bump_chart_name,  # This is for the bump chart (most watched channels)
+            heatmap_data=heatmap_name,  # This is for the heatmap (day of the week consumption)
             uploaded_files=[file.filename for file in files],
             has_valid_data=has_valid_data,
             csv_file_name=unique_filename  # Pass the unique filename to the template for download
@@ -292,6 +293,32 @@ def download_csv(filename):
         return response
 
     return "File not found", 404
+
+# Helper function to save a Matplotlib plot as a temporary image file
+def save_image_temp_file(fig):
+    with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmp_file:
+        fig.savefig(tmp_file.name, bbox_inches='tight')
+        tmp_file.close()
+        return tmp_file.name
+
+# Route to download the generated image
+@app.route('/download_image/<filename>', methods=['GET'])
+@limiter.limit("5 per minute")  # Limit to 5 downloads per minute
+def download_image(filename):
+    # Construct the full path to the temporary file
+    temp_file_path = os.path.join(tempfile.gettempdir(), filename)
+
+    # Check if the file exists
+    if os.path.exists(temp_file_path):
+        # Log the download action
+        logger.info(f"Image file downloaded: {temp_file_path}")
+
+        # Serve the image and delete it afterward
+        response = send_file(temp_file_path, mimetype='image/png')
+        os.remove(temp_file_path)  # Delete the file after sending
+        return response
+
+    return "File not found", 404
     
 # Teardown request function for cleaning up files
 @app.teardown_request
@@ -305,6 +332,16 @@ def cleanup_temp_files(exception=None):
             logger.error(f"Failed to delete temp file: {e}")
         finally:
             session.pop('csv_file', None)  # Ensure session is cleaned up
+
+    # Similarly, for image cleanup
+    image_file_path = session.get('image_file', None)
+    if image_file_path and os.path.exists(image_file_path):
+        try:
+            os.remove(image_file_path)
+        except Exception as e:
+            logger.error(f"Failed to delete temp image file: {e}")
+        finally:
+            session.pop('image_file', None)
 
 # Define the port to run the app on
 PORT = int(os.getenv('PORT', 5001))  # Default to 5001 for local development

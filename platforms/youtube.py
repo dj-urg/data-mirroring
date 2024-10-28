@@ -3,7 +3,130 @@ import pandas as pd
 import os
 import tempfile
 import uuid
+import shutil
+import logging
+import matplotlib
+import matplotlib.pyplot as plt
+from matplotlib.lines import Line2D
+import seaborn as sns
 
+# Use 'Agg' backend to avoid GUI issues
+matplotlib.use('Agg')
+
+# Configure the logger
+FLASK_ENV = os.getenv('FLASK_ENV', 'production')  # Default to 'production'
+
+if FLASK_ENV == 'production':
+    # Disable logging in production except for warnings and errors
+    logging.basicConfig(level=logging.WARNING, format='%(asctime)s %(levelname)s: %(message)s')
+else:
+    # Enable detailed logging for development
+    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(levelname)s: %(message)s')
+
+logger = logging.getLogger()
+
+# Custom visualization functions
+def add_line(ax, year_values, rank_values, linewidth=3, color="black"):
+    ax.add_artist(Line2D(year_values, -rank_values, linewidth=linewidth, color=color))
+
+def add_circle(ax, year_value, rank_value, marker_size=15, color="black"):
+    ax.plot(year_value, -rank_value, 'o', color=color, markersize=marker_size)
+
+def add_text(ax, year_value, rank_value, text, offset=0.02):
+    ax.text(year_value + offset, -rank_value, text, fontsize=10, va='bottom', ha='left')
+
+def format_ticks(ax, years, padx=0.25, pady=0.1, y_label_size=16, x_label_size=18):
+    ax.set(xlim=(-padx, len(years) - 1 + padx), ylim=(-5.5 - pady, -pady))
+
+    xticks = [i for i in range(len(years))]
+    ax.set_xticks(ticks=xticks, labels=years)
+
+    # Remove y-axis labels (rank numbers)
+    ax.set_yticks([])  # No y-axis tick labels
+
+    # Only show top x-axis labels (years), disable bottom x-axis labels
+    ax.tick_params("y", labelsize=y_label_size, pad=8)
+    ax.tick_params("x", labeltop=True, bottom=False, labelsize=x_label_size, pad=4)  # Disable bottom ticks
+
+def set_custom_style():
+    plt.rcParams.update({
+        "axes.facecolor": "#FFFFFF",  # White background for the plot
+        "figure.facecolor": "#FFFFFF",  # White background for the figure
+        "grid.color": "#E4C9C9",  # Keep grid color subtle
+        "axes.grid": True,
+        "xtick.bottom": False,
+        "xtick.top": True,
+        "ytick.left": False,
+        "ytick.right": False,
+        "axes.spines.left": False,
+        "axes.spines.bottom": False,
+        "axes.spines.right": False,
+        "axes.spines.top": False
+    })
+
+# Helper function to save images as a temporary file
+def save_image_temp_file(fig):
+    # Save the image in a temporary file
+    with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmp_file:
+        fig.savefig(tmp_file.name, bbox_inches='tight')
+        tmp_file.close()
+        return os.path.basename(tmp_file.name)  # Only return the filename, not the full path
+
+def generate_custom_bump_chart(channel_ranking):
+    # Set custom style
+    set_custom_style()
+
+    # Extract years and ranks for each channel and plot the lines
+    channels = channel_ranking['channel'].unique()
+    years = sorted(channel_ranking['year'].unique())  # List of years to plot
+
+    # Adjust figure size (reduce height)
+    fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(8, 3))  # Width remains, height reduced significantly
+
+    # Adjust the tick formatting and spacing
+    format_ticks(ax, years)
+
+    colors = plt.get_cmap("tab10").colors  # Color palette
+
+    # Draw lines or circles for each channel
+    for i, channel in enumerate(channels):
+        channel_data = channel_ranking[channel_ranking['channel'] == channel]
+        year_values = [years.index(year) for year in channel_data['year']]
+        rank_values = channel_data['rank'].values
+        color = colors[i % len(colors)]  # Rotate through colors
+
+        if len(year_values) > 1:
+            # Draw lines for channels that appear in multiple years
+            add_line(ax, year_values, rank_values, color=color)
+            for j, year in enumerate(year_values):
+                add_circle(ax, year, rank_values[j], color=color)
+            add_text(ax, year_values[-1], rank_values[-1], channel)
+        else:
+            # Draw circles for channels that only appear in one year
+            add_circle(ax, year_values[0], rank_values[0], color=color)
+            add_text(ax, year_values[0], rank_values[0], channel)
+
+    plt.tight_layout()  # Ensure the plot fits nicely
+
+    # Save the image temporarily and return the filename
+    return fig
+
+def generate_heatmap(day_counts):
+    # Convert day counts to a dataframe
+    day_count_df = pd.DataFrame({'Day': day_counts.index, 'Count': day_counts.values}).set_index('Day')
+
+    # Create a heatmap
+    fig, ax = plt.subplots(figsize=(8, 2))  # Adjust size for heatmap
+    sns.heatmap(day_count_df.T, annot=True, fmt="d", cmap="Blues", ax=ax, cbar=False)
+    ax.set_ylabel("")
+    ax.set_xlabel("Day of the Week")
+
+    plt.tight_layout()
+
+    # Save the image temporarily and return the filename
+    return fig
+
+# Main data processing function
 def process_youtube_file(files):
     """Processes multiple YouTube JSON data files and returns insights and plot data."""
     try:
@@ -41,21 +164,34 @@ def process_youtube_file(files):
 
         # Prepare data for visualization
         df['year'] = pd.to_datetime(df['timestamp']).dt.year
-        channel_data = df.groupby(['year', 'channel']).size().reset_index(name='view_counts')
-        top_channels_per_year = channel_data.groupby('year').apply(lambda x: x.nlargest(10, 'view_counts')).reset_index(drop=True)
+        df['day_of_week'] = pd.to_datetime(df['timestamp']).dt.day_name()  # Get day of the week
 
-        plot_data = {
-            'years': top_channels_per_year['year'].tolist(),
-            'view_counts': top_channels_per_year['view_counts'].tolist(),
-            'channels': top_channels_per_year['channel'].tolist()
-        }
+        # Count the number of videos consumed on each day of the week
+        day_counts = df['day_of_week'].value_counts().reindex(
+            ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+        )
+
+        # Exclude 'Unknown' channels and get top 5 per year
+        channel_data = df.groupby(['year', 'channel']).size().reset_index(name='view_counts')
+        channel_data = channel_data[channel_data['channel'] != 'Unknown']
+        top_channels_per_year = channel_data.groupby('year').apply(lambda x: x.nlargest(5, 'view_counts')).reset_index(drop=True)
+
+        # Rank channels for each year
+        top_channels_per_year['rank'] = top_channels_per_year.groupby('year')['view_counts'].rank(ascending=False, method='first')
+
+        # Generate bump chart image
+        bump_chart_name = save_image_temp_file(generate_custom_bump_chart(top_channels_per_year))
+
+        # Generate heatmap image
+        heatmap_name = save_image_temp_file(generate_heatmap(day_counts))
 
         # Generate a unique filename using UUID and save CSV to temporary file
         unique_filename = f"{uuid.uuid4()}.csv"
         temp_file_path = os.path.join(tempfile.gettempdir(), unique_filename)
         df.to_csv(temp_file_path, index=False)
 
-        return df, unique_filename, insights, plot_data, not df.empty
+        return df, unique_filename, insights, bump_chart_name, heatmap_name, not df.empty
 
     except Exception as e:
-        raise ValueError(f"Error processing YouTube data: {type(e).__name__} - {str(e)}")
+        logger.warning(f"Error occurred: {type(e).__name__} - {str(e)}")  # Avoid logging sensitive data
+        raise ValueError("An internal error occurred. Please try again.")
