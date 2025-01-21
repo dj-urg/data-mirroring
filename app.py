@@ -29,7 +29,7 @@ csrf = CSRFProtect(app)  # Initialize CSRF protection
 CORS(app, resources={r"/*": {"origins": ["https://data-mirror-72f6ffc87917.herokuapp.com", "https://cdnjs.cloudflare.com"]}})
 
 # Get environment setting (default to 'production')
-FLASK_ENV = os.getenv('FLASK_ENV', 'development')
+FLASK_ENV = os.getenv('FLASK_ENV', 'production')
 
 # Route to serve the favicon    
 @app.route('/favicon.ico')
@@ -222,11 +222,14 @@ def render_dashboard_template(platform):
         return render_template('dashboard_tiktok.html')
     else:
         return render_template('platform_selection.html')
-
-
+    
 # Helper function to handle platform-specific file processing
 def handle_platform_file_processing(platform, files):
     try:
+        # Initialize platform-specific variables
+        df, unique_filename, insights, plot_data, bump_chart_name, heatmap_name = None, None, None, None, None, None
+        has_valid_data = False
+
         # Process files based on the selected platform
         if platform == 'youtube':
             df, unique_filename, insights, bump_chart_name, heatmap_name, has_valid_data = process_youtube_file(files)
@@ -244,55 +247,65 @@ def handle_platform_file_processing(platform, files):
         temp_file_path = save_csv_temp_file(df)
         session['csv_file'] = temp_file_path  # Store the CSV file path in the session
 
-        if FLASK_ENV != 'production':
-            logger.info(f"CSV file created at: {temp_file_path}")
+        # Generate the CSV file path for download
+        csv_file_name = os.path.basename(temp_file_path)
+        csv_file_path = f"/download_csv/{csv_file_name}"
+        logger.info(f"CSV file path passed to template: {csv_file_path}")
 
         # Display the first five rows of the processed data
         first_five_rows = df.head(5).to_html(classes='data', header="true", index=False)
 
-        # Render the dashboard with the processed data
+        # Render the dashboard with platform-specific data
         return render_template(
             f'dashboard_{platform}.html',
             insights=insights,
             data=first_five_rows,
-            plot_data=bump_chart_name,  # This is for the bump chart (most watched channels)
-            heatmap_data=heatmap_name,  # This is for the heatmap (day of the week consumption)
+            plot_data=plot_data,  # Use plot_data for Instagram and TikTok
+            bump_chart_data=bump_chart_name,  # Specific to YouTube
+            heatmap_data=heatmap_name,  # Specific to YouTube
             uploaded_files=[file.filename for file in files],
             has_valid_data=has_valid_data,
-            csv_file_name=unique_filename  # Pass the unique filename to the template for download
+            csv_file_name=csv_file_name,  # Pass the unique filename to the template
+            csv_file_path=csv_file_path  # Pass the download path to the template
         )
 
     except Exception as e:
-        logger.error(f"Error processing {platform} data: {e}")
+        logger.error(f"Error processing {platform} data: {e}", exc_info=True)
         return render_template(f'dashboard_{platform}.html', error=f"There was an error processing the {platform} data. Please try again.")
 
 
 # Helper function to save DataFrame as a temporary CSV file
 def save_csv_temp_file(df):
+    if df is None or df.empty:
+        logger.error("DataFrame is invalid or empty. Cannot create CSV.")
+        raise ValueError("Invalid or empty DataFrame provided.")
     with tempfile.NamedTemporaryFile(delete=False, suffix='.csv') as tmp_file:
         df.to_csv(tmp_file.name, index=False)
         tmp_file.close()
+        logger.info(f"CSV file created at: {tmp_file.name}")
         return tmp_file.name
 
 # Route to download the processed CSV file
 @app.route('/download_csv/<filename>', methods=['GET'])
-@limiter.limit("5 per minute")  # Limit to 5 downloads per minute
+@limiter.limit("5 per minute")  # Limit download rate
 def download_csv(filename):
-    # Construct the full file path for the temporary file
     temp_file_path = os.path.join(tempfile.gettempdir(), filename)
 
-    # Check if the file exists
     if os.path.exists(temp_file_path):
-        # Log the download action
-        logger.info(f"File downloaded: {temp_file_path}")
-
-        # Send the file and delete it afterward
+        logger.info(f"Serving file for download: {temp_file_path}")
         response = send_file(temp_file_path, as_attachment=True, download_name=filename, mimetype='text/csv')
-        os.remove(temp_file_path)  # Delete the file after sending
-        session.pop('csv_file', None)  # Clean up session
-        return response
+        
+        # After serving the file, delete it
+        try:
+            os.remove(temp_file_path)
+            logger.info(f"File deleted after download: {temp_file_path}")
+        except Exception as e:
+            logger.error(f"Failed to delete file {temp_file_path}: {e}")
 
-    return "File not found", 404
+        return response
+    else:
+        logger.error(f"File not found: {temp_file_path}")
+        return "File not found", 404
 
 # Helper function to save a Matplotlib plot as a temporary image file
 def save_image_temp_file(fig):
@@ -323,25 +336,11 @@ def download_image(filename):
 # Teardown request function for cleaning up files
 @app.teardown_request
 def cleanup_temp_files(exception=None):
-    # Clean up the temporary files after the request finishes
+    # Do not delete the file immediately after request handling
     temp_file_path = session.get('csv_file', None)
-    if temp_file_path and os.path.exists(temp_file_path):
-        try:
-            os.remove(temp_file_path)
-        except Exception as e:
-            logger.error(f"Failed to delete temp file: {e}")
-        finally:
-            session.pop('csv_file', None)  # Ensure session is cleaned up
-
-    # Similarly, for image cleanup
-    image_file_path = session.get('image_file', None)
-    if image_file_path and os.path.exists(image_file_path):
-        try:
-            os.remove(image_file_path)
-        except Exception as e:
-            logger.error(f"Failed to delete temp image file: {e}")
-        finally:
-            session.pop('image_file', None)
+    if temp_file_path:
+        logger.info(f"Delaying cleanup for file: {temp_file_path}")
+    # No file deletion here
 
 # Define the port to run the app on
 PORT = int(os.getenv('PORT', 5001))  # Default to 5001 for local development

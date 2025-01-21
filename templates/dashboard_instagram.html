@@ -10,18 +10,26 @@
 
     <div class="container mt-5">
 
-        <!-- Simple Upload Form Section -->
+        <!-- Upload Form Section -->
         <div class="card mt-3">
-            <div class="card-body">
-                <p class="text-center mb-2">
+            <div class="card-body text-center">
+                <p class="mb-2">
                     Please upload your downloaded Instagram data in <strong>JSON format</strong>.
                 </p>
-                <form id="uploadForm" action="" method="post" enctype="multipart/form-data" class="d-flex flex-column align-items-center">
+                <form id="uploadForm" action="" method="post" enctype="multipart/form-data">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <input type="file" name="file" accept=".json" multiple required class="form-control-file d-inline-block mb-2">
-                    <input type="submit" value="Upload Data and Process" class="btn btn-primary btn-sm" style="padding: 6px 12px; border-radius: 4px;">
+                    <input type="file" name="file" accept=".json" multiple required class="form-control mb-2">
+                    <button type="submit" class="btn btn-primary">Upload Data</button>
                 </form>
             </div>
+        </div>
+
+        <!-- Loading Spinner -->
+        <div id="loadingSpinner" class="text-center mt-4" style="display: none;">
+            <div class="spinner-border text-primary" role="status">
+                <span class="sr-only">Loading...</span>
+            </div>
+            <p class="mt-2">Processing your files, please wait...</p>
         </div>
 
         <!-- Uploaded Files Section -->
@@ -29,7 +37,7 @@
         <div class="card mt-3">
             <div class="card-body">
                 <h4 class="mb-3">Uploaded Files:</h4>
-                <ul class="list-group mt-2">
+                <ul class="list-group">
                     {% for file in uploaded_files %}
                     <li class="list-group-item">{{ file }}</li>
                     {% endfor %}
@@ -40,13 +48,12 @@
 
         <!-- Data Insights Section -->
         {% if insights %}
-        <div class="card mt-3 d-none" id="insights"> <!-- Initially hidden -->
+        <div class="card mt-3" id="insights">
             <div class="card-body">
                 <div class="alert alert-info">
                     <p>Total Entries: <strong>{{ insights.total_entries }}</strong></p>
                     <p>Data Time Frame: 
-                        <strong>{{ insights.time_frame_start }}</strong>
-                        to 
+                        <strong>{{ insights.time_frame_start }}</strong> to 
                         <strong>{{ insights.time_frame_end }}</strong>
                     </p>
                 </div>
@@ -56,43 +63,33 @@
 
         <!-- Uploaded Data Section -->
         {% if has_valid_data %}
-        <div class="card mt-3 d-none" id="dataTable"> <!-- Initially hidden with d-none -->
+        <div class="card mt-3" id="dataTable">
             <div class="card-body">
-                <h2 class="card-title">Uploaded Data as Table (First 5 Rows)</h2>
-                <div class="table-responsive" style="max-height: 400px; overflow: auto;">
-                    <table class="table table-bordered table-hover table-striped table-sm" style="width: 100%;">
-                        <tbody>
-                            {{ data | safe }} <!-- Render the DataFrame as an HTML table -->
-                        </tbody>
+                <h2 class="card-title">Uploaded Data (First 5 Rows)</h2>
+                <div class="table-responsive" style="max-height: 400px;">
+                    <table class="table table-bordered table-hover table-striped">
+                        {{ data | safe }}
                     </table>
                 </div>
             </div>
         </div>
 
-        <!-- CSV Download Section with Explanation -->
+        <!-- CSV Download Section -->
         <div class="card mt-3">
             <div class="card-body text-center">
-                <p class="mb-2">
-                    You can download your processed Instagram data in <strong>CSV format</strong> for further inspection or data donation.
-                </p>
-
-                <!-- Centering the button -->
-                <div class="d-flex justify-content-center">
-                    {% if csv_file_name %}
-                    <a href="{{ csv_file_path }}" class="btn btn-primary btn-sm" style="padding: 8px 15px; border-radius: 5px;" download>
-                        Download CSV
-                    </a>
-                    {% endif %}
-                </div>
+                <p class="mb-2">Download your processed Instagram data in <strong>CSV format</strong>.</p>
+                {% if csv_file_name %}
+                <a href="{{ csv_file_path }}" class="btn btn-success" download>Download CSV</a>
+                {% endif %}
             </div>
         </div>
         {% endif %}
 
-        <!-- Visualization Section: Engagement per Year -->
+        <!-- Visualization Section -->
         {% if plot_data and plot_data.years %}
-        <div class="card mt-3 d-none" id="visualization"> <!-- Initially hidden -->
+        <div class="card mt-3" id="visualization">
             <div class="card-body">
-                <h2 class="card-title text-center">Most Engaged Titles Per Year</h2>
+                <h2 class="card-title text-center">Occurrence of Items in Data Over Time</h2>
                 <div id="engagementChart" class="mt-3"></div>
             </div>
         </div>
@@ -103,53 +100,61 @@
     <!-- Plotly Script -->
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 
-    <!-- Conditionally render JavaScript if plot_data exists -->
-    {% if plot_data is not none %}
+    <!-- Loading Spinner Logic -->
     <script>
-        const engagementData = JSON.parse(`{{ plot_data | tojson | safe }}`);
-    
-        if (engagementData.years.length > 0 && engagementData.engagement_counts.length > 0 && engagementData.titles.length > 0) {
-            const traces = [];
-            const colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd'];
+        document.addEventListener("DOMContentLoaded", () => {
+            const uploadForm = document.getElementById("uploadForm");
+            const loadingSpinner = document.getElementById("loadingSpinner");
 
-            engagementData.titles.forEach((title, i) => {
-                const trace = {
-                    x: [engagementData.years[i]], 
-                    y: [engagementData.engagement_counts[i]],  
+            uploadForm.addEventListener("submit", () => {
+                // Show the loading spinner when the form is submitted
+                loadingSpinner.style.display = "block";
+            });
+        });
+    </script>
+
+    <!-- Conditional Rendering for Plotly -->
+    {% if plot_data %}
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const engagementData = JSON.parse(`{{ plot_data | tojson | safe }}`);
+            const { years, engagement_counts, titles } = engagementData;
+
+            if (years.length && engagement_counts.length && titles.length) {
+                const traces = titles.map((title, i) => ({
+                    x: [years[i]],
+                    y: [engagement_counts[i]],
                     type: 'bar',
                     name: title,
-                    text: [title],  
+                    text: title,
                     hoverinfo: 'text+y',
                     marker: {
-                        color: colors[i % colors.length],
+                        color: ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd'][i % 5],
                         opacity: 0.85,
-                        line: {
-                            width: 1.5,
-                            color: 'rgba(0,0,0,0.8)'
-                        }
+                        line: { width: 1.5, color: '#000' }
                     }
+                }));
+
+                const layout = {
+                    xaxis: { title: '', tickvals: [...new Set(years)], tickangle: -45 },
+                    yaxis: {
+                        title: '',
+                        rangemode: 'tozero',
+                        gridcolor: '#ccc',
+                        tickformat: 'd', // Ensures whole numbers
+                        dtick: 1         // Forces ticks to appear at every integer
+                    },
+                    barmode: 'group',
+                    bargap: 0.2,
+                    bargroupgap: 0.15,
+                    showlegend: false
                 };
-                traces.push(trace);
-            });
 
-            const layout = {
-                title: 'Top 10 Titles Per Year',
-                xaxis: { title: 'Year', tickvals: [...new Set(engagementData.years)], tickangle: -45 },
-                yaxis: { title: 'Engagement Count', rangemode: 'tozero', gridcolor: 'rgba(200, 200, 200, 0.3)' },
-                barmode: 'group',
-                bargap: 0.2,
-                bargroupgap: 0.15,
-                showlegend: false
-            };
-
-            Plotly.newPlot('engagementChart', traces, layout);
-        } else {
-            console.log("No valid data available for the chart.");
-        }
-    </script>         
-    {% else %}
-    <script>
-        console.log("No plot data available.");
+                Plotly.newPlot('engagementChart', traces, layout);
+            } else {
+                console.warn("No valid data for visualization.");
+            }
+        });
     </script>
     {% endif %}
 {% endblock %}
