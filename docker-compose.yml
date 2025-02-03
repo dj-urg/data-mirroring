@@ -8,4 +8,12 @@ services:
       - ./user_uploads:/app/user_uploads  # Maps your local user_uploads to container
       - ./data:/app/data  # Maps a writable local data folder to /app/data inside the container
     environment:
-      - FLASK_ENV=production  # Add environment variables here if needed
+      - FLASK_ENV=production  # Flask environment
+      - REDIS_URL=redis://redis:6379  # Redis URL for Flask to connect
+    depends_on:
+      - redis  # Ensures Redis is up and running before Flask app starts
+
+  redis:
+    image: redis:alpine  # Using Redis lightweight version (alpine)
+    ports:
+      - "6379:6379"  # Expose Redis port for internal communication between containers

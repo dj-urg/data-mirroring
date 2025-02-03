@@ -69,6 +69,18 @@ else:
 
 logger = logging.getLogger()
 
+# Retry Redis connection for 5 seconds before raising an error
+def connect_to_redis():
+    while True:
+        try:
+            redis_client = Redis.from_url(os.getenv('REDIS_URL', 'redis://localhost:6379'), decode_responses=True)
+            return redis_client
+        except Exception as e:
+            time.sleep(1)  # wait for 1 second before retrying
+            continue
+
+REDIS_CLIENT = connect_to_redis()  # This will block until Redis is up
+
 # Define the base directory for file storage
 BASE_DIR = os.getenv('APP_BASE_DIR', os.path.dirname(os.path.abspath(__file__)))
 

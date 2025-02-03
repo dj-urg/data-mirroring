@@ -1,4 +1,4 @@
-# Dockerfile
+# Dockerfile for the Data Mirroring service
 
 # Use Python official image from Docker Hub
 FROM python:3.10-slim
@@ -26,7 +26,8 @@ EXPOSE 5001
 ENV FLASK_APP=app.py \
     FLASK_RUN_HOST=0.0.0.0 \
     FLASK_RUN_PORT=5001 \
-    FLASK_ENV=production
+    FLASK_ENV=production \
+    REDIS_URL=redis://redis:6379
 
 # (Optional) Create a non-root user for improved security
 RUN adduser --disabled-password --gecos "" appuser && chown -R appuser /app
