@@ -154,7 +154,7 @@ allowed_extensions = {'json'}
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in allowed_extensions
 
-@app.before_first_request
+@app.before_request
 def clear_old_sessions():
     try:
         redis_client = Redis.from_url(REDIS_URL)
