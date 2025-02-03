@@ -43,11 +43,12 @@ REDIS_URL = os.getenv('REDIS_URL')
 if REDIS_URL:
     app.config['SESSION_REDIS'] = Redis.from_url(
         REDIS_URL, 
-        decode_responses=True, 
+        decode_responses=True,
+        ssl=True,  # Ensure SSL is used explicitly
         ssl_cert_reqs=None  # Disable SSL verification
     )
 else:
-    raise ValueError("REDIS_URL environment variable is not set")   
+    raise ValueError("REDIS_URL environment variable is not set")
 
 # Configure session storage with Redis
 app.config['SESSION_TYPE'] = 'redis'  # Store sessions in Redis
