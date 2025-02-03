@@ -172,7 +172,8 @@ def ensure_csrf_token():
 # Enforce HTTPS in production
 @app.before_request
 def enforce_https():
-    if FLASK_ENV == 'production' and request.scheme != "https":
+    # Ensure HTTPS only when running on Heroku
+    if "DYNO" in os.environ and request.headers.get("X-Forwarded-Proto") != "https":
         return redirect(request.url.replace("http://", "https://"))
     
 @app.before_request
