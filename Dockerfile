@@ -33,4 +33,4 @@ RUN adduser --disabled-password --gecos "" appuser && chown -R appuser /app
 USER appuser
 
 # Command to run the application
-CMD ["flask", "run"]
+CMD ["gunicorn", "--bind", "0.0.0.0:5001", "app:app"]
