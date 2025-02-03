@@ -38,7 +38,7 @@ FLASK_ENV = os.getenv('FLASK_ENV', 'production')
 def favicon():
     return send_from_directory(os.path.join(app.root_path, 'static'), 'favicon.ico') 
 
-REDIS_URL = os.getenv('REDIS_URL', 'redis://localhost:6379')   
+REDIS_URL = os.getenv('REDIS_URL')   
 
 # Configure session storage with Redis
 app.config['SESSION_TYPE'] = 'redis'  # Store sessions in Redis
@@ -73,7 +73,7 @@ logger = logging.getLogger()
 def connect_to_redis():
     while True:
         try:
-            redis_client = Redis.from_url(os.getenv('REDIS_URL', 'redis://localhost:6379'), decode_responses=True)
+            redis_client = Redis.from_url(os.getenv('REDIS_URL'), decode_responses=True)
             return redis_client
         except Exception as e:
             time.sleep(1)  # wait for 1 second before retrying
@@ -89,7 +89,7 @@ limiter = Limiter(
     get_remote_address,
     app=app,
     default_limits=["200 per day", "50 per hour"],
-    storage_uri=os.getenv('REDIS_URL', 'redis://localhost:6379')
+    storage_uri=os.getenv('REDIS_URL')
 )
 
 @app.after_request

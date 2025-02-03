@@ -3,17 +3,23 @@ services:
   flask_app:
     build: .
     ports:
-      - "5001:5001"
+      - "5001:5001"  # Expose port 5001 for your Flask app
     volumes:
-      - ./user_uploads:/app/user_uploads  # Maps your local user_uploads to container
-      - ./data:/app/data  # Maps a writable local data folder to /app/data inside the container
-    environment:
-      - FLASK_ENV=production  # Flask environment
-      - REDIS_URL=redis://redis:6379  # Redis URL for Flask to connect
+      - ./user_uploads:/app/user_uploads  # Local directory for user uploads
+      - ./data:/app/data  # Local directory for app data
+    env_file:
+      - .env  # Load environment variables securely from the .env file
     depends_on:
-      - redis  # Ensures Redis is up and running before Flask app starts
+      - redis  # Ensure Redis starts before Flask app
+    networks:
+      - app_network  # Use a private network for service communication
 
   redis:
-    image: redis:alpine  # Using Redis lightweight version (alpine)
-    ports:
-      - "6379:6379"  # Expose Redis port for internal communication between containers
+    image: redis:alpine  # Use Redis in an alpine container for efficiency
+    command: ["redis-server", "--save", "900", "1", "--appendonly", "no"]  # Disable persistence
+    networks:
+      - app_network  # Keep Redis isolated on the app_network
+
+networks:
+  app_network:
+    driver: bridge  # Using the default bridge network for isolation

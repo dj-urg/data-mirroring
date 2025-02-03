@@ -9,12 +9,14 @@ WORKDIR /app
 # Copy only requirements.txt first to leverage Docker layer caching
 COPY requirements.txt /app/
 
-# Install dependencies
+# Install dependencies (as root)
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Create writable directories and set permissions
+# Create writable directories and set secure permissions
 RUN mkdir -p /app/data /tmp/user_uploads && \
-    chmod -R 777 /app/data /tmp/user_uploads
+    adduser --disabled-password --gecos "" appuser && \
+    chown -R appuser:appuser /app /app/data /tmp/user_uploads && \
+    chmod -R 700 /app/data /tmp/user_uploads
 
 # Copy the entire project into the container
 COPY . /app
@@ -22,16 +24,17 @@ COPY . /app
 # Expose the port that Flask will run on
 EXPOSE 5001
 
-# Set environment variables for Flask
+# Set environment variables for Flask (should ideally be passed via docker-compose.yml or .env)
 ENV FLASK_APP=app.py \
     FLASK_RUN_HOST=0.0.0.0 \
     FLASK_RUN_PORT=5001 \
-    FLASK_ENV=production \
-    REDIS_URL=redis://redis:6379
+    FLASK_ENV=production
 
-# (Optional) Create a non-root user for improved security
-RUN adduser --disabled-password --gecos "" appuser && chown -R appuser /app
+# Use a non-root user for better security
 USER appuser
 
 # Command to run the application
 CMD ["gunicorn", "--bind", "0.0.0.0:5001", "app:app"]
+
+# (Optional) Health check to ensure the app is running properly
+HEALTHCHECK CMD curl --fail http://localhost:5001/ || exit 1
