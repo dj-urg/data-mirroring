@@ -38,7 +38,16 @@ FLASK_ENV = os.getenv('FLASK_ENV', 'production')
 def favicon():
     return send_from_directory(os.path.join(app.root_path, 'static'), 'favicon.ico') 
 
-REDIS_URL = os.getenv('REDIS_URL')   
+REDIS_URL = os.getenv('REDIS_URL')
+
+if REDIS_URL:
+    app.config['SESSION_REDIS'] = Redis.from_url(
+        REDIS_URL, 
+        decode_responses=True, 
+        ssl_cert_reqs=None  # Disable SSL verification
+    )
+else:
+    raise ValueError("REDIS_URL environment variable is not set")   
 
 # Configure session storage with Redis
 app.config['SESSION_TYPE'] = 'redis'  # Store sessions in Redis
