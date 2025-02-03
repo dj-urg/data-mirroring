@@ -1,4 +1,3 @@
-
 # Data Mirror 3.0
 
 Data Mirror 3.0 is a Flask-based web application that allows users to upload and process data from platforms such as YouTube and Instagram. It generates visual insights and provides downloadable CSV files based on the uploaded JSON data. The app includes a dashboard for each supported platform, enabling users to explore their data visually.
