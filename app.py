@@ -3,8 +3,10 @@ from flask_cors import CORS
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_wtf.csrf import CSRFProtect
+from flask_session import Session
 from functools import wraps
 from datetime import timedelta
+from redis import Redis
 import os
 import logging
 import signal
@@ -34,27 +36,35 @@ FLASK_ENV = os.getenv('FLASK_ENV', 'production')
 # Route to serve the favicon    
 @app.route('/favicon.ico')
 def favicon():
-    return send_from_directory(os.path.join(app.root_path, 'static'), 'favicon.ico')    
+    return send_from_directory(os.path.join(app.root_path, 'static'), 'favicon.ico') 
 
-# Set session cookie configurations based on environment
+REDIS_URL = os.getenv('REDIS_URL', 'redis://localhost:6379')   
+
+# Configure session storage with Redis
+app.config['SESSION_TYPE'] = 'redis'  # Store sessions in Redis
+app.config['SESSION_PERMANENT'] = False  # Sessions should expire based on TTL, not persist indefinitely
+app.config['SESSION_USE_SIGNER'] = True  # Prevent session tampering
+app.config['SESSION_KEY_PREFIX'] = 'flask_session:'  # Prefix Redis keys for clarity
+app.config['SESSION_REDIS'] = Redis.from_url(REDIS_URL, decode_responses=True)
+
+# Set session and security configurations based on environment
 if FLASK_ENV == 'production':
     app.config['SESSION_COOKIE_SECURE'] = True  # Only transmit cookies over HTTPS
-    app.config['SESSION_COOKIE_HTTPONLY'] = True # Prevent access to session cookies via JavaScript
-    app.config['SESSION_COOKIE_SAMESITE'] = 'Strict'  # Prevent CSRF attacks
-    app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024 # Limit file upload size to 16 MB
+    app.config['SESSION_COOKIE_HTTPONLY'] = True  # Prevent JavaScript access to cookies
+    app.config['SESSION_COOKIE_SAMESITE'] = 'Strict'  # Prevent CSRF attacks via cross-site requests
     app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=30)  # Set session timeout to 30 minutes
-    app.config['WTF_CSRF_CHECK_REFERRER'] = False  # Disable CSRF check for referrer
-    app.config['WTF_CSRF_SSL_STRICT'] = False
+    app.config['WTF_CSRF_CHECK_REFERRER'] = False  # Disable strict referrer checks for CSRF
+    app.config['WTF_CSRF_SSL_STRICT'] = False  # Allow CSRF over non-SSL connections (can be True if SSL enforced)
+    app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # Limit file upload size to 16MB
 else:
-    # Development mode: No need for HTTPS
-    app.config['SESSION_COOKIE_SECURE'] = False
-    app.config['SESSION_COOKIE_HTTPONLY'] = True
+    app.config['SESSION_COOKIE_SECURE'] = False  # Allow non-HTTPS in development
+    app.config['SESSION_COOKIE_HTTPONLY'] = True  # Still prevent JavaScript access
+    app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'  # Allow some cross-origin requests in dev
 
+# Logging configuration based on environment
 if FLASK_ENV == 'production':
-    # Disable logging in production except for warnings and errors
     logging.basicConfig(level=logging.WARNING, format='%(asctime)s %(levelname)s: %(message)s')
 else:
-    # Enable detailed logging for development
     logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(levelname)s: %(message)s')
 
 logger = logging.getLogger()
@@ -62,11 +72,12 @@ logger = logging.getLogger()
 # Define the base directory for file storage
 BASE_DIR = os.getenv('APP_BASE_DIR', os.path.dirname(os.path.abspath(__file__)))
 
-# Initialize rate limiter
+# Initialize rate limiter with Redis storage for production
 limiter = Limiter(
     get_remote_address,
     app=app,
-    default_limits=["200 per day", "50 per hour"]  # Adjust based on your needs
+    default_limits=["200 per day", "50 per hour"],
+    storage_uri=os.getenv('REDIS_URL', 'redis://localhost:6379')
 )
 
 @app.after_request
@@ -143,11 +154,30 @@ allowed_extensions = {'json'}
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in allowed_extensions
 
+@app.before_first_request
+def clear_old_sessions():
+    try:
+        redis_client = Redis.from_url(REDIS_URL)
+        redis_client.delete(*redis_client.keys('flask_session:*'))
+        logger.info("Old Redis sessions cleared on startup.")
+    except Exception as e:
+        logger.error(f"Failed to clear old sessions: {e}")
+
+@app.before_request
+def ensure_csrf_token():
+    if 'csrf_token' not in session:
+        session['csrf_token'] = csrf._get_token()
+        logger.debug(f"CSRF Token Set: {session['csrf_token']}")
+
 # Enforce HTTPS in production
 @app.before_request
 def enforce_https():
     if FLASK_ENV == 'production' and request.scheme != "https":
         return redirect(request.url.replace("http://", "https://"))
+    
+@app.before_request
+def log_session_data():
+    logger.debug(f"Session Data: {dict(session)}")  # Log current session state
 
 # Log requests in non-production environments for debugging
 @app.before_request
