@@ -76,7 +76,7 @@ def connect_to_redis():
             redis_client = Redis.from_url(os.getenv('REDIS_URL'), decode_responses=True)
             return redis_client
         except Exception as e:
-            time.sleep(1)  # wait for 1 second before retrying
+            time.sleep(1)  # Retry connection if Redis is not available
             continue
 
 REDIS_CLIENT = connect_to_redis()  # This will block until Redis is up
@@ -184,8 +184,7 @@ def ensure_csrf_token():
 # Enforce HTTPS in production
 @app.before_request
 def enforce_https():
-    # Ensure HTTPS only when running on Heroku
-    if "DYNO" in os.environ and request.headers.get("X-Forwarded-Proto") != "https":
+    if FLASK_ENV == 'production' and request.headers.get("X-Forwarded-Proto") != "https":
         return redirect(request.url.replace("http://", "https://"))
     
 @app.before_request
