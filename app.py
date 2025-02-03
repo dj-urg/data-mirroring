@@ -7,6 +7,7 @@ from flask_session import Session
 from functools import wraps
 from datetime import timedelta
 from redis import Redis
+import time
 import os
 import logging
 import signal
@@ -51,7 +52,6 @@ else:
     raise ValueError("REDIS_URL environment variable is not set")
 
 # Configure session storage with Redis
-app.config['SESSION_TYPE'] = 'redis'  # Store sessions in Redis
 app.config['SESSION_PERMANENT'] = False  # Sessions should expire based on TTL, not persist indefinitely
 app.config['SESSION_USE_SIGNER'] = True  # Prevent session tampering
 app.config['SESSION_KEY_PREFIX'] = 'flask_session:'  # Prefix Redis keys for clarity
@@ -81,13 +81,15 @@ logger = logging.getLogger()
 
 # Retry Redis connection for 5 seconds before raising an error
 def connect_to_redis():
-    while True:
+    retries = 5  # Retry a maximum of 5 times
+    for _ in range(retries):
         try:
             redis_client = Redis.from_url(os.getenv('REDIS_URL'), decode_responses=True)
             return redis_client
         except Exception as e:
-            time.sleep(1)  # Retry connection if Redis is not available
-            continue
+            logger.error(f"Redis connection failed: {e}")
+            time.sleep(1)  # Wait for 1 second before retrying
+    raise ConnectionError("Failed to connect to Redis after several attempts")
 
 REDIS_CLIENT = connect_to_redis()  # This will block until Redis is up
 
@@ -184,13 +186,7 @@ def clear_old_sessions():
         logger.info("Old Redis sessions cleared on startup.")
     except Exception as e:
         logger.error(f"Failed to clear old sessions: {e}")
-
-@app.before_request
-def ensure_csrf_token():
-    if 'csrf_token' not in session:
-        session['csrf_token'] = csrf._get_token()
-        logger.debug(f"CSRF Token Set: {session['csrf_token']}")
-
+        
 # Enforce HTTPS in production
 @app.before_request
 def enforce_https():
@@ -199,7 +195,8 @@ def enforce_https():
     
 @app.before_request
 def log_session_data():
-    logger.debug(f"Session Data: {dict(session)}")  # Log current session state
+    if os.getenv('FLASK_ENV') != 'production':
+        logger.debug(f"Session Data: {dict(session)}")
 
 # Log requests in non-production environments for debugging
 @app.before_request
