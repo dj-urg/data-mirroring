@@ -11,14 +11,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Upgrade pip and install dependencies
 COPY requirements.txt /app/requirements.txt
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir --user -r requirements.txt
+    pip install --no-cache-dir -r requirements.txt
 
 # --- Stage 2: Create the final lightweight container ---
-FROM python:3.13-slim
+FROM python:3.13-slim  # Final, clean image
 
 WORKDIR /app
 
-# Copy dependencies from builder stage
+# Copy dependencies from the builder stage
 COPY --from=builder /root/.local /root/.local
 ENV PATH="/root/.local/bin:$PATH"
 
