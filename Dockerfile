@@ -9,7 +9,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends gcc libpq-dev &
 # Copy requirements and install Python dependencies with --use-pep517 flag
 COPY requirements.txt /app/requirements.txt
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir --use-pep517 -r requirements.txt
+    pip install --no-cache-dir -r requirements.txt
 
 # --- Stage 2: Final image ---
 FROM python:3.13-slim
