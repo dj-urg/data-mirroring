@@ -46,7 +46,7 @@ if REDIS_URL:
         REDIS_URL,
         decode_responses=True,
         ssl=True,  # Ensures SSL is used
-        ssl_cert_reqs='required'  # Ensures certificate validation
+        ssl_cert_reqs='None'
     )
 else:
     raise ValueError("REDIS_URL environment variable is not set")
