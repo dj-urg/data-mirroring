@@ -43,15 +43,16 @@ REDIS_URL = os.getenv('REDIS_URL')
 
 if REDIS_URL:
     app.config['SESSION_REDIS'] = Redis.from_url(
-        REDIS_URL, 
+        REDIS_URL,
         decode_responses=True,
-        ssl=True,  # Ensure SSL is used explicitly
-        ssl_cert_reqs=None  # Disable SSL verification
+        ssl=True,  # Ensures SSL is used
+        ssl_cert_reqs='required'  # Ensures certificate validation
     )
 else:
     raise ValueError("REDIS_URL environment variable is not set")
 
 # Configure session storage with Redis
+app.config['SESSION_TYPE'] = 'redis'  # Store sessions in Redis
 app.config['SESSION_PERMANENT'] = False  # Sessions should expire based on TTL, not persist indefinitely
 app.config['SESSION_USE_SIGNER'] = True  # Prevent session tampering
 app.config['SESSION_KEY_PREFIX'] = 'flask_session:'  # Prefix Redis keys for clarity
