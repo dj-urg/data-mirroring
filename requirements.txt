@@ -19,12 +19,11 @@ markdown-it-py==3.0.0
 MarkupSafe==3.0.1
 matplotlib==3.9.2
 mdurl==0.1.2
-nodejs==0.1.1
-numpy==2.1.2
+numpy==1.26.4
 optional-django==0.1.0
 ordered-set==4.1.0
 packaging==24.1
-pandas==2.2.3
+pandas==2.2.0
 pillow==10.4.0
 plotly==5.24.1
 Pygments==2.18.0
