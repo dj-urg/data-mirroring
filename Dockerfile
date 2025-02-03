@@ -18,7 +18,7 @@ FROM python:3.13-slim  # Final, clean image
 
 WORKDIR /app
 
-# Copy dependencies from the builder stage
+# Copy dependencies from builder stage
 COPY --from=builder /root/.local /root/.local
 ENV PATH="/root/.local/bin:$PATH"
 
