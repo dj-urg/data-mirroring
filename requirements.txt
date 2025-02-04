@@ -8,4 +8,4 @@ matplotlib==3.10.0
 pandas==2.2.3
 python-dotenv==1.0.1
 seaborn==0.13.2
-redis>=4.0.0
+python-magic==0.4.27
