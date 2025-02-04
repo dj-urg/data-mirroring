@@ -5,6 +5,7 @@ from flask_limiter.util import get_remote_address
 from flask_wtf.csrf import CSRFProtect
 from functools import wraps
 from datetime import timedelta
+import magic
 import time
 import os
 import logging
@@ -27,7 +28,8 @@ app.secret_key = os.getenv('SECRET_KEY')  # Set the secret key for session manag
 csrf = CSRFProtect(app)  # Initialize CSRF protection
 
 # Enable Cross-Origin Resource Sharing (CORS) for specific origins
-CORS(app, resources={r"/*": {"origins": ["https://data-mirror-72f6ffc87917.herokuapp.com", "https://cdnjs.cloudflare.com"]}})
+allowed_origins = os.getenv("CORS_ALLOWED_ORIGINS", "https://data-mirror-72f6ffc87917.herokuapp.com").split(",")
+CORS(app, resources={r"/*": {"origins": allowed_origins}})
 
 # Get environment setting (default to 'production')
 FLASK_ENV = os.getenv('FLASK_ENV', 'production')
@@ -45,8 +47,8 @@ if FLASK_ENV == 'production':
     app.config['SESSION_COOKIE_HTTPONLY'] = True  # Prevent JavaScript access to cookies
     app.config['SESSION_COOKIE_SAMESITE'] = 'Strict'  # Prevent CSRF attacks via cross-site requests
     app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(minutes=30)  # Set session timeout to 30 minutes
-    app.config['WTF_CSRF_CHECK_REFERRER'] = False  # Disable strict referrer checks for CSRF
-    app.config['WTF_CSRF_SSL_STRICT'] = False  # Allow CSRF over non-SSL connections (can be True if SSL enforced)
+    app.config['WTF_CSRF_CHECK_REFERRER'] = True  # Disable strict referrer checks for CSRF
+    app.config['WTF_CSRF_SSL_STRICT'] = True  # Allow CSRF over non-SSL connections (can be True if SSL enforced)
     app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # Limit file upload size to 16MB
 else:
     app.config['SESSION_COOKIE_SECURE'] = False  # Allow non-HTTPS in development
@@ -142,8 +144,16 @@ atexit.register(cleanup)
 allowed_extensions = {'json'}
 
 # Function to check if the uploaded file is allowed
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in allowed_extensions
+def allowed_file(file):
+    # Check extension
+    filename = file.filename
+    if '.' not in filename or filename.rsplit('.', 1)[1].lower() not in allowed_extensions:
+        return False
+
+    # Check MIME type
+    mime_type = magic.from_buffer(file.read(2048), mime=True)
+    file.seek(0)  # Reset file pointer after checking
+    return mime_type in ["application/json"]
        
 # Enforce HTTPS in production
 @app.before_request
