@@ -6,7 +6,8 @@ from flask_wtf.csrf import CSRFProtect
 from flask_session import Session
 from functools import wraps
 from datetime import timedelta
-from redis import Redis
+from urllib.parse import urlparse
+import redis
 import time
 import os
 import logging
@@ -47,11 +48,14 @@ if REDIS_URL:
     app.config['SESSION_PERMANENT'] = False
     app.config['SESSION_USE_SIGNER'] = True
     app.config['SESSION_KEY_PREFIX'] = 'flask_session:'
-    app.config['SESSION_REDIS'] = Redis.from_url(
-        REDIS_URL,
-        decode_responses=True,
-        ssl=True,               # Use SSL if required by your Heroku Redis
-        ssl_cert_reqs='required'
+    
+    parsed_url = urlparse(REDIS_URL)
+    app.config['SESSION_REDIS'] = redis.Redis(
+        host=parsed_url.hostname,
+        port=parsed_url.port,
+        password=parsed_url.password,
+        ssl=(parsed_url.scheme == "rediss"),
+        ssl_cert_reqs=None  # Disable certificate verification
     )
     # Initialize the Flask-Session extension
     Session(app)
@@ -83,19 +87,29 @@ logger = logging.getLogger()
 # Retry Redis connection for 5 seconds before raising an error
 def connect_to_redis():
     retries = 5  # Retry a maximum of 5 times
+    redis_url = os.getenv("REDIS_URL")
+
+    if not redis_url:
+        raise ValueError("REDIS_URL environment variable is not set")
+
+    parsed_url = urlparse(redis_url)
+
     for _ in range(retries):
         try:
-            redis_client = Redis.from_url(
-                os.getenv('REDIS_URL'),
-                decode_responses=True,
-                ssl=True,
-                ssl_cert_reqs='required'
+            redis_client = redis.Redis(
+                host=parsed_url.hostname,
+                port=parsed_url.port,
+                password=parsed_url.password,
+                ssl=(parsed_url.scheme == "rediss"),  # Ensure SSL is used if the URL requires it
+                ssl_cert_reqs=None  # Disable certificate verification (per Heroku docs)
             )
             return redis_client
         except Exception as e:
             logger.error(f"Redis connection failed: {e}")
             time.sleep(1)  # Wait for 1 second before retrying
     raise ConnectionError("Failed to connect to Redis after several attempts")
+
+REDIS_CLIENT = connect_to_redis()
 
 REDIS_CLIENT = connect_to_redis()  # This will block until Redis is up
 
