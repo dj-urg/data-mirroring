@@ -3,6 +3,8 @@ from app.security import requires_authentication
 from app.processing import handle_platform_file_processing
 from app.extensions import limiter
 from platforms.youtube import process_youtube_file
+from platforms.instagram import process_instagram_file
+from platforms.tiktok import process_tiktok_file
 import os
 import tempfile
 import io
@@ -62,6 +64,51 @@ def dashboard_youtube():
         has_valid_data=has_valid_data
     )
 
+@routes_bp.route('/dashboard/instagram', methods=['GET', 'POST'])
+@requires_authentication
+@limiter.limit("10 per minute")
+def dashboard_instagram():
+    current_app.logger.info("Dashboard accessed for Instagram, Method: %s, IP: %s", request.method, request.remote_addr)
+
+    if request.method == 'GET':
+        return render_template('dashboard_instagram.html')
+
+    files = request.files.getlist('file')
+    current_app.logger.info("Processing %d file(s) for Instagram", len(files))
+
+    df, csv_file_name, insights, plot_data, has_valid_data = process_instagram_file(files)
+
+    return render_template(
+        'dashboard_instagram.html',
+        insights=insights,
+        csv_file_name=csv_file_name,
+        plot_data=plot_data,
+        has_valid_data=has_valid_data
+    )
+
+@routes_bp.route('/dashboard/tiktok', methods=['GET', 'POST'])
+@requires_authentication
+@limiter.limit("10 per minute")
+def dashboard_tiktok():
+    current_app.logger.info("Dashboard accessed for TikTok, Method: %s, IP: %s", request.method, request.remote_addr)
+
+    if request.method == 'GET':
+        return render_template('dashboard_tiktok.html')
+
+    files = request.files.getlist('file')
+    current_app.logger.info("Processing %d file(s) for TikTok", len(files))
+
+    df, csv_file_name, insights, plot_data, heatmap_data, has_valid_data = process_tiktok_file(files)
+
+    return render_template(
+        'dashboard_tiktok.html',
+        insights=insights,
+        csv_file_name=csv_file_name,
+        plot_data=plot_data,
+        heatmap_data=heatmap_data,
+        has_valid_data=has_valid_data
+    )
+    
 @routes_bp.route('/download_image/<filename>', methods=['GET'])
 def download_image(filename):
     """Serve the requested image file for download and delete it after sending."""

@@ -24,6 +24,7 @@ nav ul li a {
     color: #2C3E50; /* Dark text for better contrast */
     text-decoration: none;
     font-weight: bold;
+    font-size: larger;
 }
 
 nav ul li a:hover {
@@ -31,15 +32,27 @@ nav ul li a:hover {
 }
 
 /* ========================= */
-/* Body Styling              */
+/* Body Styling with Smooth Transition */
 /* ========================= */
 body {
     min-height: 100vh; /* Ensure the body takes at least the full viewport height */
     margin: 0; /* Remove default margin */
     padding-bottom: 60px; /* Create space for the footer */
-    background-color: #ECF0F1; /* Background color for the body */
-    font-family: 'Helvetica, Arial, sans-serif'; /* Font settings */
+    background-color: #ffffff; /* Background color for the body */
+    font-family: 'Roboto', sans-serif; /* Font settings */
+    font-size: small;
     color: #2C3E50; /* Default text color */
+    opacity: 0; /* Start with hidden body */
+    animation: fadeIn 0.3s ease-in-out forwards;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
 }
 
 /* ========================= */
@@ -71,7 +84,7 @@ h1 {
     text-align: center;
     color: #2C3E50;
     margin-bottom: 20px;
-    font-size: 2.8em;
+    font-size: 4.8em;
     font-weight: bold;
     letter-spacing: 0.05em;
 }
