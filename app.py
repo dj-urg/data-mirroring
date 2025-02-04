@@ -42,21 +42,21 @@ def favicon():
 REDIS_URL = os.getenv('REDIS_URL')
 
 if REDIS_URL:
+    # Configure session storage with Redis (consolidated configuration)
+    app.config['SESSION_TYPE'] = 'redis'
+    app.config['SESSION_PERMANENT'] = False
+    app.config['SESSION_USE_SIGNER'] = True
+    app.config['SESSION_KEY_PREFIX'] = 'flask_session:'
     app.config['SESSION_REDIS'] = Redis.from_url(
         REDIS_URL,
         decode_responses=True,
-        ssl=True,  # Ensures SSL is used
-        ssl_cert_reqs='None'
+        ssl=True,               # Use SSL if required by your Heroku Redis
+        ssl_cert_reqs='required'
     )
+    # Initialize the Flask-Session extension
+    Session(app)
 else:
     raise ValueError("REDIS_URL environment variable is not set")
-
-# Configure session storage with Redis
-app.config['SESSION_TYPE'] = 'redis'  # Store sessions in Redis
-app.config['SESSION_PERMANENT'] = False  # Sessions should expire based on TTL, not persist indefinitely
-app.config['SESSION_USE_SIGNER'] = True  # Prevent session tampering
-app.config['SESSION_KEY_PREFIX'] = 'flask_session:'  # Prefix Redis keys for clarity
-app.config['SESSION_REDIS'] = Redis.from_url(REDIS_URL, decode_responses=True)
 
 # Set session and security configurations based on environment
 if FLASK_ENV == 'production':
@@ -85,7 +85,12 @@ def connect_to_redis():
     retries = 5  # Retry a maximum of 5 times
     for _ in range(retries):
         try:
-            redis_client = Redis.from_url(os.getenv('REDIS_URL'), decode_responses=True)
+            redis_client = Redis.from_url(
+                os.getenv('REDIS_URL'),
+                decode_responses=True,
+                ssl=True,
+                ssl_cert_reqs='required'
+            )
             return redis_client
         except Exception as e:
             logger.error(f"Redis connection failed: {e}")
@@ -182,9 +187,10 @@ def allowed_file(filename):
 @app.before_request
 def clear_old_sessions():
     try:
-        redis_client = Redis.from_url(REDIS_URL)
-        redis_client.delete(*redis_client.keys('flask_session:*'))
-        logger.info("Old Redis sessions cleared on startup.")
+        keys = REDIS_CLIENT.keys('flask_session:*')
+        if keys:
+            REDIS_CLIENT.delete(*keys)
+            logger.info("Old Redis sessions cleared on startup.")
     except Exception as e:
         logger.error(f"Failed to clear old sessions: {e}")
         
