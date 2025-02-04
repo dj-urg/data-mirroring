@@ -3,11 +3,8 @@ from flask_cors import CORS
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_wtf.csrf import CSRFProtect
-from flask_session import Session
 from functools import wraps
 from datetime import timedelta
-from urllib.parse import urlparse
-import redis
 import time
 import os
 import logging
@@ -40,27 +37,7 @@ FLASK_ENV = os.getenv('FLASK_ENV', 'production')
 def favicon():
     return send_from_directory(os.path.join(app.root_path, 'static'), 'favicon.ico') 
 
-REDIS_URL = os.getenv('REDIS_URL')
-
-if REDIS_URL:
-    # Configure session storage with Redis (consolidated configuration)
-    app.config['SESSION_TYPE'] = 'redis'
-    app.config['SESSION_PERMANENT'] = False
-    app.config['SESSION_USE_SIGNER'] = True
-    app.config['SESSION_KEY_PREFIX'] = 'flask_session:'
-    
-    parsed_url = urlparse(REDIS_URL)
-    app.config['SESSION_REDIS'] = redis.Redis(
-        host=parsed_url.hostname,
-        port=parsed_url.port,
-        password=parsed_url.password,
-        ssl=(parsed_url.scheme == "rediss"),
-        ssl_cert_reqs=None  # Disable certificate verification
-    )
-    # Initialize the Flask-Session extension
-    Session(app)
-else:
-    raise ValueError("REDIS_URL environment variable is not set")
+app.secret_key = os.getenv('SECRET_KEY')  # Set the secret key for session management
 
 # Set session and security configurations based on environment
 if FLASK_ENV == 'production':
@@ -84,35 +61,6 @@ else:
 
 logger = logging.getLogger()
 
-# Retry Redis connection for 5 seconds before raising an error
-def connect_to_redis():
-    retries = 5  # Retry a maximum of 5 times
-    redis_url = os.getenv("REDIS_URL")
-
-    if not redis_url:
-        raise ValueError("REDIS_URL environment variable is not set")
-
-    parsed_url = urlparse(redis_url)
-
-    for _ in range(retries):
-        try:
-            redis_client = redis.Redis(
-                host=parsed_url.hostname,
-                port=parsed_url.port,
-                password=parsed_url.password,
-                ssl=(parsed_url.scheme == "rediss"),  # Ensure SSL is used if the URL requires it
-                ssl_cert_reqs=None  # Disable certificate verification (per Heroku docs)
-            )
-            return redis_client
-        except Exception as e:
-            logger.error(f"Redis connection failed: {e}")
-            time.sleep(1)  # Wait for 1 second before retrying
-    raise ConnectionError("Failed to connect to Redis after several attempts")
-
-REDIS_CLIENT = connect_to_redis()
-
-REDIS_CLIENT = connect_to_redis()  # This will block until Redis is up
-
 # Define the base directory for file storage
 BASE_DIR = os.getenv('APP_BASE_DIR', os.path.dirname(os.path.abspath(__file__)))
 
@@ -120,8 +68,7 @@ BASE_DIR = os.getenv('APP_BASE_DIR', os.path.dirname(os.path.abspath(__file__)))
 limiter = Limiter(
     get_remote_address,
     app=app,
-    default_limits=["200 per day", "50 per hour"],
-    storage_uri=os.getenv('REDIS_URL')
+    default_limits=["200 per day", "50 per hour"]
 )
 
 @app.after_request
@@ -197,17 +144,7 @@ allowed_extensions = {'json'}
 # Function to check if the uploaded file is allowed
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in allowed_extensions
-
-@app.before_request
-def clear_old_sessions():
-    try:
-        keys = REDIS_CLIENT.keys('flask_session:*')
-        if keys:
-            REDIS_CLIENT.delete(*keys)
-            logger.info("Old Redis sessions cleared on startup.")
-    except Exception as e:
-        logger.error(f"Failed to clear old sessions: {e}")
-        
+       
 # Enforce HTTPS in production
 @app.before_request
 def enforce_https():
