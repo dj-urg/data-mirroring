@@ -9,6 +9,8 @@ import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 import seaborn as sns
+import io
+from flask import session
 
 # Use 'Agg' backend to avoid GUI issues
 matplotlib.use('Agg')
@@ -64,13 +66,20 @@ def set_custom_style():
         "axes.spines.top": False
     })
 
-# Helper function to save images as a temporary file
+# Helper function to save images as temporary files
 def save_image_temp_file(fig):
-    # Save the image in a temporary file
+    """Saves an image as a temporary file and returns the filename."""
     with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmp_file:
         fig.savefig(tmp_file.name, bbox_inches='tight')
         tmp_file.close()
-        return os.path.basename(tmp_file.name)  # Only return the filename, not the full path
+        return os.path.basename(tmp_file.name)
+
+# Helper function to save CSV as a temporary file
+def save_csv_temp_file(df):
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".csv") as tmp_file:
+        df.to_csv(tmp_file.name, index=False)
+        os.chmod(tmp_file.name, 0o600)  # Secure file permissions
+        return os.path.basename(tmp_file.name)  # Return filename only
 
 def generate_custom_bump_chart(channel_ranking):
     # Set custom style

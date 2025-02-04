@@ -17,6 +17,7 @@ platforms/downloads/
 user_uploads/
 
 # Log files
+logs/
 *.log
 error_logs.log
 

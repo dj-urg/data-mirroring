@@ -13,10 +13,11 @@
     <header>
         <nav>
             <ul>
-                <li><a href="{{ url_for('landing_page') }}">Home</a></li>
-                <li><a href="{{ url_for('platform_selection') }}">Dashboards</a></li>
-                <li><a href="{{ url_for('info') }}">Project Info</a></li>
-                <li><a href="{{ url_for('data_processing_info') }}">Data Processing</a></li>
+                <li><a href="{{ url_for('routes.landing_page') }}">Home</a></li>
+                <li><a href="{{ url_for('routes.platform_selection') }}">Dashboards</a></li>
+                <li><a href="{{ url_for('routes.info') }}">Project Info</a></li>
+                <li><a href="{{ url_for('routes.data_processing_info') }}">Data Processing</a></li>
+
             </ul>
         </nav>
     </header>

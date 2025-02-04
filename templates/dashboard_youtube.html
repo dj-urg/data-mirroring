@@ -65,7 +65,7 @@
                 <!-- Centering the button -->
                 <div class="d-flex justify-content-center">
                     {% if csv_file_name %}
-                    <a href="{{ url_for('download_csv', filename=csv_file_name) }}" class="btn btn-primary btn-sm">
+                    <a href="{{ url_for('routes.download_csv', filename=csv_file_name) }}" class="btn btn-primary btn-sm">
                         Download CSV
                     </a>
                     {% endif %}
@@ -80,7 +80,7 @@
             <div class="card-body text-center">
                 <h5>Top 5 Most Watched Channels Per Year</h5>
                 <div class="d-flex justify-content-center">
-                    <img src="{{ url_for('download_image', filename=plot_data) }}" alt="Top 5 Channels Per Year" class="img-fluid" style="max-width: 90%; height: auto;" />
+                    <img src="{{ url_for('routes.download_image', filename=plot_data) }}" alt="Top 5 Channels Per Year" class="img-fluid" style="max-width: 90%; height: auto;" />
                 </div>
             </div>
         </div>
@@ -92,7 +92,7 @@
             <div class="card-body text-center">
                 <h5>Video Consumption Per Day of the Week</h5>
                 <div class="d-flex justify-content-center">
-                    <img src="{{ url_for('download_image', filename=heatmap_data) }}" alt="Heatmap showing video consumption by day of the week" class="img-fluid" style="max-width: 90%; height: auto;" />
+                    <img src="{{ url_for('routes.download_image', filename=heatmap_data) }}" alt="Heatmap showing video consumption by day of the week" class="img-fluid" style="max-width: 90%; height: auto;" />
                 </div>
             </div>
         </div>
