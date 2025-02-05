@@ -1,8 +1,9 @@
-from flask import Flask, request
+from flask import Flask, request, g
 from flask_cors import CORS
 from flask_wtf.csrf import CSRFProtect
 import os
 import logging
+import secrets
 from dotenv import load_dotenv
 from app.extensions import limiter
 from app.logging_config import setup_logging
@@ -14,6 +15,11 @@ logger = logging.getLogger(__name__)
 def create_app():
     app = Flask(__name__, template_folder="../templates")
     app.secret_key = os.getenv('SECRET_KEY')
+    
+    @app.before_request
+    def generate_nonce():
+        """Generate a nonce for CSP before rendering templates."""
+        g.csp_nonce = secrets.token_urlsafe(16)
 
     # Load Configurations
     from app.config import configure_app

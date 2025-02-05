@@ -1,8 +1,9 @@
-from flask import session, redirect, url_for, request, current_app, make_response
+from flask import session, redirect, url_for, request, current_app, make_response, g
 from functools import wraps
 import os
 import glob
 import tempfile
+import secrets
 
 def enforce_https():
     """Redirects HTTP to HTTPS only in production."""
@@ -12,22 +13,32 @@ def enforce_https():
         return apply_security_headers(response)  # Apply security headers even on redirects
 
 def apply_security_headers(response):
-    """Adds essential security headers to every response."""
+    """Adds essential security headers to every response, ensuring security best practices are applied."""
+    
+    nonce = g.get("csp_nonce", "")
+    
     response.headers["Content-Security-Policy"] = (
-        "default-src 'self'; "
-        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.plot.ly; "
-        "style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; "
-        "img-src 'self' https://img.icons8.com data:; "
-        "font-src 'self' data: https://cdnjs.cloudflare.com; "
-        "object-src 'none'; "
-        "frame-ancestors 'none';"
+        f"default-src 'self'; "
+        f"script-src 'self' 'nonce-{nonce}' https://cdn.plot.ly; "
+        f"style-src 'self' 'nonce-{nonce}' https://cdnjs.cloudflare.com https://fonts.googleapis.com; "
+        f"style-src-elem 'self' 'nonce-{nonce}' https://cdnjs.cloudflare.com https://fonts.googleapis.com; "
+        f"img-src 'self' https://img.icons8.com https://upload.wikimedia.org data:; "
+        f"font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com; "
+        f"object-src 'none'; "
+        f"frame-ancestors 'none';"
     )
+
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
     response.headers["Permissions-Policy"] = "geolocation 'self'; microphone 'none'"
     response.headers["X-XSS-Protection"] = "1; mode=block"
+    response.headers["Cross-Origin-Opener-Policy"] = "same-origin"
+    response.headers["Cross-Origin-Resource-Policy"] = "same-origin"
+
+    # Store nonce in a secure cookie so it can be used in templates
+    response.set_cookie("csp_nonce", nonce, secure=True, httponly=True, samesite="Strict")
 
     return response
 

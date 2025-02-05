@@ -1,59 +1,4 @@
-<!-- templates/enter_code.html -->
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Enter Access Code</title>
-    <style>
-        body {
-            font-family: 'Helvetica, Arial, sans-serif';
-            background-color: #f4f4f4; /* Light background */
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh; /* Full height */
-            margin: 0;
-        }
-        .container {
-            background-color: white; /* White background for form */
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* Subtle shadow */
-            text-align: center;
-            max-width: 400px; /* Limit width */
-            width: 100%; /* Full width on smaller screens */
-        }
-        h1 {
-            color: #2C3E50; /* Dark color for text */
-            margin-bottom: 20px;
-        }
-        input[type="text"] {
-            width: 100%; /* Full width input */
-            padding: 10px;
-            margin: 10px 0; /* Spacing around input */
-            border: 1px solid #BDC3C7; /* Border color */
-            border-radius: 4px; /* Rounded corners */
-        }
-        button {
-            background-color: #3498DB; /* Button color */
-            color: white; /* White text */
-            padding: 10px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer; /* Pointer on hover */
-            width: 100%; /* Full width button */
-        }
-        button:hover {
-            background-color: #2980B9; /* Darker button color on hover */
-        }
-        .error-message {
-            color: red; /* Error message color */
-            margin-top: 10px; /* Spacing above error message */
-        }
-    </style>
-</head>
-<body>
+{% block content %}
     <div class="container">
         <h1>Enter Access Code</h1>
         <form method="POST">
@@ -65,5 +10,7 @@
             <p class="error-message">{{ error }}</p>
         {% endif %}
     </div>
-</body>
-</html>
+
+    <!-- Link to external JS file -->
+    <script src="{{ url_for('static', filename='js/enter_code.js') }}"></script>
+{% endblock %}

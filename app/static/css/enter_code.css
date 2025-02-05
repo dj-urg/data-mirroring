@@ -1,0 +1,54 @@
+/* ========================= */
+/* Basic Layout for the Page  */
+/* ========================= */
+body {
+    font-family: 'Helvetica, Arial, sans-serif';
+    background-color: #f4f4f4; /* Light background */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh; /* Full height */
+    margin: 0;
+}
+
+.container {
+    background-color: white; /* White background for form */
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+    text-align: center;
+    max-width: 400px;
+    width: 100%;
+}
+
+h1 {
+    color: #2C3E50;
+    margin-bottom: 20px;
+}
+
+input[type="text"] {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid #BDC3C7;
+    border-radius: 4px;
+}
+
+button {
+    background-color: #3498DB;
+    color: white;
+    padding: 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    width: 100%;
+}
+
+button:hover {
+    background-color: #2980B9;
+}
+
+.error-message {
+    color: red;
+    margin-top: 10px;
+}

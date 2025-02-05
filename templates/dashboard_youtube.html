@@ -10,29 +10,29 @@
 
     <div class="container mt-5">
 
-        <!-- Simple Upload Form Section -->
-        <div class="card mt-3">
+        <!-- Upload Form -->
+        <div class="upload-container mt-3">
             <div class="card-body">
                 <p class="text-center mb-2">
-                    Please upload your downloaded data from the platform in <strong>JSON format</strong>.
+                    Please upload your downloaded YouTube data in <strong>JSON format</strong>.
                 </p>
-                <form id="uploadForm" action="" method="post" enctype="multipart/form-data" class="d-flex flex-column align-items-center">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">  <!-- Hidden CSRF token -->
-                    <input type="file" name="file" accept=".json" multiple required class="form-control-file d-inline-block mb-2">
-                    <input type="submit" value="Upload Data and Process" class="btn btn-primary btn-sm" style="padding: 6px 12px; border-radius: 4px;">
+                <form id="uploadForm" action="{{ url_for('routes.dashboard_youtube') }}" method="post" enctype="multipart/form-data">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="file" name="file" id="fileInput" accept=".json" multiple required class="form-control mb-2">
+                    <button type="submit" id="uploadButton" class="btn btn-primary btn-sm">Upload Data</button>
                 </form>
+                <div id="loader" class="loader d-none"></div>
             </div>
         </div>
 
         <!-- Insights Section -->
         {% if insights %}
-        <div class="card mt-3 d-none" id="insights"> <!-- Initially hidden -->
+        <div class="card mt-3" id="insights">
             <div class="card-body">
                 <div class="alert alert-info">
                     <p>Total Videos: <strong>{{ insights.total_videos }}</strong></p>
                     <p>Data Time Frame: 
-                        <strong>{{ insights.time_frame_start }}</strong>
-                        to 
+                        <strong>{{ insights.time_frame_start }}</strong> to 
                         <strong>{{ insights.time_frame_end }}</strong>
                     </p>
                 </div>
@@ -40,62 +40,57 @@
         </div>
         {% endif %}
 
-        <!-- Uploaded Data Section -->
+        <!-- Data Table -->
         {% if has_valid_data %}
-        <div class="card mt-3" id="dataTable"> <!-- Now visible when valid data exists -->
+        <div class="card mt-3" id="dataTable">
             <div class="card-body">
-                <!-- Responsive table container -->
-                <div class="table-responsive" style="max-height: 400px; overflow: auto;">
-                    <table class="table table-bordered table-hover table-striped table-sm" style="width: 100%;">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover">
                         <tbody>
-                            {{ data | safe }} <!-- Render the DataFrame as an HTML table -->
+                            {{ data | safe }}
                         </tbody>
                     </table>
                 </div>
             </div>
         </div>
 
-        <!-- CSV Download Section with Explanation -->
-        <div class="card mt-3"> <!-- Card for consistency -->
+        <!-- CSV Download -->
+        <div class="card mt-3">
             <div class="card-body text-center">
-                <p class="mb-2">
-                    You can download your processed data in <strong>CSV format</strong> for further inspection or data donation.
-                </p>
-
-                <!-- Centering the button -->
-                <div class="d-flex justify-content-center">
-                    {% if csv_file_name %}
-                    <a href="{{ url_for('routes.download_csv', filename=csv_file_name) }}" class="btn btn-primary btn-sm">
-                        Download CSV
-                    </a>
-                    {% endif %}
-                </div>
+                <p>Download your processed data in <strong>CSV format</strong>.</p>
+                {% if csv_file_name %}
+                <a href="{{ url_for('routes.download_csv', filename=csv_file_name) }}" class="btn btn-primary btn-sm">Download CSV</a>
+                {% endif %}
             </div>
         </div>
         {% endif %}
 
-        <!-- Visualization Section: Most Watched Channels Per Year -->
+        <!-- Visualization -->
         {% if plot_data %}
         <div class="card mt-3" id="visualization">
             <div class="card-body text-center">
                 <h5>Top 5 Most Watched Channels Per Year</h5>
                 <div class="d-flex justify-content-center">
-                    <img src="{{ url_for('routes.download_image', filename=plot_data) }}" alt="Top 5 Channels Per Year" class="img-fluid" style="max-width: 90%; height: auto;" />
+                    <img src="{{ url_for('routes.download_image', filename=plot_data) }}" alt="Top 5 Channels Per Year" class="img-fluid">
                 </div>
             </div>
         </div>
         {% endif %}
 
-        <!-- Heatmap Section: Video Consumption Per Day of the Week -->
+        <!-- Heatmap -->
         {% if heatmap_data %}
         <div class="card mt-3" id="heatmap">
             <div class="card-body text-center">
                 <h5>Video Consumption Per Day of the Week</h5>
                 <div class="d-flex justify-content-center">
-                    <img src="{{ url_for('routes.download_image', filename=heatmap_data) }}" alt="Heatmap showing video consumption by day of the week" class="img-fluid" style="max-width: 90%; height: auto;" />
+                    <img src="{{ url_for('routes.download_image', filename=heatmap_data) }}" alt="Heatmap" class="img-fluid">
                 </div>
             </div>
         </div>
         {% endif %}
+
     </div>
+
+    <!-- Link to external JS -->
+    <script src="{{ url_for('static', filename='js/youtube_dashboard.js') }}" nonce="{{ g.csp_nonce }}"></script>
 {% endblock %}

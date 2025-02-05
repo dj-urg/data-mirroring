@@ -107,6 +107,72 @@ h2 {
 }
 
 /* ========================= */
+/* Uploading                 */
+/* ========================= */
+
+/* Upload Container Styling */
+.upload-container {
+    background-color: #fff; /* White background */
+    text-align: center; /* Center align the content */
+    max-width: 500px; /* Set a max-width for better layout */
+    margin: 0 auto; /* Center horizontally */
+}
+
+/* Button Styling */
+.upload-btn {
+    padding: 10px 20px;
+    font-size: 16px;
+    background-color: #3498db;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    margin-top: 20px;
+}
+
+.upload-btn:hover {
+    background-color: #2980b9;
+}
+
+/* File Input Styling */
+.file-input {
+    display: none; /* Hide the default file input */
+}
+
+.file-input-label {
+    display: inline-block;
+    padding: 8px 16px;
+    background-color: #3498db;
+    color: #fff;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+}
+
+.file-input-label:hover {
+    background-color: #2980b9;
+}
+
+/* Loader Styling */
+.loader {
+    display: none;  /* 🔥 Ensure loader is hidden by default */
+    border: 6px solid #f3f3f3; /* Light grey */
+    border-top: 6px solid #3498db; /* Blue color */
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin-top: 20px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* ========================= */
 /* Paragraphs                */
 /* ========================= */
 p {
@@ -277,7 +343,7 @@ td a:hover {
     display: block; /* Ensures no extra space below */
     margin: 0 auto; /* Center the logo */
     border: none; /* Remove any border */
-    max-width: 100%; /* Make sure it scales with the container */
+    max-width: 150px; /* Make sure it scales with the container */
     height: auto; /* Maintain aspect ratio */
 }
 
@@ -316,4 +382,8 @@ h1.platform-title, p.platform-description {
 
 .button-link:hover {
     background-color: #2980B9;
+}
+
+#dataTable {
+    display: none;
 }
