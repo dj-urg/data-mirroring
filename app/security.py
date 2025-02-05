@@ -1,19 +1,18 @@
-from flask import session, redirect, url_for, request, current_app
+from flask import session, redirect, url_for, request, current_app, make_response
 from functools import wraps
 import os
 import glob
 import tempfile
 
 def enforce_https():
-    """Redirect HTTP to HTTPS only in production."""
+    """Redirects HTTP to HTTPS only in production."""
     is_production = os.getenv("FLASK_ENV") == "production" or os.getenv("DYNO")  # DYNO is set on Heroku
     if is_production and request.headers.get("X-Forwarded-Proto", "http") == "http":
-        return redirect(request.url.replace("http://", "https://"), code=301)
+        response = make_response(redirect(request.url.replace("http://", "https://"), code=301))
+        return apply_security_headers(response)  # Apply security headers even on redirects
 
 def apply_security_headers(response):
-    """
-    Adds security headers to every response and logs their application.
-    """
+    """Adds essential security headers to every response."""
     response.headers["Content-Security-Policy"] = (
         "default-src 'self'; "
         "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.plot.ly; "
@@ -27,43 +26,44 @@ def apply_security_headers(response):
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
-    response.headers["Feature-Policy"] = "geolocation 'self'; microphone 'none'"
+    response.headers["Permissions-Policy"] = "geolocation 'self'; microphone 'none'"
     response.headers["X-XSS-Protection"] = "1; mode=block"
-
-    #Log that security headers were applied
-    current_app.logger.info("Security headers applied to response.")
 
     return response
 
 def requires_authentication(f):
-    """
-    Decorator that ensures users are authenticated before accessing routes.
-    Logs authentication attempts.
-    """
+    """Decorator that ensures users are authenticated before accessing routes."""
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if not session.get('authenticated'):
-            current_app.logger.warning(f"Unauthorized access attempt: {request.path} from {request.remote_addr}")
             return redirect(url_for('routes.enter_code'))
-        
-        current_app.logger.debug(f"Authenticated access: {request.path} from {request.remote_addr}")
         return f(*args, **kwargs)
-
+    
     return decorated_function
 
 def cleanup_old_temp_files():
     """Deletes CSV files older than 1 hour in the temp directory."""
     temp_dir = tempfile.gettempdir()
-    current_app.logger.info(f"Checking temp directory for old files: {temp_dir}")
-
     for file in glob.glob(os.path.join(temp_dir, "*.csv")):
         try:
             os.remove(file)
-            current_app.logger.info(f"Deleted old temp file: {file}")
-        except Exception as e:
-            current_app.logger.error(f"Could not delete {file}: {e}")
+        except Exception:
+            pass
 
 def register_cleanup(app):
-    """Attach cleanup to Flask startup."""
+    """Attach cleanup function to Flask app startup and request teardown."""
     with app.app_context():
         cleanup_old_temp_files()
+
+    @app.teardown_request
+    def cleanup_temp_files(exception=None):
+        """Delete only files that were marked for deletion."""
+        temp_dir = tempfile.gettempdir()
+
+        for filename in getattr(request, "files_to_cleanup", []):
+            file_path = os.path.join(temp_dir, filename)
+            if os.path.exists(file_path):
+                try:
+                    os.remove(file_path)
+                except Exception:
+                    pass
