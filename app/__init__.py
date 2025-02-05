@@ -7,6 +7,7 @@ import logging
 from dotenv import load_dotenv
 from app.extensions import limiter
 from app.logging_config import setup_logging
+from app.security import enforce_https  # Import the HTTPS enforcement function
 
 load_dotenv()
 logger = logging.getLogger(__name__)
@@ -21,6 +22,13 @@ def create_app():
 
     # Set up logging AFTER the app is created
     setup_logging(app)
+
+    # Enforce HTTPS before every request (only in production)
+    @app.before_request
+    def force_https():
+        https_redirect = enforce_https()
+        if https_redirect:
+            return https_redirect
 
     # Enable CSRF Protection
     csrf = CSRFProtect(app)

@@ -4,6 +4,12 @@ import os
 import glob
 import tempfile
 
+def enforce_https():
+    """Redirect HTTP to HTTPS only in production."""
+    is_production = os.getenv("FLASK_ENV") == "production" or os.getenv("DYNO")  # DYNO is set on Heroku
+    if is_production and request.headers.get("X-Forwarded-Proto", "http") == "http":
+        return redirect(request.url.replace("http://", "https://"), code=301)
+
 def apply_security_headers(response):
     """
     Adds security headers to every response and logs their application.
