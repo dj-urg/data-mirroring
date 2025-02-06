@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, send_file, current_app, session, redirect, url_for, jsonify
+from flask import Blueprint, render_template, request, send_file, current_app, session, redirect, url_for, abort
 from app.security import requires_authentication, cleanup_old_temp_files, enforce_https, apply_security_headers, cleanup_temp_files
 from app.extensions import limiter
 from platforms.youtube import process_youtube_file
@@ -6,6 +6,7 @@ from platforms.instagram import process_instagram_file
 from platforms.tiktok import process_tiktok_file
 import os
 import tempfile
+from werkzeug.utils import secure_filename
 import re
 from flask import flash
 
@@ -139,35 +140,82 @@ def dashboard_tiktok():
 @routes_bp.route('/download_image/<filename>', methods=['GET'])
 def download_image(filename):
     """Serve the requested image file for download and delete it after sending."""
-    temp_file_path = os.path.join(tempfile.gettempdir(), filename)
+    
+    # Sanitize filename to prevent directory traversal attacks
+    safe_filename = secure_filename(filename)
+
+    # Define temp directory
+    temp_dir = tempfile.gettempdir()
+    temp_file_path = os.path.join(temp_dir, safe_filename)
+
+    # Normalize path to prevent path traversal
+    temp_file_path = os.path.normpath(temp_file_path)
+
+    # Ensure the file is only served from the temp directory
+    if not temp_file_path.startswith(temp_dir):
+        current_app.logger.warning(f"Blocked attempt to access: {filename}")
+        abort(400, "Invalid file request")
 
     if os.path.exists(temp_file_path):
-        response = send_file(temp_file_path, mimetype="image/png")
+        try:
+            response = send_file(temp_file_path, mimetype="image/png")
 
-        # Delete AFTER the response is fully sent
-        @response.call_on_close
-        def remove_temp_file():
-            try:
-                os.remove(temp_file_path)
-                current_app.logger.info(f"Deleted temporary file: {temp_file_path}")
-            except Exception as e:
-                current_app.logger.error(f"Failed to delete file {temp_file_path}: {e}")
+            # Delete AFTER the response is fully sent
+            @response.call_on_close
+            def remove_temp_file():
+                try:
+                    os.remove(temp_file_path)
+                    current_app.logger.info(f"Deleted temporary file: {temp_file_path}")
+                except Exception as e:
+                    current_app.logger.error(f"Failed to delete file {temp_file_path}: {e}")
 
-        return response
+            return response
+        except Exception as e:
+            current_app.logger.error(f"Error serving file {temp_file_path}: {e}")
+            abort(500, "Internal server error")
     else:
-        return "File not found", 404
+        current_app.logger.warning(f"File not found: {temp_file_path}")
+        abort(404, "File not found")
 
 @routes_bp.route('/download_csv/<filename>', methods=['GET'])
 def download_csv(filename):
     """Serve the requested CSV file for download and delete it immediately after."""
-    temp_file_path = os.path.join(tempfile.gettempdir(), filename)
+
+    # Sanitize filename to prevent directory traversal attacks
+    safe_filename = secure_filename(filename)
+
+    # Define temp directory
+    temp_dir = tempfile.gettempdir()
+    temp_file_path = os.path.join(temp_dir, safe_filename)
+
+    # Normalize the path to prevent path traversal
+    temp_file_path = os.path.normpath(temp_file_path)
+
+    # Ensure the file is only accessed from the temp directory
+    if not temp_file_path.startswith(temp_dir):
+        current_app.logger.warning(f"Blocked attempt to access: {filename}")
+        abort(400, "Invalid file request")
 
     if os.path.exists(temp_file_path):
-        response = send_file(temp_file_path, as_attachment=True, download_name=filename, mimetype="text/csv")
-        os.remove(temp_file_path)  # Delete file after serving
-        return response
+        try:
+            response = send_file(temp_file_path, as_attachment=True, download_name=safe_filename, mimetype="text/csv")
+
+            # Delete AFTER the response is fully sent
+            @response.call_on_close
+            def remove_temp_file():
+                try:
+                    os.remove(temp_file_path)
+                    current_app.logger.info(f"Deleted temporary file: {temp_file_path}")
+                except Exception as e:
+                    current_app.logger.error(f"Failed to delete file {temp_file_path}: {e}")
+
+            return response
+        except Exception as e:
+            current_app.logger.error(f"Error serving file {temp_file_path}: {e}")
+            abort(500, "Internal server error")
     else:
-        return "File not found", 404
+        current_app.logger.warning(f"File not found: {temp_file_path}")
+        abort(404, "File not found")
     
 def is_valid_code(code):
     # Ensure the code is alphanumeric and has a reasonable length

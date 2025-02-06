@@ -20,11 +20,21 @@ document.addEventListener('DOMContentLoaded', function() {
 
 function goToDashboard() {
     const platform = document.querySelector('input[name="platform"]:checked');
+
     if (platform) {
-        window.location.href = "/dashboard/" + platform.value;  // Redirects to /dashboard/youtube or /dashboard/instagram
+        // Define allowed platforms (whitelist)
+        const allowedPlatforms = ["youtube", "instagram", "tiktok"];
+        const selectedPlatform = platform.value.trim().toLowerCase();
+
+        if (allowedPlatforms.includes(selectedPlatform)) {
+            // Use encodeURIComponent to further ensure safe URL encoding
+            window.location.href = "/dashboard/" + encodeURIComponent(selectedPlatform);
+        } else {
+            alert("Invalid platform selection.");
+        }
     } else {
         alert("Please select a platform before proceeding.");
-    }       
+    }
 }
 
 function showDescription(platform) {

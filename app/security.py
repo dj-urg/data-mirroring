@@ -5,14 +5,26 @@ import glob
 import tempfile
 import time
 import secrets
+from urllib.parse import urlparse, urlunparse
 
 def enforce_https():
     """Redirects HTTP to HTTPS only in production."""
-    is_production = os.getenv("FLASK_ENV") == "production" or os.getenv("DYNO")  # DYNO is set on Heroku
+    is_production = os.getenv("FLASK_ENV") == "production" or os.getenv("DYNO")  # Heroku check
+
+    # Allowed domains for secure redirection
+    ALLOWED_HOSTS = {"data-mirror.org", "data-mirror-72f6ffc87917.herokuapp.com"}
+
     if is_production and request.headers.get("X-Forwarded-Proto", "http") == "http":
-        response = make_response(redirect(request.url.replace("http://", "https://"), code=301))
-        return apply_security_headers(response)  # Apply security headers even on redirects
-    return None
+        parsed_url = urlparse(request.url)
+
+        # Ensure the hostname is in the allowed list
+        if parsed_url.hostname in ALLOWED_HOSTS:
+            secure_url = urlunparse(parsed_url._replace(scheme="https"))
+            response = make_response(redirect(secure_url, code=301))
+            return apply_security_headers(response)
+
+        # Block redirects to untrusted domains
+        return "Invalid redirect", 400
 
 def apply_security_headers(response):
     """Adds essential security headers to every response, ensuring security best practices are applied."""
