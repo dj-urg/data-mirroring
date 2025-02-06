@@ -387,3 +387,17 @@ h1.platform-title, p.platform-description {
 #dataTable {
     display: none;
 }
+
+/* Ensure the Plotly container has a specific height and width */
+#test-plot {
+    width: 100%;
+    height: 400px;
+}
+
+/* Optionally style the modeBar to make sure it appears correctly */
+#test-plot .modebar {
+    position: absolute;
+    top: 0;
+    right: 0;
+    z-index: 10;  /* Make sure the toolbar stays above the graph */
+}

@@ -1,12 +1,12 @@
-from flask import Blueprint, render_template, request, send_file, current_app, session, redirect, url_for
+from flask import Blueprint, render_template, request, send_file, current_app, session, redirect, url_for, jsonify
 from app.security import requires_authentication, cleanup_old_temp_files, enforce_https, apply_security_headers, cleanup_temp_files
 from app.extensions import limiter
 from platforms.youtube import process_youtube_file
 from platforms.instagram import process_instagram_file
 from platforms.tiktok import process_tiktok_file
+from platforms.test import get_plot_json
 import os
 import tempfile
-import io
 import re
 from flask import flash
 
@@ -191,3 +191,18 @@ def enter_code():
             return render_template('enter_code.html', error="Invalid access code.")
     
     return render_template('enter_code.html')
+
+@routes_bp.route('/test')
+def test_page():
+    try:
+        return render_template("test_plot.html")
+    except Exception as e:
+        return f"Template Error: {str(e)}", 500
+
+@routes_bp.route('/generate-top-5', methods=['GET'])
+def generate_top_5():
+    # Get the plot JSON from test.py
+    plot_json = get_plot_json()
+
+    # Return the plot data as JSON to the frontend
+    return jsonify(plot_json)

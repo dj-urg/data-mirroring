@@ -31,3 +31,9 @@ package-lock.json
 
 # Miscellaneous system files
 .DS_Store
+
+# Test environment
+test/
+test*.py
+test*.js
+test*.html
