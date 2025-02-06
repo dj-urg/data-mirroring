@@ -3,6 +3,7 @@ from functools import wraps
 import os
 import glob
 import tempfile
+import time
 import secrets
 
 def enforce_https():
@@ -11,17 +12,21 @@ def enforce_https():
     if is_production and request.headers.get("X-Forwarded-Proto", "http") == "http":
         response = make_response(redirect(request.url.replace("http://", "https://"), code=301))
         return apply_security_headers(response)  # Apply security headers even on redirects
+    return None
+
+import secrets
+from flask import g
 
 def apply_security_headers(response):
     """Adds essential security headers to every response, ensuring security best practices are applied."""
-    
-    nonce = g.get("csp_nonce", "")
-    
+
+    # Generate a CSP nonce dynamically per request
+    nonce = g.get("csp_nonce", secrets.token_urlsafe(16))
+
     response.headers["Content-Security-Policy"] = (
         f"default-src 'self'; "
         f"script-src 'self' 'nonce-{nonce}' https://cdn.plot.ly; "
         f"style-src 'self' 'nonce-{nonce}' https://cdnjs.cloudflare.com https://fonts.googleapis.com; "
-        f"style-src-elem 'self' 'nonce-{nonce}' https://cdnjs.cloudflare.com https://fonts.googleapis.com; "
         f"img-src 'self' https://img.icons8.com https://upload.wikimedia.org data:; "
         f"font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com; "
         f"object-src 'none'; "
@@ -37,9 +42,6 @@ def apply_security_headers(response):
     response.headers["Cross-Origin-Opener-Policy"] = "same-origin"
     response.headers["Cross-Origin-Resource-Policy"] = "same-origin"
 
-    # Store nonce in a secure cookie so it can be used in templates
-    response.set_cookie("csp_nonce", nonce, secure=True, httponly=True, samesite="Strict")
-
     return response
 
 def requires_authentication(f):
@@ -52,29 +54,38 @@ def requires_authentication(f):
     
     return decorated_function
 
-def cleanup_old_temp_files():
+def cleanup_old_temp_files(exception=None):
     """Deletes CSV files older than 1 hour in the temp directory."""
     temp_dir = tempfile.gettempdir()
+    one_hour_ago = time.time() - 3600  # 3600 seconds = 1 hour
+
     for file in glob.glob(os.path.join(temp_dir, "*.csv")):
-        try:
-            os.remove(file)
-        except Exception:
-            pass
+        if os.path.getmtime(file) < one_hour_ago:  # Only delete old files
+            try:
+                os.remove(file)
+                current_app.logger.info(f"Deleted old temp file: {file}")
+            except Exception as e:
+                current_app.logger.error(f"Failed to delete old temp file {file}: {e}")
+                
+def cleanup_temp_files(exception=None):
+    """Delete only files that were marked for deletion in the request context."""
+    temp_dir = tempfile.gettempdir()
+
+    if hasattr(g, "files_to_cleanup"):
+        for filename in g.files_to_cleanup:
+            file_path = os.path.join(temp_dir, filename)
+            if os.path.exists(file_path):
+                try:
+                    os.remove(file_path)
+                    current_app.logger.info(f"Deleted temporary file: {file_path}")
+                except Exception as e:
+                    current_app.logger.error(f"Failed to delete file {file_path}: {e}")
 
 def register_cleanup(app):
     """Attach cleanup function to Flask app startup and request teardown."""
     with app.app_context():
         cleanup_old_temp_files()
 
-    @app.teardown_request
-    def cleanup_temp_files(exception=None):
-        """Delete only files that were marked for deletion."""
-        temp_dir = tempfile.gettempdir()
-
-        for filename in getattr(request, "files_to_cleanup", []):
-            file_path = os.path.join(temp_dir, filename)
-            if os.path.exists(file_path):
-                try:
-                    os.remove(file_path)
-                except Exception:
-                    pass
+def initialize_cleanup():
+    """Ensure request.files_to_cleanup exists before each request."""
+    g.files_to_cleanup = [] # Store filenames to delete later

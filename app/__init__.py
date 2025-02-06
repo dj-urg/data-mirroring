@@ -7,7 +7,7 @@ import secrets
 from dotenv import load_dotenv
 from app.extensions import limiter
 from app.logging_config import setup_logging
-from app.security import enforce_https, apply_security_headers, register_cleanup
+from app.security import apply_security_headers, register_cleanup
 
 load_dotenv()
 logger = logging.getLogger(__name__)
@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 def create_app():
     app = Flask(__name__, template_folder="../templates")
     app.secret_key = os.getenv('SECRET_KEY')
-    
+
     @app.before_request
     def generate_nonce():
         """Generate a nonce for CSP before rendering templates."""
@@ -27,18 +27,6 @@ def create_app():
 
     # Set up logging AFTER the app is created
     setup_logging(app)
-
-    # ✅ Enforce HTTPS before every request
-    @app.before_request
-    def force_https():
-        https_redirect = enforce_https()
-        if https_redirect:
-            return https_redirect
-
-    # ✅ Apply security headers to all responses
-    @app.after_request
-    def add_security_headers(response):
-        return apply_security_headers(response)
 
     # ✅ Enable CSRF Protection
     csrf = CSRFProtect(app)

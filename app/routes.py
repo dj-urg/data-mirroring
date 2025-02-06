@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, send_file, current_app, session, redirect, url_for
-from app.security import requires_authentication
+from app.security import requires_authentication, initialize_cleanup, cleanup_old_temp_files, enforce_https, apply_security_headers, cleanup_temp_files
 from app.extensions import limiter
 from platforms.youtube import process_youtube_file
 from platforms.instagram import process_instagram_file
@@ -10,33 +10,40 @@ import io
 import re
 from flask import flash
 
-
 routes_bp = Blueprint('routes', __name__)
+
+# Register security functions with Flask
+routes_bp.before_request(initialize_cleanup)  # Runs before each request
+routes_bp.before_request(cleanup_old_temp_files)
+routes_bp.before_request(cleanup_temp_files)
+routes_bp.before_request(enforce_https)
+routes_bp.after_request(apply_security_headers)  # Apply security headers to responses
+routes_bp.teardown_request(cleanup_old_temp_files)  # Runs after each request
 
 @limiter.limit("10 per minute")
 
 @routes_bp.route('/')
 @requires_authentication
 def landing_page():
-    current_app.logger.info("Landing page accessed. IP: %s", request.remote_addr)
+    current_app.logger.info("Landing page accessed.")
     return render_template('homepage.html')
 
 @routes_bp.route('/platform-selection')
 @requires_authentication
 def platform_selection():
-    current_app.logger.info("Platform selection page accessed. IP: %s", request.remote_addr)
+    current_app.logger.info("Platform selection page accessed.")
     return render_template('platform_selection.html')
 
 @routes_bp.route('/info')
 @requires_authentication
 def info():
-    current_app.logger.info("Info page accessed. IP: %s", request.remote_addr)
+    current_app.logger.info("Info page accessed.")
     return render_template('info.html')
 
 @routes_bp.route('/data_processing_info')
 @requires_authentication
 def data_processing_info():
-    current_app.logger.info("Data processing info page accessed. IP: %s", request.remote_addr)
+    current_app.logger.info("Data processing info page accessed.")
     return render_template('data_processing_info.html')
 
 # Handling file processing inside your dashboard route
@@ -44,7 +51,7 @@ def data_processing_info():
 @requires_authentication
 @limiter.limit("10 per minute")
 def dashboard_youtube():
-    current_app.logger.info("Dashboard accessed for YouTube, Method: %s, IP: %s", request.method, request.remote_addr)
+    current_app.logger.info("Dashboard accessed for YouTube, Method: %s", request.method,)
     
     if request.method == 'GET':
         return render_template('dashboard_youtube.html')
@@ -69,7 +76,7 @@ def dashboard_youtube():
 @requires_authentication
 @limiter.limit("10 per minute")
 def dashboard_instagram():
-    current_app.logger.info("Dashboard accessed for Instagram, Method: %s, IP: %s", request.method, request.remote_addr)
+    current_app.logger.info("Dashboard accessed for Instagram, Method: %s", request.method,)
 
     if request.method == 'GET':
         return render_template('dashboard_instagram.html')
@@ -93,7 +100,7 @@ def dashboard_instagram():
 @requires_authentication
 @limiter.limit("10 per minute")
 def dashboard_tiktok():
-    current_app.logger.info("Dashboard accessed for TikTok, Method: %s, IP: %s", request.method, request.remote_addr)
+    current_app.logger.info("Dashboard accessed for TikTok, Method: %s", request.method,)
 
     if request.method == 'GET':
         return render_template('dashboard_tiktok.html')
