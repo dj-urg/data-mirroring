@@ -1,6 +1,5 @@
-from flask import Blueprint, render_template, request, send_file, current_app, session, redirect, url_for, jsonify
+from flask import Blueprint, render_template, request, send_file, current_app, session, redirect, url_for
 from app.security import requires_authentication
-from app.processing import handle_platform_file_processing
 from app.extensions import limiter
 from platforms.youtube import process_youtube_file
 from platforms.instagram import process_instagram_file
@@ -9,6 +8,7 @@ import os
 import tempfile
 import io
 import re
+from flask import flash
 
 
 routes_bp = Blueprint('routes', __name__)
@@ -99,18 +99,30 @@ def dashboard_tiktok():
         return render_template('dashboard_tiktok.html')
 
     files = request.files.getlist('file')
+    if not files or files[0].filename == '':
+        flash("No file selected", "danger")
+        return redirect(url_for('routes.dashboard_tiktok'))
+
     current_app.logger.info("Processing %d file(s) for TikTok", len(files))
 
-    df, csv_file_name, insights, plot_data, heatmap_data, has_valid_data = process_tiktok_file(files)
+    try:
+        df, csv_file_name, insights, plot_data, heatmap_data, has_valid_data, csv_preview_html = process_tiktok_file(files)
+        data_html = df.to_html(classes="table table-bordered table-hover") if has_valid_data else None
 
-    return render_template(
-        'dashboard_tiktok.html',
-        insights=insights,
-        csv_file_name=csv_file_name,
-        plot_data=plot_data,
-        heatmap_data=heatmap_data,
-        has_valid_data=has_valid_data
-    )
+        return render_template(
+            'dashboard_tiktok.html',
+            insights=insights,
+            csv_file_name=csv_file_name,
+            plot_data=plot_data,
+            heatmap_data=heatmap_data,
+            has_valid_data=has_valid_data,
+            data=data_html,
+            csv_preview_html=csv_preview_html
+        )
+    except ValueError as e:
+        flash(str(e), "danger")
+        current_app.logger.error("Error processing TikTok file: %s", str(e))
+        return redirect(url_for('routes.dashboard_tiktok'))
     
 @routes_bp.route('/download_image/<filename>', methods=['GET'])
 def download_image(filename):

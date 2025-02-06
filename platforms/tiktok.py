@@ -1,133 +1,148 @@
 import json
 import pandas as pd
-import logging
 import os
 import tempfile
 import uuid
+import logging
+import matplotlib
+import matplotlib.pyplot as plt
+import seaborn as sns
+import traceback
+
+# Use 'Agg' backend for headless image generation
+matplotlib.use('Agg')
 
 # Configure the logger
-FLASK_ENV = os.getenv('FLASK_ENV', 'production')  # Default to 'production'
+FLASK_ENV = os.getenv('FLASK_ENV', 'production')
 
 if FLASK_ENV == 'production':
-    # Disable logging in production except for warnings and errors
     logging.basicConfig(level=logging.WARNING, format='%(asctime)s %(levelname)s: %(message)s')
 else:
-    # Enable detailed logging for development
     logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(levelname)s: %(message)s')
 
 logger = logging.getLogger()
 
+# Helper function to save images as a temporary file
+def save_image_temp_file(fig):
+    """Saves an image as a temporary file and returns the filename."""
+    with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmp_file:
+        fig.savefig(tmp_file.name, bbox_inches='tight')
+        plt.close(fig)  # Free up memory
+        return os.path.basename(tmp_file.name)
+
+# Helper function to save CSV as a temporary file
+def save_csv_temp_file(df):
+    """Saves CSV data as a temporary file and returns the filename."""
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".csv") as tmp_file:
+        df.to_csv(tmp_file.name, index=False)
+        os.chmod(tmp_file.name, 0o600)  # Secure file permissions
+        return os.path.basename(tmp_file.name)
+
+# Generate a bump chart similar to YouTube's
+def generate_custom_bump_chart(source_ranking):
+    fig, ax = plt.subplots(figsize=(8, 3))
+
+    sources = source_ranking['source'].unique()
+    years = sorted(source_ranking['year'].unique())
+
+    for source in sources:
+        source_data = source_ranking[source_ranking['source'] == source]
+        year_values = [years.index(year) for year in source_data['year']]
+        rank_values = source_data['rank'].values
+
+        ax.plot(year_values, -rank_values, marker='o', label=source)
+
+    ax.set_xticks(range(len(years)))
+    ax.set_xticklabels(years)
+    ax.set_yticks([])  # Hide y-axis ticks
+    ax.legend()
+    
+    plt.tight_layout()
+    return fig
+
+# Generate heatmap for TikTok activity
+def generate_heatmap(hourly_counts):
+    fig, ax = plt.subplots(figsize=(8, 2))
+    hourly_df = pd.DataFrame({'Hour': hourly_counts.index, 'Count': hourly_counts.values}).set_index('Hour')
+    sns.heatmap(hourly_df.T, annot=True, fmt="d", cmap="Blues", ax=ax, cbar=False)
+    ax.set_xlabel("Hour of the Day")
+    plt.tight_layout()
+    return fig
+
+# Main processing function for TikTok files
 def process_tiktok_file(files):
-    """Processes multiple TikTok JSON data files and merges them into a single DataFrame."""
     try:
         all_data = []
-        
-        # Loop through each file in the files list
+
         for file in files:
-            data = json.load(file)
-            flattened_data = []
+            try:
+                data = json.load(file)
+            except json.JSONDecodeError:
+                logger.error("Uploaded file is not valid JSON.")
+                raise ValueError("Invalid JSON file. Please upload a valid TikTok data file.")
 
-            # Extract data from 'Favorite Videos'
-            if 'Favorite Videos' in data['Activity']:
-                for item in data['Activity']['Favorite Videos'].get('FavoriteVideoList', []):
-                    timestamp = pd.to_datetime(item.get('Date', ''), errors='coerce')  # Coerce invalid formats to NaT
-                    flattened_data.append({
-                        'video_title': 'Favorite Video',
-                        'video_url': item.get('Link', ''),
-                        'timestamp': timestamp,
-                        'source': 'Favorite Videos'
-                    })
+            activity_data = data.get('Activity', {})
 
-            # Extract data from 'Like List'
-            if 'Like List' in data['Activity']:
-                for item in data['Activity']['Like List'].get('ItemFavoriteList', []):
-                    timestamp = pd.to_datetime(item.get('Date', ''), errors='coerce')  # Coerce invalid formats to NaT
-                    flattened_data.append({
-                        'video_title': 'Liked Video',
-                        'video_url': item.get('Link', ''),
-                        'timestamp': timestamp,
-                        'source': 'Like List'
-                    })
+            # Process Favorite Videos
+            fav_videos = activity_data.get('Favorite Videos', {}).get('FavoriteVideoList', [])
+            if not isinstance(fav_videos, list):
+                logger.warning("Unexpected format in 'Favorite Videos'. Expected a list.")
+                fav_videos = []
 
-            all_data.extend(flattened_data)
+            for item in fav_videos:
+                timestamp = pd.to_datetime(item.get('Date', ''), errors='coerce')
+                all_data.append({
+                    'video_title': 'Favorite Video',
+                    'video_url': item.get('Link', ''),
+                    'timestamp': timestamp,
+                    'source': 'Favorite Videos'
+                })
 
-        # Convert to DataFrame
+            # Process Like List
+            liked_videos = activity_data.get('Like List', {}).get('ItemFavoriteList', [])
+            if not isinstance(liked_videos, list):
+                logger.warning("Unexpected format in 'Like List'. Expected a list.")
+                liked_videos = []
+
+            for item in liked_videos:
+                timestamp = pd.to_datetime(item.get('Date', ''), errors='coerce')
+                all_data.append({
+                    'video_title': 'Liked Video',
+                    'video_url': item.get('Link', ''),
+                    'timestamp': timestamp,
+                    'source': 'Like List'
+                })
+
+        if not all_data:
+            logger.error("No valid video data found in the uploaded files.")
+            raise ValueError("No valid video data found in the uploaded files.")
+
         df = pd.DataFrame(all_data)
-
-        # Ensure the 'timestamp' is properly parsed as a datetime object
         df['timestamp'] = pd.to_datetime(df['timestamp'])
 
-        # Drop rows where timestamp is NaT (invalid dates)
-        valid_timestamps = df['timestamp'].dropna()
-
-        # If valid timestamps exist, get the earliest and latest dates
-        if not valid_timestamps.empty:
-            time_frame_start = valid_timestamps.min().date()  # Convert to date for readability
-            time_frame_end = valid_timestamps.max().date()
-        else:
-            time_frame_start, time_frame_end = 'N/A', 'N/A'
-        
-        # Generate a unique filename using UUID and save CSV to a temporary file
-        unique_filename = f"{uuid.uuid4()}.csv"
-        temp_file_path = os.path.join(tempfile.gettempdir(), unique_filename)
-        df.to_csv(temp_file_path, index=False)
-
-        logger.info(f"CSV file saved successfully at: {temp_file_path}")
-
-        # Generate insights
         insights = {
             'total_videos': len(df),
-            'time_frame_start': time_frame_start,
-            'time_frame_end': time_frame_end
+            'time_frame_start': df['timestamp'].min().date() if not df.empty else 'N/A',
+            'time_frame_end': df['timestamp'].max().date() if not df.empty else 'N/A'
         }
 
-        # Extract the year from the timestamp for grouping
         df['year'] = df['timestamp'].dt.year
-
-        # Group by year and source, and count the occurrences of each source per year
-        source_data = df.groupby(['year', 'source']).size().reset_index(name='view_counts')
-
-        # For each year, select the top sources
-        top_sources_per_year = source_data.groupby('year').apply(lambda x: x.nlargest(10, 'view_counts')).reset_index(drop=True)
-
-        # Prepare data for visualization (Bar Chart)
-        plot_data = {
-            'years': top_sources_per_year['year'].tolist(),
-            'view_counts': top_sources_per_year['view_counts'].tolist(),
-            'sources': top_sources_per_year['source'].tolist()
-        }
-
-        # Check if plot data has any missing values
-        if not plot_data['years'] or not plot_data['view_counts'] or not plot_data['sources']:
-            logger.error("Plot data contains incomplete values.")
-            plot_data = {}  # Reset plot_data if it's malformed
-
-        has_valid_data = not df.empty
-
-        # Extract hour for time of day analysis
         df['hour'] = df['timestamp'].dt.hour
         activity_counts = df['hour'].value_counts().sort_index()
 
-        # Time of day insights
-        morning = activity_counts[(activity_counts.index >= 6) & (activity_counts.index < 12)].sum()
-        afternoon = activity_counts[(activity_counts.index >= 12) & (activity_counts.index < 18)].sum()
-        evening = activity_counts[(activity_counts.index >= 18) & (activity_counts.index < 24)].sum()
-        night = activity_counts[(activity_counts.index >= 0) & (activity_counts.index < 6)].sum()
+        # Prepare visualization
+        source_data = df.groupby(['year', 'source']).size().reset_index(name='view_counts')
+        top_sources_per_year = source_data.groupby('year').apply(lambda x: x.nlargest(5, 'view_counts')).reset_index(drop=True)
+        top_sources_per_year['rank'] = top_sources_per_year.groupby('year')['view_counts'].rank(ascending=False, method='first')
 
-        insights['morning_activity'] = morning
-        insights['afternoon_activity'] = afternoon
-        insights['evening_activity'] = evening
-        insights['night_activity'] = night
+        bump_chart_name = save_image_temp_file(generate_custom_bump_chart(top_sources_per_year))
+        heatmap_name = save_image_temp_file(generate_heatmap(activity_counts))
+        csv_file_name = save_csv_temp_file(df)
+        csv_preview_html = df.head(5).to_html(classes="table table-striped", index=False)
 
-        # Optionally: Prepare heatmap data for visualization (if desired)
-        heatmap_data = {
-            'hours': list(activity_counts.index),
-            'activity_counts': list(activity_counts.values)
-        }
-
-        # Return DataFrame, filename, insights, plot data, and heatmap data
-        return df, unique_filename, insights, plot_data, heatmap_data, has_valid_data
+        return df, csv_file_name, insights, bump_chart_name, heatmap_name, not df.empty, csv_preview_html
 
     except Exception as e:
-        logger.warning(f"Error occurred: {type(e).__name__} - {str(e)}")  # Avoid logging sensitive data
-        raise ValueError("An internal error occurred. Please try again.")
+        logger.error(f"Error processing TikTok file: {type(e).__name__} - {str(e)}")
+        logger.error(traceback.format_exc())  # This will print the full traceback
+        raise ValueError(f"Error processing TikTok data: {str(e)}")
