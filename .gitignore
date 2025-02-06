@@ -34,6 +34,7 @@ package-lock.json
 
 # Test environment
 test/
+tests/
 test*.py
 test*.js
 test*.html
