@@ -25,6 +25,16 @@
             </div>
         </div>
 
+        <!-- CSV Data Preview Section -->
+        {% if csv_preview_html %}
+        <div class="card mt-3">
+            <div class="card-body">
+                <h5>CSV Data Preview</h5>
+                {{ csv_preview_html | safe }}
+            </div>
+        </div>
+        {% endif %}
+
         <!-- Insights Section -->
         {% if insights %}
         <div class="card mt-3" id="insights">

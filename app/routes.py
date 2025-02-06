@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, send_file, current_app, session, redirect, url_for
-from app.security import requires_authentication, initialize_cleanup, cleanup_old_temp_files, enforce_https, apply_security_headers, cleanup_temp_files
+from app.security import requires_authentication, cleanup_old_temp_files, enforce_https, apply_security_headers, cleanup_temp_files
 from app.extensions import limiter
 from platforms.youtube import process_youtube_file
 from platforms.instagram import process_instagram_file
@@ -13,7 +13,6 @@ from flask import flash
 routes_bp = Blueprint('routes', __name__)
 
 # Register security functions with Flask
-routes_bp.before_request(initialize_cleanup)  # Runs before each request
 routes_bp.before_request(cleanup_old_temp_files)
 routes_bp.before_request(cleanup_temp_files)
 routes_bp.before_request(enforce_https)
@@ -51,26 +50,34 @@ def data_processing_info():
 @requires_authentication
 @limiter.limit("10 per minute")
 def dashboard_youtube():
-    current_app.logger.info("Dashboard accessed for YouTube, Method: %s", request.method,)
-    
+    current_app.logger.info("Dashboard accessed for YouTube, Method: %s", request.method)
+
     if request.method == 'GET':
         return render_template('dashboard_youtube.html')
-    
+
     files = request.files.getlist('file')
+    if not files or files[0].filename == '':
+        flash("No file selected", "danger")
+        return redirect(url_for('routes.dashboard_youtube'))
+
     current_app.logger.info("Processing %d file(s) for YouTube", len(files))
-    
-    # Call process_youtube_file to get the insights, filenames, and other data
-    df, csv_file_name, insights, bump_chart_name, heatmap_name, has_valid_data = process_youtube_file(files)
-    
-    # Pass all necessary data to the template
-    return render_template(
-        'dashboard_youtube.html',
-        insights=insights,
-        csv_file_name=csv_file_name,
-        plot_data=bump_chart_name,
-        heatmap_data=heatmap_name,
-        has_valid_data=has_valid_data
-    )
+
+    try:
+        df, csv_file_name, insights, plot_data, heatmap_data, has_valid_data, csv_preview_html = process_youtube_file(files)
+
+        return render_template(
+            'dashboard_youtube.html',
+            insights=insights,
+            csv_file_name=csv_file_name,
+            plot_data=plot_data,
+            heatmap_data=heatmap_data,
+            has_valid_data=has_valid_data,
+            csv_preview_html=csv_preview_html
+        )
+    except ValueError as e:
+        flash(str(e), "danger")
+        current_app.logger.error("Error processing YouTube file: %s", str(e))
+        return redirect(url_for('routes.dashboard_youtube'))
 
 @routes_bp.route('/dashboard/instagram', methods=['GET', 'POST'])
 @requires_authentication
@@ -123,7 +130,6 @@ def dashboard_tiktok():
             plot_data=plot_data,
             heatmap_data=heatmap_data,
             has_valid_data=has_valid_data,
-            data=data_html,
             csv_preview_html=csv_preview_html
         )
     except ValueError as e:

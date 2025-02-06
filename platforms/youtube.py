@@ -11,6 +11,7 @@ from matplotlib.lines import Line2D
 import seaborn as sns
 import io
 from flask import session
+import re
 
 # Use 'Agg' backend to avoid GUI issues
 matplotlib.use('Agg')
@@ -198,8 +199,21 @@ def process_youtube_file(files):
         unique_filename = f"{uuid.uuid4()}.csv"
         temp_file_path = os.path.join(tempfile.gettempdir(), unique_filename)
         df.to_csv(temp_file_path, index=False)
+        
+                # Generate HTML preview from DataFrame
+        raw_html = df.head(5).to_html(
+            classes="table table-striped text-right",
+            index=False,
+            escape=False,
+            render_links=True,
+            border=0
+        )
 
-        return df, unique_filename, insights, bump_chart_name, heatmap_name, not df.empty
+        # Remove all inline styles (especially `style="text-align: right;"`)
+        csv_preview_html = re.sub(r'style="[^"]*"', '', raw_html)
+
+        return df, unique_filename, insights, bump_chart_name, heatmap_name, not df.empty, csv_preview_html
+
 
     except Exception as e:
         logger.warning(f"Error occurred: {type(e).__name__} - {str(e)}")  # Avoid logging sensitive data

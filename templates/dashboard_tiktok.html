@@ -3,7 +3,18 @@
 {% block title %}TikTok Dashboard{% endblock %}
 
 {% block content %}
-    <div class="platform-header text-center mb-4">
+    <!-- Inline styles moved to a <style> block with a nonce -->
+    <style nonce="{{ g.csp_nonce }}">
+        .platform-header { text-align: center; margin-bottom: 30px; }
+        .platform-title { font-size: 24px; font-weight: bold; }
+        .upload-container { padding: 15px; background-color: #f8f9fa; border-radius: 5px; }
+        .loader { display: none; margin-top: 15px; text-align: center; }
+        .d-none { display: none; }
+        .text-center { text-align: center; }
+        .btn-sm { padding: 5px 10px; font-size: 14px; }
+    </style>
+
+    <div class="platform-header">
         <img src="https://img.icons8.com/color/96/000000/tiktok.png" alt="TikTok Logo" class="platform-logo">
         <h1 class="platform-title">TikTok Dashboard</h1>
     </div>
@@ -21,7 +32,7 @@
                     <input type="file" name="file" id="fileInput" accept=".json" multiple required class="form-control mb-2">
                     <button type="submit" id="uploadButton" class="btn btn-primary btn-sm">Upload Data</button>
                 </form>
-                <div id="loader" class="loader d-none"></div>
+                <div id="loader" class="loader">Loading...</div>
             </div>
         </div>
 
@@ -33,7 +44,6 @@
                 {{ csv_preview_html | safe }}
             </div>
         </div>
-        {% else %}
         {% endif %}
 
         <!-- Insights Section -->
@@ -51,21 +61,8 @@
         </div>
         {% endif %}
 
-        <!-- Data Table -->
-        {% if has_valid_data %}
-        <div class="card mt-3" id="dataTable">
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-bordered table-hover">
-                        <tbody>
-                            {{ data | safe }}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
         <!-- CSV Download -->
+        {% if csv_file_name %}
         <div class="card mt-3">
             <div class="card-body text-center">
                 <p>Download your processed data in <strong>CSV format</strong>.</p>
@@ -103,5 +100,5 @@
     </div>
 
     <!-- Link to external JS -->
-    <script src="{{ url_for('static', filename='js/tiktok_dashboard.js') }}" nonce="{{ g.csp_nonce }}"></script>
+    <script src="{{ url_for('static', filename='js/tiktok_dashboard.js') }}" nonce="{{ g.csp_nonce }}" defer></script>
 {% endblock %}

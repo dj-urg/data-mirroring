@@ -14,9 +14,6 @@ def enforce_https():
         return apply_security_headers(response)  # Apply security headers even on redirects
     return None
 
-import secrets
-from flask import g
-
 def apply_security_headers(response):
     """Adds essential security headers to every response, ensuring security best practices are applied."""
 
@@ -37,7 +34,7 @@ def apply_security_headers(response):
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
-    response.headers["Permissions-Policy"] = "geolocation 'self'; microphone 'none'"
+    response.headers["Permissions-Policy"] = "geolocation=(self), microphone=()"
     response.headers["X-XSS-Protection"] = "1; mode=block"
     response.headers["Cross-Origin-Opener-Policy"] = "same-origin"
     response.headers["Cross-Origin-Resource-Policy"] = "same-origin"
@@ -82,10 +79,21 @@ def cleanup_temp_files(exception=None):
                     current_app.logger.error(f"Failed to delete file {file_path}: {e}")
 
 def register_cleanup(app):
-    """Attach cleanup function to Flask app startup and request teardown."""
-    with app.app_context():
-        cleanup_old_temp_files()
+    """Registers cleanup functions with Flask request lifecycle."""
+    
+    @app.before_request
+    def initialize_request_cleanup():
+        """Ensure request.files_to_cleanup exists before each request."""
+        g.files_to_cleanup = []
 
-def initialize_cleanup():
-    """Ensure request.files_to_cleanup exists before each request."""
-    g.files_to_cleanup = [] # Store filenames to delete later
+    @app.teardown_request
+    def cleanup_temp_files_request(exception=None):
+        """Delete only files that were marked for deletion in the request context."""
+        cleanup_temp_files(exception)
+
+    @app.teardown_request
+    def cleanup_old_temp_files_request(exception=None):
+        """Deletes old CSV temp files after requests finish."""
+        cleanup_old_temp_files(exception)
+
+    app.logger.info("Cleanup functions registered.")

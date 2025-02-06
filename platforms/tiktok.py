@@ -8,6 +8,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 import seaborn as sns
 import traceback
+import re
 
 # Use 'Agg' backend for headless image generation
 matplotlib.use('Agg')
@@ -138,7 +139,18 @@ def process_tiktok_file(files):
         bump_chart_name = save_image_temp_file(generate_custom_bump_chart(top_sources_per_year))
         heatmap_name = save_image_temp_file(generate_heatmap(activity_counts))
         csv_file_name = save_csv_temp_file(df)
-        csv_preview_html = df.head(5).to_html(classes="table table-striped", index=False)
+        
+        # Generate HTML preview from DataFrame
+        raw_html = df.head(5).to_html(
+            classes="table table-striped text-right",
+            index=False,
+            escape=False,
+            render_links=True,
+            border=0
+        )
+
+        # Remove all inline styles (especially `style="text-align: right;"`)
+        csv_preview_html = re.sub(r'style="[^"]*"', '', raw_html)
 
         return df, csv_file_name, insights, bump_chart_name, heatmap_name, not df.empty, csv_preview_html
 
