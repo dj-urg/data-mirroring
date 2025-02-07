@@ -63,22 +63,25 @@ def requires_authentication(f):
         return f(*args, **kwargs)
     
     return decorated_function
-
-def cleanup_old_temp_files(exception=None):
-    """Deletes CSV files older than 1 hour in the temp directory."""
-    temp_dir = tempfile.gettempdir()
-    one_hour_ago = time.time() - 3600  # 3600 seconds = 1 hour
-
-    for file in glob.glob(os.path.join(temp_dir, "*.csv")):
-        if os.path.getmtime(file) < one_hour_ago:  # Only delete old files
-            try:
-                os.remove(file)
-                current_app.logger.info(f"Deleted old temp file: {file}")
-            except Exception as e:
-                current_app.logger.error(f"Failed to delete old temp file {file}: {e}")
                 
+def cleanup_old_temp_files(exception=None):
+    """Deletes temporary files older than 1 hour in the temp directory."""
+    temp_dir = tempfile.gettempdir()
+    one_hour_ago = time.time() - 3600  # 1 hour ago
+
+    try:
+        for file in os.listdir(temp_dir):
+            file_path = os.path.join(temp_dir, file)
+
+            # Ensure it's a file (not a directory) and is older than 1 hour
+            if os.path.isfile(file_path) and os.path.getmtime(file_path) < one_hour_ago:
+                os.remove(file_path)
+                current_app.logger.info(f"Deleted old temp file: {file_path}")
+    except Exception as e:
+        current_app.logger.error(f"Error during temp file cleanup: {e}")
+
 def cleanup_temp_files(exception=None):
-    """Delete only files that were marked for deletion in the request context."""
+    """Deletes only files that were marked for deletion in the request context."""
     temp_dir = tempfile.gettempdir()
 
     if hasattr(g, "files_to_cleanup"):
@@ -101,12 +104,8 @@ def register_cleanup(app):
 
     @app.teardown_request
     def cleanup_temp_files_request(exception=None):
-        """Delete only files that were marked for deletion in the request context."""
-        cleanup_temp_files(exception)
-
-    @app.teardown_request
-    def cleanup_old_temp_files_request(exception=None):
-        """Deletes old CSV temp files after requests finish."""
-        cleanup_old_temp_files(exception)
+        """Delete only files that were marked for deletion in the request context, and old temp files."""
+        cleanup_temp_files(exception)        # Cleanup files marked for deletion
+        cleanup_old_temp_files(exception)    # Cleanup old temp files (older than 1 hour)
 
     app.logger.info("Cleanup functions registered.")

@@ -1,48 +1,97 @@
 {% extends 'base.html' %}
 
-{% block title %}Data Processing Policy{% endblock %}
+{% block title %}Data Processing & Security Policy{% endblock %}
 
 {% block content %}
-    <div class="container mt-5">
+    <!-- Inline styles moved to a <style> block with a nonce -->
+    <style nonce="{{ g.csp_nonce }}">
+        .platform-header { text-align: center; margin-bottom: 30px; }
+        .platform-title { font-size: 24px; font-weight: bold; }
+        .content-container { padding: 15px; background-color: #ffffff; border-radius: 5px; }
+        .list-unstyled li { margin-bottom: 15px; }
+    </style>
+
+    <div class="container mt-3">
 
         <!-- Page Title -->
-        <h2 class="center">Data Processing Policy</h2>
+        <h2 class="center">Data Processing & Security Policy</h2>
         
-        <p style="line-height: 1.8;">
-            At Data Mirroring, we prioritize the privacy and security of your data. This page outlines how we process your data when you use our service hosted on Heroku.
+        <p class="lead">
+            <strong>Data Mirroring</strong> is build to prioritize the privacy and security of your data. This page outlines the security measures we have implemented to protect your information when using our application hosted on Heroku.
         </p>
 
-        <h2 class="mt-5">Coding for Privacy</h2>
-        <p style="line-height: 1.8;">
-            This app is designed to keep your data secure. When you upload a file, it’s stored in a temporary location that only you can access through your session. 
-            This means that no one else can download or view your files. Once you download your processed data, the file is automatically deleted to keep your information safe. The app also uses secure connections (HTTPS) to protect your data while you're using it, and it only allows specific, safe file types to be uploaded. 
-            In short, your data is handled carefully, and it's deleted after you’ve downloaded it, ensuring your privacy throughout.
-        </p>
+        <!-- Divider -->
+        <hr class="mb-5">
 
-        <h2 class="mt-5">Heroku's Data Storage Policy</h2>
-        <p style="line-height: 1.8;">
-            Our service is hosted on Heroku, a platform that emphasizes data security and privacy. Heroku provides a reliable and scalable cloud platform that complies with industry standards for security. 
-            They ensure that your data is encrypted in transit and at rest, preventing unauthorized access. For more details about Heroku's policies, you can visit their official documentation on 
-            <a href="https://www.heroku.com/policy/security" target="_blank">privacy and compliance</a>.
-        </p>
+        <div class="content-container mt-3">
+            <h3 class="mt-4">Coding for Security</h3>
+            <p>
+                <p>
+                Our application is built with a <strong>privacy-first approach</strong>. 
+                When you upload a file, it is temporarily stored in a <strong>secure location</strong> and only accessible during your session. 
+                Once you terminate your session, close your browser, <strong>your data is automatically deleted</strong>, ensuring no persistent storage of personal data. 
+                We take steps to clean up temporary files both during and after your session to protect your privacy.
+                </p>
 
-        <h2 class="mt-5">GDPR Compliance</h2>
-        <p style="line-height: 1.8;">
-            We are committed to complying with the General Data Protection Regulation (GDPR). Heroku also adheres to GDPR guidelines, ensuring that your data is managed responsibly and ethically. 
-            For more information on how Heroku handles data under GDPR, please refer to their 
-            <a href="https://devcenter.heroku.com/articles/gdpr" target="_blank">GDPR Compliance page</a>.
-        </p>
+                <p>
+                    Our design is fully open-source, please see: <a href="https://github.com/dj-urg/data-mirroring" target="_blank">Data Mirroring Github Page</a>.
+                </p>
+            </p>
+        </div>
 
-        <h2 class="mt-5">Key Takeaways</h2>
-        <ul style="line-height: 1.8;">
-            <li>No data is stored by us after processing.</li>
-            <li>Heroku follows strict data privacy policies.</li>
-            <li>We comply with GDPR regulations to protect your rights.</li>
-        </ul>
+        <!-- Divider -->
+        <hr class="mb-5">
 
-        <p style="line-height: 1.8;">
-            If you have any questions regarding our data processing policy, please do not hesitate to contact us.
+        <div class="content-container mt-3">
+            <h3 class="mt-4">Hosting & Infrastructure Security</h3>
+            <p>
+                Our application is hosted on <strong>Heroku's EU-based servers</strong>, ensuring compliance with European data protection regulations. <strong>Heroku encrypts all data in transit and at rest</strong>, preventing unauthorized access.
+            </p>
+            <p>
+                For more details, please visit: <a href="https://www.heroku.com/policy/security" target="_blank">Heroku's Security Policy</a>.
+            </p>
+            <p>
+                In addition, we use <strong>HTTPS encryption</strong> to secure your data in transit, and we strictly allow only specific, safe file types to minimize security risks. 
+                To enhance security, we have implemented <strong>Expedited WAF (Web Application Firewall)</strong> to protect our application.
+            </p>
+            <p>
+                For more details, please visit: <a href="https://devcenter.heroku.com/articles/expeditedwaf" target="_blank">Heroku's Expedited WAF Add-on</a>.
+            </p>
+        </div>
+
+        <!-- Divider -->
+        <hr class="mb-5">
+
+        <div class="content-container mt-3">
+            <h3 class="mt-4">GDPR Compliance & Data Privacy</h3>
+            <p>
+                We rely on highly trusted and secure third-parties to be fully <strong>GDPR compliant</strong> and ensure:
+            </p>
+            <ul class="list-unstyled mt-3">
+                <li> All data is <strong>processed in the EU</strong>, preventing international data transfers.</li>
+                <li> No <strong>persistent storage</strong> of personal data.</li>
+            </ul>
+            <p>
+                For more details, refer to:
+                <a href="https://devcenter.heroku.com/articles/gdpr" target="_blank">Heroku GDPR Compliance</a>.
+            </p>
+        </div>
+
+        <!-- Divider -->
+        <hr class="mb-5">
+
+        <div class="content-container mt-3">
+            <h3 class="mt-4">Key Takeaways</h3>
+            <ul class="list-unstyled mt-3">
+                <li> Our application is designed with a <strong>privacy-first approach</strong>.</li>
+                <li> We use <strong>Heroku EU-based servers</strong> for compliance with GDPR.</li>
+                <li> Expedited WAF <strong>protects against cyber threats</strong>.</li>
+            </ul>
+        </div>
+
+        <p class="mt-4">
+            If you have any concerns or questions regarding our data processing and security policies, please 
+            contact us at <strong>daniel.jurg@vub.be</strong>.
         </p>
-        
     </div>
 {% endblock %}

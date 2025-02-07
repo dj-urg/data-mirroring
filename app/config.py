@@ -10,6 +10,7 @@ def configure_app(app):
             SESSION_COOKIE_SECURE=True,
             SESSION_COOKIE_HTTPONLY=True,
             SESSION_COOKIE_SAMESITE='Strict',
+            SESSION_PERMANENT=False,
             PERMANENT_SESSION_LIFETIME=timedelta(minutes=30),
             WTF_CSRF_CHECK_REFERRER=True,
             WTF_CSRF_SSL_STRICT=True,
