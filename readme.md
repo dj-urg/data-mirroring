@@ -1,105 +1,87 @@
-# Data Mirror 3.0
+# Data Mirroring
 
-Data Mirror 3.0 is a Flask-based web application that allows users to upload and process data from platforms such as YouTube and Instagram. It generates visual insights and provides downloadable CSV files based on the uploaded JSON data. The app includes a dashboard for each supported platform, enabling users to explore their data visually.
+## Overview
+Welcome to the Data Mirroring research project, developed by Daniel Jurg, Sarah Vis, and Ike Picone at the Vrije Universiteit Brussel as part of the NUSE-Unit. This project aims to facilitate user reflection on social media usage through data conversion and visualization. The application transforms specific files in Data Download Packages (DDPs) provided by social media platforms like TikTok, Instagram, and YouTube into a more human-readable format. By processing a subset of the DDPs, the application offers social media users insights into their data while also ensuring the removal of parts of the data that might contain sensitive information before possible data donation. Uploaded data, CSVs, and generated visualization are processed in-memory or saved as temporary files during your session and deleted after use of the app. While the Data Mirroring application provides initial insights into data, it is designed to export social media data in tabular format for further processing in other tools.
 
 ## Features
-
 - **Platform Selection**: Choose between YouTube, Instagram, and TikTok for data processing.
 - **File Upload**: Upload multiple JSON files for each platform.
 - **Data Processing**: Generates insights and visualizations from uploaded platform data.
 - **Download CSV**: After processing, you can download a CSV file of the results.
 
-## Setup
+## Installation
+**Step 1:** Clone the repository  
+```bash
+git clone https://github.com/dj-urg/data-mirroring.git
+cd data-mirroring
+```
 
-### Prerequisites
+**Step 2:** Install dependencies  
+```bash
+pip install -r requirements.txt
+```
 
-- Python 3.8+
-- Flask and related dependencies
+**Step 3:** Run the application  
+```bash
+python app.py
+```
 
-### Installation
+## Configuration
+Before running the application, set the required environment variables:
 
-1. **Clone the repository**:
+**Linux/macOS (Terminal)**
+```bash
+export SECRET_KEY=test
+export ACCESS_CODE=test
+export FLASK_ENV=development
+```
 
-   ```bash
-   git clone https://github.com/yourusername/data-mirror-3.0.git
-   cd data-mirror-3.0
-   ```
+**Windows (Command Prompt)**
 
-2. **Set up a virtual environment** (optional but recommended):
+```bash
+set SECRET_KEY=test
+set ACCESS_CODE=test
+set FLASK_ENV=development
+```
 
-   ```bash
-   python -m venv .venv
-   source .venv/bin/activate  # On Windows use .venv\Scripts\activate
-   ```
+Or create a .env file and add:
 
-3. **Install the dependencies**:
-
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-4. **Set environment variables** (optional):
-
-   - By default, the app runs in development mode. To switch to production, set the `FLASK_ENV` environment variable:
-
-     ```bash
-     export FLASK_ENV=production
-     ```
-
-5. **Run the application**:
-
-   ```bash
-   python app.py
-   ```
-
-6. **Access the app**:
-
-   Open your browser and navigate to `http://127.0.0.1:5001`.
+```bash
+SECRET_KEY=example
+ACCESS_CODE=example
+FLASK_ENV=development
+```
 
 ## Usage
-
-1. **Landing Page**: 
-   Start at the landing page and select your desired platform (YouTube, Instagram, TikTok) for data processing.
-
-2. **Upload Data**: 
-   Upload JSON files relevant to the platform. Only JSON files are supported for upload.
-
-3. **View Insights**: 
-   Once the data is processed, the dashboard will display insights and visualizations. You can also preview the first five rows of your data in a table.
-
-4. **Download CSV**: 
-   A downloadable CSV file will be generated for the processed data.
-
-## File Structure
-
-```
-data-mirror-3.0/
-│
-├── app.py                     # Main Flask app
-├── platforms/
-│   ├── youtube.py              # YouTube processing logic
-│   ├── instagram.py            # Instagram processing logic
-│   └── tiktok.py               # Placeholder for TikTok processing logic
-├── templates/
-│   ├── homepage.html           # Landing page template
-│   ├── platform_selection.html # Platform selection template
-│   ├── dashboard_youtube.html  # YouTube dashboard template
-│   ├── dashboard_instagram.html# Instagram dashboard template
-│   ├── dashboard_tiktok.html   # TikTok dashboard template
-├── static/                     # Static assets (CSS, JS, images)
-└── README.md                   # This file
+Once you've run the application, simply navigate to the local port:
+```bash
+http://127.0.0.1:5001
 ```
 
-## Error Handling
+## Technologies Used
+- **Language:** Python, CSS, Dockerfile, HTML, JavaScript
+- **Framework:** Flask
+- **Other Tools:** Docker, Github Actions
 
-- Errors encountered during file uploads or data processing are logged, and a relevant error message is displayed on the dashboard.
-- The app gracefully handles shutdown requests using `SIGINT` and `SIGTERM`.
+## Roadmap
+- [ ] Allow Data Conversions
+- [ ] Allow Data Downloads
+- [ ] Allow Data Visualizations
+- [ ] Enhance Visualizations
 
-## Development
+## Security & Best Practices
+- Use environment variables instead of hardcoding secrets.
+- Follow GitHub security updates for dependencies.
 
-- The app uses `CORS` to handle cross-origin requests during development.
-- Logging level is set to `DEBUG` in development mode to help troubleshoot issues.
+## Contributing
+1. Fork the repository
+2. Create a new branch (`git checkout -b feature-branch`)
+3. Commit changes (`git commit -m "Add feature"`)
+4. Push (`git push origin feature-branch`)
+5. Open a Pull Request
 
-### Running Tests
+## License
+MIT License
 
-To be added.
+## Contact
+For questions or issues, contact daniel.jurg@vub.be
