@@ -39,7 +39,8 @@ def apply_security_headers(response):
         f"img-src 'self' https://img.icons8.com https://upload.wikimedia.org data:; "
         f"font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com; "
         f"object-src 'none'; "
-        f"frame-ancestors 'none';"
+        f"frame-ancestors 'none'; "
+        f"base-uri 'self';"
     )
 
     response.headers["X-Frame-Options"] = "DENY"
