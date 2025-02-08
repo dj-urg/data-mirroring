@@ -402,9 +402,54 @@ h1.platform-title, p.platform-description {
     z-index: 10;  /* Make sure the toolbar stays above the graph */
 }
 
-/* Explicitly target the cookie banner */
-#cookie-banner, #cookie-banner h1, #cookie-banner p, #cookie-banner button {
-    font-family: inherit; /* Use the font defined for the body */
-    font-size: 16px; /* Adjust if needed for consistency */
-    line-height: 1.5; /* Ensure good readability */
+/* Ensure global font and text styles apply to the cookie banner */
+#cookie-banner {
+    font-family: 'Roboto', sans-serif; /* Use the global font */
+    font-size: 1.2em; /* Match the paragraph font size */
+    line-height: 1.7; /* Same as your paragraph spacing */
+    text-align: justify; /* Match the paragraph alignment */
+    color: #2C3E50; /* Match the global text color */
+}
+
+#cookie-banner h1 {
+    font-size: 2.5em; /* Adjust to match the global h1 size */
+    font-weight: bold; /* Match the bold weight of h1 */
+    color: #2C3E50; /* Ensure consistency in heading color */
+    text-align: center; /* Center the heading */
+    margin-bottom: 20px; /* Add spacing for visual balance */
+}
+
+#cookie-banner p {
+    font-size: 1.2em; /* Match the paragraph font size */
+    color: #2C3E50; /* Match the paragraph color */
+    line-height: 1.7; /* Ensure consistent spacing */
+    margin-bottom: 20px; /* Add spacing after paragraphs */
+    text-align: justify; /* Match the alignment used in the example */
+}
+
+#cookie-banner a {
+    color: #3498DB; /* Match link color in your example */
+    font-weight: bold; /* Bold links */
+    text-decoration: none; /* Remove underline */
+}
+
+#cookie-banner a:hover {
+    text-decoration: underline; /* Add underline on hover */
+}
+
+#cookie-banner button {
+    font-family: 'Roboto', sans-serif; /* Inherit the global font */
+    font-size: 1.2em; /* Match button font size */
+    background-color: #3498DB; /* Match the global button color */
+    color: white; /* Ensure contrast */
+    padding: 10px 20px; /* Add appropriate padding */
+    border: none; /* Remove border */
+    border-radius: 4px; /* Match the button border-radius */
+    cursor: pointer; /* Use pointer cursor for better UX */
+    margin-top: 10px; /* Add spacing above the button */
+    text-align: center; /* Center the text inside the button */
+}
+
+#cookie-banner button:hover {
+    background-color: #2980B9; /* Match hover color for consistency */
 }
