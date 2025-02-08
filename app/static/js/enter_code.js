@@ -1,4 +1,4 @@
-document.addEventListener("DOMContentLoaded", function() {
+document.addEventListener("DOMContentLoaded", function () {
     // Apply styles to body
     document.body.style.fontFamily = "'Helvetica', Arial, sans-serif";
     document.body.style.backgroundColor = "#f4f4f4"; // Light background
@@ -21,11 +21,11 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 
     // Apply styles to h1
-    const h1 = document.querySelector("h1");
-    if (h1) {
+    const h1s = document.querySelectorAll("h1");
+    h1s.forEach((h1) => {
         h1.style.color = "#2C3E50";
         h1.style.marginBottom = "20px";
-    }
+    });
 
     // Apply styles to input[type="text"]
     const inputText = document.querySelector('input[type="text"]');
@@ -37,9 +37,9 @@ document.addEventListener("DOMContentLoaded", function() {
         inputText.style.borderRadius = "4px";
     }
 
-    // Apply styles to button
-    const button = document.querySelector("button");
-    if (button) {
+    // Apply styles to buttons
+    const buttons = document.querySelectorAll("button");
+    buttons.forEach((button) => {
         button.style.backgroundColor = "#3498DB";
         button.style.color = "white";
         button.style.padding = "10px";
@@ -47,15 +47,15 @@ document.addEventListener("DOMContentLoaded", function() {
         button.style.borderRadius = "4px";
         button.style.cursor = "pointer";
         button.style.width = "100%";
-    }
 
-    // Apply hover effect to button
-    button.addEventListener("mouseover", function() {
-        button.style.backgroundColor = "#2980B9";
-    });
+        // Add hover effect to buttons
+        button.addEventListener("mouseover", function () {
+            button.style.backgroundColor = "#2980B9";
+        });
 
-    button.addEventListener("mouseout", function() {
-        button.style.backgroundColor = "#3498DB";
+        button.addEventListener("mouseout", function () {
+            button.style.backgroundColor = "#3498DB";
+        });
     });
 
     // Apply styles to error message
@@ -64,4 +64,25 @@ document.addEventListener("DOMContentLoaded", function() {
         errorMessage.style.color = "red";
         errorMessage.style.marginTop = "10px";
     }
+
+    // Cookie Banner Logic
+    const cookieBanner = document.getElementById("cookie-banner");
+    const accessCodeSection = document.getElementById("access-code-section");
+    const acceptCookiesButton = document.getElementById("accept-cookies");
+
+    // Check if cookies have already been accepted
+    if (localStorage.getItem("cookiesAccepted")) {
+        cookieBanner.style.display = "none"; // Hide cookie banner
+        accessCodeSection.style.display = "block"; // Show access code section
+    } else {
+        cookieBanner.style.display = "block"; // Show cookie banner
+        accessCodeSection.style.display = "none"; // Hide access code section
+    }
+
+    // When "Accept" is clicked, save consent and show the access code section
+    acceptCookiesButton.addEventListener("click", function () {
+        localStorage.setItem("cookiesAccepted", "true");
+        cookieBanner.style.display = "none"; // Hide cookie banner
+        accessCodeSection.style.display = "block"; // Show access code section
+    });
 });

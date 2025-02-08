@@ -1,14 +1,27 @@
 {% block content %}
     <div class="container">
-        <h1>Enter Access Code</h1>
-        <form method="POST">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"> <!-- CSRF token -->
-            <input type="text" name="code" placeholder="Enter your access code" required>
-            <button type="submit">Submit</button>
-        </form>
-        {% if error %}
-            <p class="error-message">{{ error }}</p>
-        {% endif %}
+        <!-- Cookie Banner -->
+        <div id="cookie-banner">
+            <h1>Cookies Notice</h1>
+            <p>
+                This website uses cookies to enhance user experience. By using our website, you agree to our 
+                <a href="https://github.com/dj-urg/data-mirroring/wiki/Privacy-Policy" target="_blank">Privacy Policy</a>.
+            </p>
+            <button id="accept-cookies">Accept</button>
+        </div>
+
+        <!-- Access Code Form (initially hidden) -->
+        <div id="access-code-section" style="display: none;">
+            <h1>Enter Access Code</h1>
+            <form method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"> <!-- CSRF token -->
+                <input type="text" name="code" placeholder="Enter your access code" required>
+                <button type="submit">Submit</button>
+            </form>
+            {% if error %}
+                <p class="error-message">{{ error }}</p>
+            {% endif %}
+        </div>
     </div>
 
     <!-- Link to external JS file -->
