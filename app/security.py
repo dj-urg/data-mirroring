@@ -34,7 +34,6 @@ def apply_security_headers(response):
 
     response.headers["Content-Security-Policy"] = (
         f"default-src 'self'; "
-        f"script-src 'self' 'nonce-{nonce}' https://cdn.plot.ly; "
         f"style-src 'self' 'nonce-{nonce}' https://cdnjs.cloudflare.com https://fonts.googleapis.com; "
         f"img-src 'self' https://img.icons8.com https://upload.wikimedia.org data:; "
         f"font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com; "
@@ -43,12 +42,10 @@ def apply_security_headers(response):
         f"base-uri 'self';"
     )
 
-    response.headers["X-Frame-Options"] = "DENY"
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains; preload"
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
     response.headers["Permissions-Policy"] = "geolocation=(self), microphone=()"
-    response.headers["X-XSS-Protection"] = "1; mode=block"
     response.headers["Cross-Origin-Opener-Policy"] = "same-origin"
     response.headers["Cross-Origin-Resource-Policy"] = "same-origin"
 
