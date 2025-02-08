@@ -92,3 +92,10 @@ button:hover {
 #cookie-banner button:hover {
     background-color: #2980B9;
 }
+
+/* Explicitly target the cookie banner */
+#cookie-banner, #cookie-banner h1, #cookie-banner p, #cookie-banner button {
+    font-family: inherit; /* Use the font defined for the body */
+    font-size: 16px; /* Adjust if needed for consistency */
+    line-height: 1.5; /* Ensure good readability */
+}

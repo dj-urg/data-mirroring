@@ -401,3 +401,10 @@ h1.platform-title, p.platform-description {
     right: 0;
     z-index: 10;  /* Make sure the toolbar stays above the graph */
 }
+
+/* Explicitly target the cookie banner */
+#cookie-banner, #cookie-banner h1, #cookie-banner p, #cookie-banner button {
+    font-family: inherit; /* Use the font defined for the body */
+    font-size: 16px; /* Adjust if needed for consistency */
+    line-height: 1.5; /* Ensure good readability */
+}
