@@ -58,7 +58,8 @@ def apply_security_headers(response):
     response.headers["X-Frame-Options"] = "DENY"
 
     # Strict-Transport-Security
-    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains; preload"
+    if request.is_secure:  # Apply HSTS only for HTTPS
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains; preload"
 
     # Referrer-Policy
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
