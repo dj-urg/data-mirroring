@@ -28,7 +28,7 @@
                 </label>
             </div>
             <div class="center">
-                <input type="button" value="Continue" onclick="goToDashboard()" class="button-link">
+                <input type="button" value="Continue" id="continueButton" class="button-link">
             </div>
             <p id="platformDescription" class="description"></p>
         </form>
@@ -36,7 +36,7 @@
 
     <!-- Link to external JS file -->
     <script src="{{ url_for('static', filename='js/platform-selection.js') }}" 
-        integrity="sha384-x6PptG+sfQtq9fThVVzn54y7N5oouKHK7hNTh1dSDR2e+KDn5WWe1l7cPrjOkvU6"
+        integrity="sha384-QO96Ox3FuAHKq9GCuSzm6U2LaTSyTa+qfp1d+2GLSHq7ta2OIN7ZLYAOUT3LXa+0"
         crossorigin="anonymous"
         defer></script>
 {% endblock %}

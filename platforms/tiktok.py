@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import traceback
 import re
+from app.utils.file_utils import get_user_temp_dir
 
 # Use 'Agg' backend for headless image generation
 matplotlib.use('Agg')
@@ -23,21 +24,25 @@ else:
 
 logger = logging.getLogger()
 
-# Helper function to save images as a temporary file
 def save_image_temp_file(fig):
-    """Saves an image as a temporary file and returns the filename."""
-    with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmp_file:
-        fig.savefig(tmp_file.name, bbox_inches='tight')
-        plt.close(fig)  # Free up memory
-        return os.path.basename(tmp_file.name)
+    """Saves an image in the user's temporary directory and returns the filename."""
+    temp_dir = get_user_temp_dir()
+    unique_filename = f"{uuid.uuid4()}.png"
+    temp_file_path = os.path.join(temp_dir, unique_filename)
 
-# Helper function to save CSV as a temporary file
+    fig.savefig(temp_file_path, bbox_inches='tight')
+    plt.close(fig)  # Free up memory
+    return unique_filename  # Return just the filename
+
 def save_csv_temp_file(df):
-    """Saves CSV data as a temporary file and returns the filename."""
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".csv") as tmp_file:
-        df.to_csv(tmp_file.name, index=False)
-        os.chmod(tmp_file.name, 0o600)  # Secure file permissions
-        return os.path.basename(tmp_file.name)
+    """Saves CSV data in the user's temporary directory and returns the filename."""
+    temp_dir = get_user_temp_dir()
+    unique_filename = f"{uuid.uuid4()}.csv"
+    temp_file_path = os.path.join(temp_dir, unique_filename)
+
+    df.to_csv(temp_file_path, index=False)
+    os.chmod(temp_file_path, 0o600)  # Secure file permissions
+    return unique_filename  # Return just the filename
 
 # Generate a bump chart similar to YouTube's
 def generate_custom_bump_chart(source_ranking):

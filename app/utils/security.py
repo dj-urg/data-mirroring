@@ -2,10 +2,10 @@ from flask import session, redirect, url_for, request, current_app, make_respons
 from functools import wraps
 import os
 import base64
-import tempfile
 import time
 import secrets
 from urllib.parse import urlparse, urlunparse
+from app.utils.file_utils import get_user_temp_dir
 
 def enforce_https():
     """Redirects HTTP to HTTPS only in production."""
@@ -47,7 +47,6 @@ def apply_security_headers(response):
         f"frame-ancestors 'none'; "  # Prevent embedding your site in an iframe
         f"base-uri 'self'; "  # Restrict the base URI to your site only
         f"form-action 'self'; "  # Restrict forms to submit only to your own domain
-        f"require-trusted-types-for 'script';"  # Enable Trusted Types for script sinks
         f"connect-src 'self' https://data-mirror.org https://data-mirror-72f6ffc87917.herokuapp.com;"  # Allow connections to both domains
     )
 
@@ -94,7 +93,7 @@ def requires_authentication(f):
                 
 def cleanup_old_temp_files(exception=None):
     """Deletes temporary files older than 1 hour in the temp directory."""
-    temp_dir = tempfile.gettempdir()
+    temp_dir = get_user_temp_dir()
     one_hour_ago = time.time() - 3600  # 1 hour ago
 
     try:
@@ -110,7 +109,7 @@ def cleanup_old_temp_files(exception=None):
 
 def cleanup_temp_files(exception=None):
     """Deletes only files that were marked for deletion in the request context."""
-    temp_dir = tempfile.gettempdir()
+    temp_dir = get_user_temp_dir()
 
     if hasattr(g, "files_to_cleanup"):
         for filename in g.files_to_cleanup:

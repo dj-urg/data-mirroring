@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, request, send_file, current_app, session, redirect, url_for, abort
-from app.security import requires_authentication, cleanup_old_temp_files, enforce_https, apply_security_headers, cleanup_temp_files
-from app.extensions import limiter
+from app.utils.security import requires_authentication, cleanup_old_temp_files, enforce_https, apply_security_headers, cleanup_temp_files
+from app.utils.extensions import limiter
+from app.utils.file_utils import get_user_temp_dir
 from platforms.youtube import process_youtube_file
 from platforms.instagram import process_instagram_file
 from platforms.tiktok import process_tiktok_file
@@ -19,7 +20,7 @@ routes_bp.before_request(enforce_https)
 routes_bp.after_request(apply_security_headers)  # Apply security headers to responses
 routes_bp.teardown_request(cleanup_old_temp_files)  # Runs after each request
 
-@limiter.limit("10 per minute")
+@limiter.limit("10 per minute", key_func=lambda: session.get('user_id', request.remote_addr))
 
 @routes_bp.route('/')
 @requires_authentication
@@ -145,7 +146,7 @@ def download_image(filename):
     safe_filename = secure_filename(filename)
 
     # Define temp directory
-    temp_dir = tempfile.gettempdir()
+    temp_dir = get_user_temp_dir()
     temp_file_path = os.path.join(temp_dir, safe_filename)
 
     # Normalize path to prevent path traversal
@@ -153,7 +154,7 @@ def download_image(filename):
 
     # Ensure the file is only served from the temp directory
     if not temp_file_path.startswith(temp_dir):
-        current_app.logger.warning(f"Blocked attempt to access: {filename}")
+        current_app.logger.warning(f"Blocked attempt to access an invalid file")
         abort(400, "Invalid file request")
 
     if os.path.exists(temp_file_path):
@@ -174,7 +175,7 @@ def download_image(filename):
             current_app.logger.error(f"Error serving file {temp_file_path}: {e}")
             abort(500, "Internal server error")
     else:
-        current_app.logger.warning(f"File not found: {temp_file_path}")
+        current_app.logger.warning(f"Attempted access to a non-existent file.")
         abort(404, "File not found")
 
 @routes_bp.route('/download_csv/<filename>', methods=['GET'])
@@ -185,10 +186,10 @@ def download_csv(filename):
     safe_filename = secure_filename(filename)
 
     # Define temp directory
-    temp_dir = tempfile.gettempdir()
+    temp_dir = get_user_temp_dir()
     temp_file_path = os.path.join(temp_dir, safe_filename)
 
-    # Normalize the path to prevent path traversal
+    # Normalize path to prevent path traversal
     temp_file_path = os.path.normpath(temp_file_path)
 
     # Ensure the file is only accessed from the temp directory

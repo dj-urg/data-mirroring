@@ -1,26 +1,29 @@
-// Create a Trusted Types policy using DOMPurify
-const ttPolicy = window.trustedTypes.createPolicy('default', {
-    createHTML: (input) => DOMPurify.sanitize(input)
-});
+// Create a Trusted Types policy using DOMPurify if supported
+let ttPolicy = null;
+if (window.trustedTypes) {
+    ttPolicy = window.trustedTypes.createPolicy('default', {
+        createHTML: (input) => DOMPurify.sanitize(input)
+    });
+} else {
+    console.warn("Trusted Types are not supported in this browser. Falling back to direct DOMPurify usage.");
+}
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     // Add event listeners for the radio buttons
-    document.getElementById('youtubeLabel').addEventListener('click', function() {
+    document.getElementById('youtubeLabel').addEventListener('click', function () {
         showDescription('youtube');
     });
 
-    document.getElementById('instagramLabel').addEventListener('click', function() {
+    document.getElementById('instagramLabel').addEventListener('click', function () {
         showDescription('instagram');
     });
 
-    document.getElementById('tiktokLabel').addEventListener('click', function() {
+    document.getElementById('tiktokLabel').addEventListener('click', function () {
         showDescription('tiktok');
     });
 
     // Add event listener for the "Continue" button
-    document.querySelector('input[type="button"]').addEventListener('click', function() {
-        goToDashboard();
-    });
+    document.getElementById('continueButton').addEventListener('click', goToDashboard);
 });
 
 function showDescription(platform) {
@@ -31,7 +34,14 @@ function showDescription(platform) {
     };
 
     const platformDescription = document.getElementById("platformDescription");
-    platformDescription.innerHTML = ttPolicy.createHTML(descriptions[platform]); // Use TrustedHTML
+
+    // Use Trusted Types if available, otherwise fallback to DOMPurify
+    if (ttPolicy) {
+        platformDescription.innerHTML = ttPolicy.createHTML(descriptions[platform]);
+    } else {
+        platformDescription.innerHTML = DOMPurify.sanitize(descriptions[platform]);
+    }
+
     platformDescription.style.display = "block";
 
     // Reset styles

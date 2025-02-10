@@ -6,16 +6,20 @@ import logging
 import secrets
 import base64
 from dotenv import load_dotenv
-from app.extensions import limiter
-from app.logging_config import setup_logging
-from app.security import enforce_https, apply_security_headers, register_cleanup
+from app.utils.extensions import limiter
+from app.utils.logging_config import setup_logging
+from app.utils.security import enforce_https, apply_security_headers, register_cleanup
+from app.utils.file_utils import get_user_temp_dir
 
 load_dotenv()
 logger = logging.getLogger(__name__)
 
 def create_app():
     app = Flask(__name__, template_folder="../templates")
-    app.secret_key = os.getenv('SECRET_KEY')
+    secret_key = os.getenv('SECRET_KEY')
+    if not secret_key:
+        raise ValueError("SECRET_KEY is not set. Please set it in your .env file.")
+    app.secret_key = secret_key
 
     @app.before_request
     def generate_nonce():
@@ -33,7 +37,7 @@ def create_app():
         return apply_security_headers(response)
 
     # Load configurations
-    from app.config import configure_app
+    from app.utils.config import configure_app
     configure_app(app)
 
     # Set up logging AFTER the app is created

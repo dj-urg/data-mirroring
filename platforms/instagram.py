@@ -8,7 +8,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 import seaborn as sns
 from matplotlib.lines import Line2D
-from flask import render_template
+from app.utils.file_utils import get_user_temp_dir
 
 # Use 'Agg' backend to avoid GUI issues
 matplotlib.use('Agg')
@@ -191,9 +191,11 @@ def process_instagram_file(files):
 
         has_valid_data = not df.empty  # This will be True if df is not empty
 
-        # Save CSV to a temporary file
+        # Save CSV to a user-specific temporary file
+        temp_dir = get_user_temp_dir()  # Get session-specific temp directory
         unique_filename = f"{uuid.uuid4()}.csv"
-        temp_file_path = os.path.join(tempfile.gettempdir(), unique_filename)
+        temp_file_path = os.path.join(temp_dir, unique_filename)
+
         df.to_csv(temp_file_path, index=False)
 
         # Return

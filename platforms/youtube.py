@@ -3,15 +3,13 @@ import pandas as pd
 import os
 import tempfile
 import uuid
-import shutil
 import logging
 import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 import seaborn as sns
-import io
-from flask import session
 import re
+from app.utils.file_utils import get_user_temp_dir
 
 # Use 'Agg' backend to avoid GUI issues
 matplotlib.use('Agg')
@@ -195,9 +193,11 @@ def process_youtube_file(files):
         # Generate heatmap image
         heatmap_name = save_image_temp_file(generate_heatmap(day_counts))
 
-        # Generate a unique filename using UUID and save CSV to temporary file
+        # Save CSV to a user-specific temporary file
+        temp_dir = get_user_temp_dir()  # Get session-specific temp directory
         unique_filename = f"{uuid.uuid4()}.csv"
-        temp_file_path = os.path.join(tempfile.gettempdir(), unique_filename)
+        temp_file_path = os.path.join(temp_dir, unique_filename)
+
         df.to_csv(temp_file_path, index=False)
         
                 # Generate HTML preview from DataFrame
