@@ -40,7 +40,7 @@ def apply_security_headers(response):
     response.headers["Content-Security-Policy"] = (
         f"default-src 'none'; "  # Deny all by default
         f"script-src 'self' 'nonce-{nonce}' https://cdnjs.cloudflare.com; "  # Allow scripts with nonce and from trusted CDN
-        f"style-src 'self' 'nonce-{nonce}' https://cdnjs.cloudflare.com https://fonts.googleapis.com; "  # Allow styles with nonce and from trusted CDN
+        f"style-src 'self' https://cdnjs.cloudflare.com https://fonts.googleapis.com; "  # Allow styles from your app and trusted CDNs
         f"img-src 'self' https://img.icons8.com https://upload.wikimedia.org data:; "  # Allow trusted image sources
         f"font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com; "  # Allow trusted font sources
         f"object-src 'none'; "  # Disallow plugins like Flash or Java applets

@@ -5,9 +5,6 @@
 {% block content %}
     <div class="container">
         <h2 class="center">Select a Platform</h2>
-        <style nonce="{{ g.csp_nonce }}">
-            .center { margin-bottom: 30px; }
-        </style>
         <p class="center">        
             Select the platform from which you want to visualize and convert your data. Once you've made a selection, 
             a link to the data request page will appear. The application will process your Data Download Package (DDP), 
@@ -39,8 +36,7 @@
 
     <!-- Link to external JS file -->
     <script src="{{ url_for('static', filename='js/platform-selection.js') }}" 
-        integrity="sha384-AF6W4d6r1elgBT0QZlQ2P94m8yu2T/nQ0t8R0dzRW8RbIlhlWgTZg89ko/+5665k" 
-        crossorigin="anonymous" 
-        nonce="{{ g.csp_nonce }}" 
+        integrity="sha384-x6PptG+sfQtq9fThVVzn54y7N5oouKHK7hNTh1dSDR2e+KDn5WWe1l7cPrjOkvU6"
+        crossorigin="anonymous"
         defer></script>
 {% endblock %}

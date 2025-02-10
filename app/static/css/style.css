@@ -453,3 +453,7 @@ h1.platform-title, p.platform-description {
 #cookie-banner button:hover {
     background-color: #2980B9; /* Match hover color for consistency */
 }
+
+.center {
+    margin-bottom: 30px;
+}

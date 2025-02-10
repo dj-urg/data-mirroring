@@ -6,17 +6,11 @@
     <meta name="description" content="Data Mirroring Dashboard - A tool for analyzing and visualizing social media data.">
     
     <title>{% block title %}Data Mirroring Dashboard{% endblock %}</title>
-    
-    <!-- Optimize Font Loading -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
-    <!-- Updated Google Fonts with SRI -->
+    <!-- Link to local Roboto stylesheet -->
     <link
-        href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap"
-        rel="stylesheet"
-        integrity="sha384-32Ok8IFmI6v6rwoHzUw5NvrjXzThZK8XK6w6GXUjs4BKc8hRsyov1RjcMhQzmJ0S"
-        crossorigin="anonymous">
+        href="{{ url_for('static', filename='fonts/roboto.css') }}"
+        rel="stylesheet">
 
     <!-- Updated Font Awesome with SRI -->
     <link
@@ -24,6 +18,19 @@
         rel="stylesheet"
         integrity="sha384-5e2ESR8Ycmos6g3gAKr1Jvwye8sW4U1u/cAKulfVJnkakCcMqhOudbtPnvJ+nbv7"
         crossorigin="anonymous">
+
+    <!-- Link to the main local style.css -->
+    <link
+        href="{{ url_for('static', filename='css/style.css') }}"
+        rel="stylesheet">
+
+    <!-- Include DOMPurify from a trusted CDN -->
+    <script
+    src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/2.4.0/purify.min.js"
+    integrity="sha384-Tsl3d5pUAO7a13enIvSsL3O0/95nsthPJiPto5NtLuY8w3+LbZOpr3Fl2MNmrh1E"
+    crossorigin="anonymous"
+    defer></script>
+
 </head>
 <body>
 
