@@ -67,18 +67,27 @@ def set_custom_style():
 
 # Helper function to save images as temporary files
 def save_image_temp_file(fig):
-    """Saves an image as a temporary file and returns the filename."""
-    with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmp_file:
-        fig.savefig(tmp_file.name, bbox_inches='tight')
-        tmp_file.close()
-        return os.path.basename(tmp_file.name)
+    """Saves an image in the user's temporary directory and returns the filename."""
+    temp_dir = get_user_temp_dir()  # Get session-specific temp directory
+    unique_filename = f"{uuid.uuid4()}.png"  # Generate a unique filename
+    temp_file_path = os.path.join(temp_dir, unique_filename)
+
+    fig.savefig(temp_file_path, bbox_inches='tight')  # Save the image in the session temp directory
+    plt.close(fig)  # Free up memory
+    logger.debug(f"Image saved at {temp_file_path}")  # Log the saved path for debugging
+    return unique_filename  # Return just the filename
 
 # Helper function to save CSV as a temporary file
 def save_csv_temp_file(df):
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".csv") as tmp_file:
-        df.to_csv(tmp_file.name, index=False)
-        os.chmod(tmp_file.name, 0o600)  # Secure file permissions
-        return os.path.basename(tmp_file.name)  # Return filename only
+    """Saves CSV data in the user's temporary directory and returns the filename."""
+    temp_dir = get_user_temp_dir()  # Get session-specific temp directory
+    unique_filename = f"{uuid.uuid4()}.csv"  # Generate a unique filename
+    temp_file_path = os.path.join(temp_dir, unique_filename)
+
+    df.to_csv(temp_file_path, index=False)  # Save the CSV in the session temp directory
+    os.chmod(temp_file_path, 0o600)  # Secure file permissions
+    logger.debug(f"CSV saved at {temp_file_path}")  # Log the saved path for debugging
+    return unique_filename  # Return just the filename
 
 def generate_custom_bump_chart(channel_ranking):
     # Set custom style

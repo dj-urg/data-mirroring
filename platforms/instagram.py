@@ -36,10 +36,15 @@ def format_ticks(ax, years):
     ax.tick_params("x", labeltop=True, bottom=False, labelsize=12, pad=4)
 
 def save_image_temp_file(fig):
-    """Saves an image as a temporary file and returns the filename."""
-    with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmp_file:
-        fig.savefig(tmp_file.name, bbox_inches='tight')
-        return os.path.basename(tmp_file.name)
+    """Saves an image in the user's temporary directory and returns the filename."""
+    temp_dir = get_user_temp_dir()  # Get session-specific temp directory
+    unique_filename = f"{uuid.uuid4()}.png"  # Generate a unique filename
+    temp_file_path = os.path.join(temp_dir, unique_filename)
+
+    fig.savefig(temp_file_path, bbox_inches='tight')  # Save the image in the session temp directory
+    plt.close(fig)  # Free up memory
+    logger.debug(f"Image saved at {temp_file_path}")  # Log the saved path for debugging
+    return unique_filename  # Return just the filename
 
 def generate_custom_bump_chart(df):
     """Generates a bump chart for Instagram engagement per year."""
@@ -182,9 +187,10 @@ def process_instagram_file(files):
         # Generate bump chart and heatmap
         bump_chart_fig = generate_custom_bump_chart(top_categories_per_year)  # Get the figure
         bump_chart_name = save_image_temp_file(bump_chart_fig)  # Save the figure as a file
-        
+
         heatmap_fig = generate_heatmap(df)  # Generate the heatmap figure
         heatmap_name = save_image_temp_file(heatmap_fig)  # Save the heatmap as a file
+
         
         # Generate a preview of the CSV (first 5 rows) and convert to CSV string
         csv_preview_html = df.head(5).to_html(classes="table table-striped", index=False)
