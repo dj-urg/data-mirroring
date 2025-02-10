@@ -38,5 +38,9 @@
     </div>
 
     <!-- Link to external JS file -->
-    <script src="{{ url_for('static', filename='js/platform-selection.js') }}" nonce="{{ g.csp_nonce }}"></script>
+    <script src="{{ url_for('static', filename='js/platform-selection.js') }}" 
+        integrity="sha384-AF6W4d6r1elgBT0QZlQ2P94m8yu2T/nQ0t8R0dzRW8RbIlhlWgTZg89ko/+5665k" 
+        crossorigin="anonymous" 
+        nonce="{{ g.csp_nonce }}" 
+        defer></script>
 {% endblock %}

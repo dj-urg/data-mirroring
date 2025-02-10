@@ -100,5 +100,9 @@
     </div>
 
     <!-- Link to external JS -->
-    <script src="{{ url_for('static', filename='js/tiktok_dashboard.js') }}" nonce="{{ g.csp_nonce }}" defer></script>
+    <script src="{{ url_for('static', filename='js/tiktok_dashboard.js') }}" 
+        integrity="sha384-nEbft6ty8Nbjc6mzxOwtNP0OyhVmhR0wGRUSZxiMdE5umT4LogE6iyyD4e83hWhj" 
+        crossorigin="anonymous" 
+        nonce="{{ g.csp_nonce }}" 
+        defer></script>
 {% endblock %}

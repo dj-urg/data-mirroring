@@ -102,5 +102,9 @@
     </div>
 
     <!-- Link to external JS -->
-    <script src="{{ url_for('static', filename='js/youtube_dashboard.js') }}" nonce="{{ g.csp_nonce }}"></script>
+    <script src="{{ url_for('static', filename='js/youtube_dashboard.js') }}" 
+        integrity="sha384-G5AkAkpnHeR7EernINk1iwCGejgWbq7eWeIwq7bDl4GJfz8IqABh0oG8mtCsdSmz" 
+        crossorigin="anonymous" 
+        nonce="{{ g.csp_nonce }}" 
+        defer></script>
 {% endblock %}

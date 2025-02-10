@@ -96,5 +96,9 @@
     </div>
 
     <!-- Link to external JS -->
-    <script src="{{ url_for('static', filename='js/instagram_dashboard.js') }}" nonce="{{ g.csp_nonce }}"></script>
+    <script src="{{ url_for('static', filename='js/instagram_dashboard.js') }}" 
+        integrity="sha384-/rceFwtEMOvCD5IXlaJ/tFKcrRDu2XqONmtma+k49neaxooLLnL2ch4rdovhmML/" 
+        crossorigin="anonymous" 
+        nonce="{{ g.csp_nonce }}" 
+        defer></script>
 {% endblock %}

@@ -26,5 +26,9 @@
     </div>
 
     <!-- Link to external JS file -->
-    <script src="{{ url_for('static', filename='js/enter_code.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/enter_code.js') }}" 
+        integrity="sha384-cuAONuaZ9+vztYcqtQwcZc9265zq651FQWgyOxHeQQqRfX6I4Pt2QKRFM57x36Ka" 
+        crossorigin="anonymous"
+        nonce="{{ g.csp_nonce }}"  
+        defer></script>
 {% endblock %}
