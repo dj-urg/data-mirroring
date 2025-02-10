@@ -38,7 +38,7 @@ def apply_security_headers(response):
 
     # Content-Security-Policy
     response.headers["Content-Security-Policy"] = (
-        f"default-src 'self'; "
+        f"default-src 'none'; "
         f"script-src 'self' 'nonce-{nonce}' https://cdnjs.cloudflare.com; "
         f"style-src 'self' 'nonce-{nonce}' https://cdnjs.cloudflare.com https://fonts.googleapis.com; "
         f"img-src 'self' https://img.icons8.com https://upload.wikimedia.org data:; "
