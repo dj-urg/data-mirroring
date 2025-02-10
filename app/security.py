@@ -38,15 +38,16 @@ def apply_security_headers(response):
 
     # Content-Security-Policy
     response.headers["Content-Security-Policy"] = (
-        f"default-src 'none'; "
-        f"script-src 'self' 'nonce-{nonce}' https://cdnjs.cloudflare.com; "
-        f"style-src 'self' 'nonce-{nonce}' https://cdnjs.cloudflare.com https://fonts.googleapis.com; "
-        f"img-src 'self' https://img.icons8.com https://upload.wikimedia.org data:; "
-        f"font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com; "
-        f"object-src 'none'; "
-        f"frame-ancestors 'none'; "
-        f"base-uri 'self';"
-        f"require-trusted-types-for 'script';"
+        f"default-src 'none'; "  # Deny all by default
+        f"script-src 'self' 'nonce-{nonce}' https://cdnjs.cloudflare.com; "  # Allow scripts with nonce and from trusted CDN
+        f"style-src 'self' 'nonce-{nonce}' https://cdnjs.cloudflare.com https://fonts.googleapis.com; "  # Allow styles with nonce and from trusted CDN
+        f"img-src 'self' https://img.icons8.com https://upload.wikimedia.org data:; "  # Allow trusted image sources
+        f"font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com; "  # Allow trusted font sources
+        f"object-src 'none'; "  # Disallow plugins like Flash or Java applets
+        f"frame-ancestors 'none'; "  # Prevent embedding your site in an iframe
+        f"base-uri 'self'; "  # Restrict the base URI to your site only
+        f"form-action 'self'; "  # Restrict forms to submit only to your own domain
+        f"require-trusted-types-for 'script';"  # Enable Trusted Types for script sinks
     )
 
     # X-Content-Type-Options
