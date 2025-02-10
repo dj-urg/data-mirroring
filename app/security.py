@@ -1,7 +1,7 @@
 from flask import session, redirect, url_for, request, current_app, make_response, g
 from functools import wraps
 import os
-import glob
+import base64
 import tempfile
 import time
 import secrets
@@ -26,14 +26,20 @@ def enforce_https():
         # Block redirects to untrusted domains
         return "Invalid redirect", 400
 
+import base64
+import secrets
+from flask import g, request
+
 def apply_security_headers(response):
     """Adds essential security headers to every response, ensuring security best practices are applied."""
 
     # Generate a CSP nonce dynamically per request
-    nonce = g.get("csp_nonce", secrets.token_urlsafe(16))
+    nonce = g.csp_nonce = base64.b64encode(secrets.token_bytes(16)).decode('utf-8')
 
+    # Content-Security-Policy
     response.headers["Content-Security-Policy"] = (
         f"default-src 'self'; "
+        f"script-src 'self' 'nonce-{nonce}' https://cdnjs.cloudflare.com; "
         f"style-src 'self' 'nonce-{nonce}' https://cdnjs.cloudflare.com https://fonts.googleapis.com; "
         f"img-src 'self' https://img.icons8.com https://upload.wikimedia.org data:; "
         f"font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com; "
@@ -43,13 +49,33 @@ def apply_security_headers(response):
         f"require-trusted-types-for 'script';"
     )
 
+    # X-Content-Type-Options
     response.headers["X-Content-Type-Options"] = "nosniff"
+
+    # X-Frame-Options
     response.headers["X-Frame-Options"] = "DENY"
+
+    # Strict-Transport-Security
     response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains; preload"
+
+    # Referrer-Policy
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+
+    # Permissions-Policy
     response.headers["Permissions-Policy"] = "geolocation=(self), microphone=()"
+
+    # Cross-Origin-Opener-Policy
     response.headers["Cross-Origin-Opener-Policy"] = "same-origin"
+
+    # Cross-Origin-Resource-Policy
     response.headers["Cross-Origin-Resource-Policy"] = "same-origin"
+
+    # Add CORS Header to Allow Specific Origins
+    allowed_origins = ["https://data-mirror.org", "https://data-mirror-72f6ffc87917.herokuapp.com"]
+    origin = request.headers.get("Origin")
+    if origin in allowed_origins:
+        response.headers["Access-Control-Allow-Origin"] = origin
+        response.headers["Vary"] = "Origin"  # Required for dynamic Access-Control-Allow-Origin
 
     return response
 

@@ -4,6 +4,7 @@ from flask_wtf.csrf import CSRFProtect
 import os
 import logging
 import secrets
+import base64
 from dotenv import load_dotenv
 from app.extensions import limiter
 from app.logging_config import setup_logging
@@ -18,8 +19,8 @@ def create_app():
 
     @app.before_request
     def generate_nonce():
-        """Generate a nonce for CSP before rendering templates."""
-        g.csp_nonce = secrets.token_urlsafe(16)
+        """Generate a Base64-compliant nonce for CSP before rendering templates."""
+        g.csp_nonce = base64.b64encode(secrets.token_bytes(16)).decode('utf-8')
 
     @app.before_request
     def enforce_https_request():
