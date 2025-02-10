@@ -48,6 +48,7 @@ def apply_security_headers(response):
         f"base-uri 'self'; "  # Restrict the base URI to your site only
         f"form-action 'self'; "  # Restrict forms to submit only to your own domain
         f"require-trusted-types-for 'script';"  # Enable Trusted Types for script sinks
+        f"connect-src 'self' https://data-mirror.org https://data-mirror-72f6ffc87917.herokuapp.com;"  # Allow connections to both domains
     )
 
     # X-Content-Type-Options
