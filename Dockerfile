@@ -13,19 +13,19 @@ COPY requirements.txt /app/
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Create writable directories and set secure permissions
-RUN mkdir -p /app/data /tmp/user_uploads && \
+RUN mkdir -p /app/data /tmp/user_uploads /app/src && \
     adduser --disabled-password --gecos "" appuser && \
-    chown -R appuser:appuser /app /app/data /tmp/user_uploads && \
-    chmod -R 700 /app/data /tmp/user_uploads
+    chown -R appuser:appuser /app /app/src /tmp/user_uploads && \
+    chmod -R 700 /app/src /tmp/user_uploads
 
 # Copy the entire project into the container
 COPY . /app
 
-# Expose the port that Flask will run on
+# Expose port 5001 for local development
 EXPOSE 5001
 
-# Set environment variables for Flask (should ideally be passed via docker-compose.yml or .env)
-ENV FLASK_APP=app.py \
+# Set environment variables for Flask (default to local port)
+ENV FLASK_APP=src/app.py \
     FLASK_RUN_HOST=0.0.0.0 \
     FLASK_RUN_PORT=5001 \
     FLASK_ENV=production
@@ -33,8 +33,9 @@ ENV FLASK_APP=app.py \
 # Use a non-root user for better security
 USER appuser
 
-# Command to run the application
-CMD ["gunicorn", "--bind", "0.0.0.0:5001", "app:app"]
+# Command to run the application, using $PORT for Heroku
+CMD ["gunicorn", "--bind", "0.0.0.0:$PORT", "src.app:create_app()"]
 
 # (Optional) Health check to ensure the app is running properly
-HEALTHCHECK CMD curl --fail http://localhost:5001/ || exit 1
+# Uncomment if curl is installed
+# HEALTHCHECK CMD curl --fail http://localhost:5001/ || exit 1
