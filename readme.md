@@ -81,7 +81,7 @@ http://127.0.0.1:5001
 5. Open a Pull Request
 
 ## License
-MIT License
+MIT License 
 
 ## Contact
 For questions or issues, contact daniel.jurg@vub.be
