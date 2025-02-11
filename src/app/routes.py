@@ -2,9 +2,9 @@ from flask import Blueprint, render_template, request, send_file, current_app, s
 from app.utils.security import requires_authentication, cleanup_old_temp_files, enforce_https, apply_security_headers, cleanup_temp_files
 from app.utils.extensions import limiter
 from app.utils.file_utils import get_user_temp_dir
-from platforms.youtube import process_youtube_file
-from platforms.instagram import process_instagram_file
-from platforms.tiktok import process_tiktok_file
+from app.handlers.youtube import process_youtube_file
+from app.handlers.instagram import process_instagram_file
+from app.handlers.tiktok import process_tiktok_file
 import os
 import tempfile
 from werkzeug.utils import secure_filename

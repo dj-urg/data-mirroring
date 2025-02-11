@@ -15,7 +15,12 @@ load_dotenv()
 logger = logging.getLogger(__name__)
 
 def create_app():
-    app = Flask(__name__, template_folder="../templates")
+    # Dynamically locate the templates folder
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    templates_dir = os.path.join(current_dir, "templates")
+    app = Flask(__name__, template_folder=templates_dir)
+
+    # Set secret key from environment variables
     secret_key = os.getenv('SECRET_KEY')
     if not secret_key:
         raise ValueError("SECRET_KEY is not set. Please set it in your .env file.")
