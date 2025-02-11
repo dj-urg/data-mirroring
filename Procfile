@@ -1,1 +1,1 @@
-web: gunicorn 'src.app:create_app()'
+web: PYTHONPATH=src gunicorn 'app:create_app()'
