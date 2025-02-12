@@ -99,7 +99,7 @@ h2 {
 /* ========================= */
 .container {
     max-width: 850px;
-    margin: auto;
+    margin: 20px auto;
     padding: 40px;
     background-color: #FFFFFF;
     border-radius: 12px;
@@ -109,14 +109,6 @@ h2 {
 /* ========================= */
 /* Uploading                 */
 /* ========================= */
-
-/* Upload Container Styling */
-.upload-container {
-    background-color: #fff; /* White background */
-    text-align: center; /* Center align the content */
-    max-width: 500px; /* Set a max-width for better layout */
-    margin: 0 auto; /* Center horizontally */
-}
 
 /* Button Styling */
 .upload-btn {
@@ -156,21 +148,55 @@ h2 {
 }
 
 /* Loader Styling */
-.loader {
-    display: none;  /* 🔥 Ensure loader is hidden by default */
-    border: 6px solid #f3f3f3; /* Light grey */
-    border-top: 6px solid #3498db; /* Blue color */
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    animation: spin 1s linear infinite;
-    margin-top: 20px;
+/* Overlay Styling */
+.loader-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent black */
+    z-index: 998; /* Below the loader */
+    display: none; /* Hidden by default */
 }
 
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+/* Loader Styling */
+.loader {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 999; /* On top of everything */
+    width: 60px;
+    height: 60px;
+    border: 8px solid transparent;
+    border-top: 8px solid #007bff; /* Primary color */
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
 }
+
+/* Keyframe for the spinning animation */
+@keyframes spin {
+    0% { transform: translate(-50%, -50%) rotate(0deg); }
+    100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* Utility class to hide elements */
+.d-none {
+    display: none !important;
+}
+
+/* Show overlay when loading */
+body.loading {
+    overflow: hidden; /* Prevent scrolling */
+}
+body.loading .loader-overlay {
+    display: block; /* Show overlay */
+}
+body.loading .loader {
+    display: block; /* Show loader */
+}
+
 
 /* ========================= */
 /* Paragraphs                */
@@ -297,11 +323,12 @@ td a:hover {
 /* Cards                    */
 /* ========================= */
 .card {
-    max-width: 90%; /* Control the width of the card */
-    margin: 0 auto; /* Center the card horizontally */
-    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-    padding: 20px;
-    border-radius: 10px;
+    max-width: 850px; /* Matches the container width */
+    margin: 20px auto;
+    padding: 40px;
+    background-color: #FFFFFF;
+    border-radius: 12px;
+    box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.1);
 }
 
 /* ========================= */
@@ -456,4 +483,11 @@ h1.platform-title, p.platform-description {
 
 .center {
     margin-bottom: 30px;
+}
+
+.small-text {
+    font-size: 0.9em; /* Smaller size (adjust as needed) */
+    line-height: 1.5; /* Reduce line height for smaller spacing */
+    margin-bottom: 10px; /* Less margin for tighter layout */
+    color: #2C3E50; /* Consistent text color */
 }

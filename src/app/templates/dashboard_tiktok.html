@@ -25,15 +25,19 @@
         <div class="upload-container mt-3">
             <div class="card-body">
                 <p class="text-center mb-2">
-                    Please upload your downloaded TikTok data in <strong>JSON format</strong>.
+                    Please upload your downloaded YouTube data in <strong>JSON format</strong>.
                 </p>
+                <div class="loader-overlay d-none"></div>
+                <div class="loader d-none"></div>
+                
                 <form id="uploadForm" action="{{ url_for('routes.dashboard_tiktok') }}" method="post" enctype="multipart/form-data">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <input type="file" name="file" id="fileInput" accept=".json" multiple required class="form-control mb-2">
                     <button type="submit" id="uploadButton" class="btn btn-primary btn-sm">Upload Data</button>
-                </form>
-                <div id="loader" class="loader">Loading...</div>
+                </form>                       
             </div>
+        </div>
+
         </div>
 
         <!-- CSV Data Preview Section -->
@@ -101,7 +105,7 @@
 
     <!-- Link to external JS -->
     <script src="{{ url_for('static', filename='js/tiktok_dashboard.js') }}" 
-        integrity="sha384-nEbft6ty8Nbjc6mzxOwtNP0OyhVmhR0wGRUSZxiMdE5umT4LogE6iyyD4e83hWhj" 
+        integrity="sha384-OFSJr0HiS+7Wn8HjKLE8KJ8bYWpc8krvClqPo3fOqoNOY+haEn3b3sBT00vcRROp" 
         crossorigin="anonymous" 
         defer></script>
 {% endblock %}

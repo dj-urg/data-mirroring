@@ -10,6 +10,8 @@ from matplotlib.lines import Line2D
 import seaborn as sns
 import re
 from app.utils.file_utils import get_user_temp_dir
+import csv
+import openpyxl
 
 # Use 'Agg' backend to avoid GUI issues
 matplotlib.use('Agg')
@@ -83,10 +85,27 @@ def save_csv_temp_file(df):
     temp_dir = get_user_temp_dir()  # Get session-specific temp directory
     unique_filename = f"{uuid.uuid4()}.csv"  # Generate a unique filename
     temp_file_path = os.path.join(temp_dir, unique_filename)
-
-    df.to_csv(temp_file_path, index=False)  # Save the CSV in the session temp directory
+    
+    # Replace all newline characters in the DataFrame (avoid breaking CSV format when opening in Excel)
+    df.replace(r'\n', ' ', regex=True, inplace=True)
+    df.to_csv(temp_file_path, index=False, quoting=csv.QUOTE_ALL, encoding='utf-8')  # Save the CSV in the session temp directory
     os.chmod(temp_file_path, 0o600)  # Secure file permissions
     logger.debug(f"CSV saved at {temp_file_path}")  # Log the saved path for debugging
+    return unique_filename  # Return just the filename
+
+def save_excel_temp_file(df):
+    """Saves Excel data in the user's temporary directory and returns the filename."""
+    temp_dir = get_user_temp_dir()  # Get session-specific temp directory
+    unique_filename = f"{uuid.uuid4()}.xlsx"  # Generate a unique filename
+    temp_file_path = os.path.join(temp_dir, unique_filename)
+
+    # Replace newline characters to ensure proper formatting in Excel
+    df.replace(r'\n', ' ', regex=True, inplace=True)
+
+    # Save the DataFrame as an Excel file
+    df.to_excel(temp_file_path, index=False, engine='openpyxl')
+    os.chmod(temp_file_path, 0o600)  # Secure file permissions
+    logger.debug(f"Excel file saved at {temp_file_path}")  # Log the saved path for debugging
     return unique_filename  # Return just the filename
 
 def generate_custom_bump_chart(channel_ranking):
@@ -136,7 +155,7 @@ def generate_heatmap(day_counts):
     fig, ax = plt.subplots(figsize=(8, 2))  # Adjust size for heatmap
     sns.heatmap(day_count_df.T, annot=True, fmt="d", cmap="Blues", ax=ax, cbar=False)
     ax.set_ylabel("")
-    ax.set_xlabel("Day of the Week")
+    ax.set_xlabel("")
 
     plt.tight_layout()
 
@@ -207,7 +226,12 @@ def process_youtube_file(files):
         unique_filename = f"{uuid.uuid4()}.csv"
         temp_file_path = os.path.join(temp_dir, unique_filename)
 
-        df.to_csv(temp_file_path, index=False)
+        # Replace all newline characters in the DataFrame (avoid breaking CSV format when opening in Excel)
+        df.replace(r'\n', ' ', regex=True, inplace=True)
+
+        df.to_csv(temp_file_path, index=False, quoting=csv.QUOTE_ALL, encoding='utf-8')
+        
+        excel_filename = save_excel_temp_file(df)
         
                 # Generate HTML preview from DataFrame
         raw_html = df.head(5).to_html(
@@ -221,7 +245,7 @@ def process_youtube_file(files):
         # Remove all inline styles (especially `style="text-align: right;"`)
         csv_preview_html = re.sub(r'style="[^"]*"', '', raw_html)
 
-        return df, unique_filename, insights, bump_chart_name, heatmap_name, not df.empty, csv_preview_html
+        return df, excel_filename, unique_filename, insights, bump_chart_name, heatmap_name, not df.empty, csv_preview_html
 
 
     except Exception as e:

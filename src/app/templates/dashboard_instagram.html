@@ -10,18 +10,23 @@
 
     <div class="container mt-5">
 
-        <!-- Upload Form Section -->
+        <!-- Upload Form -->
         <div class="upload-container mt-3">
-            <div class="card-body text-center">
-                <p class="mb-2">
-                    Please upload your downloaded Instagram data in <strong>JSON format</strong>.
+            <div class="card-body">
+                <p class="text-center mb-2">
+                    Please upload your downloaded YouTube data in <strong>JSON format</strong>.
                 </p>
-                <form id="uploadForm" action="" method="post" enctype="multipart/form-data" class="d-flex flex-column align-items-center">
+                <div class="loader-overlay d-none"></div>
+                <div class="loader d-none"></div>
+                
+                <form id="uploadForm" action="{{ url_for('routes.dashboard_instagram') }}" method="post" enctype="multipart/form-data">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <input type="file" name="file" accept=".json" multiple required class="form-control-file d-inline-block mb-2">
-                    <input type="submit" value="Upload Data and Process" class="btn btn-primary btn-sm">
-                </form>
+                    <input type="file" name="file" id="fileInput" accept=".json" multiple required class="form-control mb-2">
+                    <button type="submit" id="uploadButton" class="btn btn-primary btn-sm">Upload Data</button>
+                </form>                       
             </div>
+        </div>
+
         </div>
 
         <!-- CSV Data Preview Section -->
@@ -97,7 +102,7 @@
 
     <!-- Link to external JS -->
     <script src="{{ url_for('static', filename='js/instagram_dashboard.js') }}" 
-        integrity="sha384-/rceFwtEMOvCD5IXlaJ/tFKcrRDu2XqONmtma+k49neaxooLLnL2ch4rdovhmML/" 
+        integrity="sha384-XSIZ1wxbVYSQkp5bgfhI0JJ1QFtMkR4Aqjnd54L4ZuGnr0Uu4VX9EWxDqgAqwkrE" 
         crossorigin="anonymous" 
         defer></script>
 {% endblock %}

@@ -6,6 +6,7 @@ from app.handlers.youtube import process_youtube_file
 from app.handlers.instagram import process_instagram_file
 from app.handlers.tiktok import process_tiktok_file
 import os
+import jsonify
 import tempfile
 from werkzeug.utils import secure_filename
 import re
@@ -46,7 +47,6 @@ def data_processing_info():
     current_app.logger.info("Data processing info page accessed.")
     return render_template('data_processing_info.html')
 
-# Handling file processing inside your dashboard route
 @routes_bp.route('/dashboard/youtube', methods=['GET', 'POST'])
 @requires_authentication
 @limiter.limit("10 per minute")
@@ -54,30 +54,48 @@ def dashboard_youtube():
     current_app.logger.info("Dashboard accessed for YouTube, Method: %s", request.method)
 
     if request.method == 'GET':
+        current_app.logger.info("Rendering YouTube dashboard GET request.")
         return render_template('dashboard_youtube.html')
+
+    current_app.logger.info("Handling POST request for YouTube dashboard.")
 
     files = request.files.getlist('file')
     if not files or files[0].filename == '':
-        flash("No file selected", "danger")
+        current_app.logger.warning("No files selected for upload.")
+        flash("No file selected", "danger")  # Keep the flash message
         return redirect(url_for('routes.dashboard_youtube'))
 
-    current_app.logger.info("Processing %d file(s) for YouTube", len(files))
+    current_app.logger.info("Number of files received: %d", len(files))
+    for i, file in enumerate(files):
+        current_app.logger.info("File %d: %s", i + 1, file.filename)
 
     try:
-        df, csv_file_name, insights, plot_data, heatmap_data, has_valid_data, csv_preview_html = process_youtube_file(files)
+        current_app.logger.info("Starting file processing...")
 
-        return render_template(
+        df, excel_filename, csv_file_name, insights, plot_data, heatmap_data, has_valid_data, csv_preview_html = process_youtube_file(files)
+
+        current_app.logger.info("File processing completed successfully.")
+        # ... (log other data)
+
+        return render_template(  # Always render the template now
             'dashboard_youtube.html',
             insights=insights,
+            excel_filename=excel_filename,
             csv_file_name=csv_file_name,
             plot_data=plot_data,
             heatmap_data=heatmap_data,
             has_valid_data=has_valid_data,
             csv_preview_html=csv_preview_html
         )
+
     except ValueError as e:
-        flash(str(e), "danger")
-        current_app.logger.error("Error processing YouTube file: %s", str(e))
+        current_app.logger.error("ValueError encountered during processing: %s", str(e))
+        flash(str(e), "danger")  # Keep flash messages for errors
+        return redirect(url_for('routes.dashboard_youtube'))
+
+    except Exception as e:
+        current_app.logger.error("Unexpected error during file processing: %s", str(e))
+        flash("An unexpected error occurred during file processing. Please try again.", "danger")
         return redirect(url_for('routes.dashboard_youtube'))
 
 @routes_bp.route('/dashboard/instagram', methods=['GET', 'POST'])
@@ -239,3 +257,43 @@ def enter_code():
             return render_template('enter_code.html', error="Invalid access code.")
     
     return render_template('enter_code.html')
+
+@routes_bp.route('/download_excel/<filename>', methods=['GET'])
+def download_excel(filename):
+    """Serve the requested Excel file for download and delete it immediately after."""
+
+    # Sanitize filename to prevent directory traversal attacks
+    safe_filename = secure_filename(filename)
+
+    # Define temp directory
+    temp_dir = get_user_temp_dir()
+    temp_file_path = os.path.join(temp_dir, safe_filename)
+
+    # Normalize path to prevent path traversal
+    temp_file_path = os.path.normpath(temp_file_path)
+
+    # Ensure the file is only accessed from the temp directory
+    if not temp_file_path.startswith(temp_dir):
+        current_app.logger.warning(f"Blocked attempt to access: {filename}")
+        abort(400, "Invalid file request")
+
+    if os.path.exists(temp_file_path):
+        try:
+            response = send_file(temp_file_path, as_attachment=True, download_name=safe_filename, mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
+            # Delete AFTER the response is fully sent
+            @response.call_on_close
+            def remove_temp_file():
+                try:
+                    os.remove(temp_file_path)
+                    current_app.logger.info(f"Deleted temporary file: {temp_file_path}")
+                except Exception as e:
+                    current_app.logger.error(f"Failed to delete file {temp_file_path}: {e}")
+
+            return response
+        except Exception as e:
+            current_app.logger.error(f"Error serving file {temp_file_path}: {e}")
+            abort(500, "Internal server error")
+    else:
+        current_app.logger.warning(f"File not found: {temp_file_path}")
+        abort(404, "File not found")

@@ -3,6 +3,17 @@
 {% block title %}YouTube Dashboard{% endblock %}
 
 {% block content %}
+    <!-- Inline styles moved to a <style> block with a nonce -->
+    <style nonce="{{ g.csp_nonce }}">
+        .platform-header { text-align: center; margin-bottom: 30px; }
+        .platform-title { font-size: 24px; font-weight: bold; }
+        .upload-container { padding: 15px; background-color: #f8f9fa; border-radius: 5px; }
+        .loader { display: none; margin-top: 15px; text-align: center; }
+        .d-none { display: none; }
+        .text-center { text-align: center; }
+        .btn-sm { padding: 5px 10px; font-size: 14px; }
+    </style>
+
     <div class="platform-header text-center mb-4">
         <img src="https://img.icons8.com/color/96/000000/youtube-play.png" alt="YouTube Logo" class="platform-logo">
         <h1 class="platform-title">YouTube Dashboard</h1>
@@ -16,36 +27,40 @@
                 <p class="text-center mb-2">
                     Please upload your downloaded YouTube data in <strong>JSON format</strong>.
                 </p>
+                <div class="loader-overlay d-none"></div>
+                <div class="loader d-none"></div>
+                
                 <form id="uploadForm" action="{{ url_for('routes.dashboard_youtube') }}" method="post" enctype="multipart/form-data">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <input type="file" name="file" id="fileInput" accept=".json" multiple required class="form-control mb-2">
                     <button type="submit" id="uploadButton" class="btn btn-primary btn-sm">Upload Data</button>
-                </form>
-                <div id="loader" class="loader d-none"></div>
+                </form>                       
             </div>
         </div>
 
-        <!-- CSV Data Preview Section -->
-        {% if csv_preview_html %}
-        <div class="card mt-3">
-            <div class="card-body">
-                <h5>CSV Data Preview</h5>
-                {{ csv_preview_html | safe }}
-            </div>
         </div>
-        {% endif %}
 
         <!-- Insights Section -->
         {% if insights %}
         <div class="card mt-3" id="insights">
             <div class="card-body">
-                <div class="alert alert-info">
-                    <p>Total Videos: <strong>{{ insights.total_videos }}</strong></p>
-                    <p>Data Time Frame: 
+                    <h2>Overview</h2>
+                    <p class="small-text">Total Videos Watched: <strong>{{ insights.total_videos }}</strong></p>
+                    <p class="small-text">Time Range: 
                         <strong>{{ insights.time_frame_start }}</strong> to 
                         <strong>{{ insights.time_frame_end }}</strong>
                     </p>
                 </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- CSV Data Preview Section -->
+        {% if csv_preview_html %}
+        <div class="card mt-3">
+            <div class="card-body">
+                <h2>CSV Data Preview (including additional variables)</h5>
+                {{ csv_preview_html | safe }}
             </div>
         </div>
         {% endif %}
@@ -64,22 +79,27 @@
             </div>
         </div>
 
-        <!-- CSV Download -->
+        <!-- CSV and Excel Download -->
         <div class="card mt-3">
             <div class="card-body text-center">
-                <p>Download your processed data in <strong>CSV format</strong>.</p>
-                {% if csv_file_name %}
-                <a href="{{ url_for('routes.download_csv', filename=csv_file_name) }}" class="btn btn-primary btn-sm">Download CSV</a>
-                {% endif %}
+                <p>Download your processed data in <strong>CSV or Excel format</strong>.</p>
+                <div class="d-flex justify-content-center">
+                    {% if csv_file_name %}
+                    <a href="{{ url_for('routes.download_csv', filename=csv_file_name) }}" class="btn btn-primary btn-sm mx-2">Download CSV</a>
+                    {% endif %}
+                    {% if excel_filename %}
+                    <a href="{{ url_for('routes.download_excel', filename=excel_filename) }}" class="btn btn-success btn-sm mx-2">Download Excel</a>
+                    {% endif %}
+                </div>
             </div>
-        </div>
+        </div>        
         {% endif %}
 
         <!-- Visualization -->
         {% if plot_data %}
         <div class="card mt-3" id="visualization">
             <div class="card-body text-center">
-                <h5>Top 5 Most Watched Channels Per Year</h5>
+                <h2>Top 5 Most Watched Channels Per Year</h2>
                 <div class="d-flex justify-content-center">
                     <img src="{{ url_for('routes.download_image', filename=plot_data) }}" alt="Top 5 Channels Per Year" class="img-fluid">
                 </div>
@@ -91,7 +111,7 @@
         {% if heatmap_data %}
         <div class="card mt-3" id="heatmap">
             <div class="card-body text-center">
-                <h5>Video Consumption Per Day of the Week</h5>
+                <h2>Video Consumption Per Day of the Week</h2>
                 <div class="d-flex justify-content-center">
                     <img src="{{ url_for('routes.download_image', filename=heatmap_data) }}" alt="Heatmap" class="img-fluid">
                 </div>
@@ -103,7 +123,7 @@
 
     <!-- Link to external JS -->
     <script src="{{ url_for('static', filename='js/youtube_dashboard.js') }}" 
-        integrity="sha384-G5AkAkpnHeR7EernINk1iwCGejgWbq7eWeIwq7bDl4GJfz8IqABh0oG8mtCsdSmz" 
+        integrity="sha384-InM2Ag0sbl9h92eKasEkqf+YZU7KcH3Z8E30P4OfTLZozw30f72loVIEYLYs4jkQ" 
         crossorigin="anonymous" 
         defer></script>
 {% endblock %}
