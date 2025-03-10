@@ -12,7 +12,7 @@ Flask-WTF==1.2.2
 fonttools==4.56.0
 gunicorn==23.0.0
 itsdangerous==2.2.0
-Jinja2==3.1.5
+Jinja2==3.1.6
 jsonify==0.5
 kiwisolver==1.4.8
 libmagic==1.0
