@@ -19,7 +19,7 @@ libmagic==1.0
 limits==4.1
 markdown-it-py==3.0.0
 MarkupSafe==3.0.2
-matplotlib==3.10.0
+matplotlib==3.10.1
 mdurl==0.1.2
 msgspec==0.19.0
 narwhals==1.30.0
