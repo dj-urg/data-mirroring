@@ -16,7 +16,7 @@ Jinja2==3.1.5
 jsonify==0.5
 kiwisolver==1.4.8
 libmagic==1.0
-limits==4.0.1
+limits==4.1
 markdown-it-py==3.0.0
 MarkupSafe==3.0.2
 matplotlib==3.10.0
