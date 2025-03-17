@@ -28,7 +28,7 @@ ordered-set==4.1.0
 packaging==24.2
 pandas==2.2.3
 pillow==11.1.0
-plotly==6.0.0
+plotly==6.0.1
 Pygments==2.19.1
 pyparsing==3.2.1
 python-dateutil==2.9.0.post0
