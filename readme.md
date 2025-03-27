@@ -65,12 +65,6 @@ http://127.0.0.1:5001
 - **Framework:** Flask
 - **Other Tools:** Docker, Github Actions
 
-## Roadmap
-- [ ] Allow Data Conversions
-- [ ] Allow Data Downloads
-- [ ] Allow Data Visualizations
-- [ ] Enhance Visualizations
-
 ## Security & Best Practices
 - Use environment variables instead of hardcoding secrets.
 - Follow GitHub security updates for dependencies.
@@ -84,6 +78,16 @@ http://127.0.0.1:5001
 
 ## License
 Mozilla Public License Version 2.0
+
+## Acknowledgments and Code Generation
+
+This project leverages the power of modern AI tools to aid development. Portions of the code were generated or assisted by:
+
+* **Claude:** Used for brainstorming, code genration, code refinement, and fixing bugs.
+* **ChatGPT:** Used for brainstorming, code genration, code refinement, and fixing bugs.
+* **GitHub Copilot:** Integrated into the development environment to provide real-time code suggestions and completions.
+
+We acknowledge the contributions of these AI models in the creation of this project. While these tools aided in development, the authors have requested expert advice to ensure the code's functionality and security.
 
 ## Contact
 For questions or issues, contact daniel.jurg@vub.be
