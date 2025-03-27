@@ -83,7 +83,7 @@ http://127.0.0.1:5001
 5. Open a Pull Request
 
 ## License
-Apache License 2.0 
+Mozilla Public License Version 2.0
 
 ## Contact
 For questions or issues, contact daniel.jurg@vub.be
