@@ -85,8 +85,8 @@ Mozilla Public License Version 2.0
 
 This project leverages the power of modern AI tools to aid development. Portions of the code were generated or assisted by:
 
-* **Claude:** Used for brainstorming, code genration, code refinement, and fixing bugs.
-* **ChatGPT:** Used for brainstorming, code genration, code refinement, and fixing bugs.
+* **Claude:** Used for brainstorming, code generation, code refinement, and fixing bugs.
+* **ChatGPT:** Used for brainstorming, code generation, code refinement, and fixing bugs.
 * **GitHub Copilot:** Integrated into the development environment to provide real-time code suggestions and completions.
 
 We acknowledge the contributions of these AI models in the creation of this project. While these tools aided in development, the authors have requested expert advice to ensure the code's functionality and security.
