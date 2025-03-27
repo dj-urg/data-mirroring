@@ -13,4 +13,6 @@ def get_user_temp_dir():
     user_temp_dir = os.path.join(tempfile.gettempdir(), f"user_{user_session_id}")
 
     os.makedirs(user_temp_dir, exist_ok=True)  # Ensure the directory exists
+    os.chmod(user_temp_dir, 0o700)  # Set directory permissions to owner-only
+
     return user_temp_dir
