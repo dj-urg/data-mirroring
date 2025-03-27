@@ -99,11 +99,18 @@ def save_excel_temp_file(df):
     unique_filename = f"{uuid.uuid4()}.xlsx"  # Generate a unique filename
     temp_file_path = os.path.join(temp_dir, unique_filename)
 
+    # Create a copy of the DataFrame to avoid modifying the original
+    excel_df = df.copy()
+    
+    # Convert timezone-aware datetime columns to timezone-naive
+    for col in excel_df.select_dtypes(include=['datetime64[ns, UTC]']).columns:
+        excel_df[col] = excel_df[col].dt.tz_localize(None)
+    
     # Replace newline characters to ensure proper formatting in Excel
-    df.replace(r'\n', ' ', regex=True, inplace=True)
+    excel_df.replace(r'\n', ' ', regex=True, inplace=True)
 
     # Save the DataFrame as an Excel file
-    df.to_excel(temp_file_path, index=False, engine='openpyxl')
+    excel_df.to_excel(temp_file_path, index=False, engine='openpyxl')
     os.chmod(temp_file_path, 0o600)  # Secure file permissions
     logger.debug(f"Excel file saved at {temp_file_path}")  # Log the saved path for debugging
     return unique_filename  # Return just the filename
@@ -148,18 +155,172 @@ def generate_custom_bump_chart(channel_ranking):
     return fig
 
 def generate_heatmap(day_counts):
+    """Generates a heatmap showing YouTube engagement by day of the week with no grid lines."""
     # Convert day counts to a dataframe
     day_count_df = pd.DataFrame({'Day': day_counts.index, 'Count': day_counts.values}).set_index('Day')
-
+    
     # Create a heatmap
     fig, ax = plt.subplots(figsize=(8, 2))  # Adjust size for heatmap
-    sns.heatmap(day_count_df.T, annot=True, fmt="d", cmap="Blues", ax=ax, cbar=False)
+    
+    # Create heatmap with all grid lines removed
+    sns.heatmap(
+        day_count_df.T, 
+        annot=True, 
+        fmt="d", 
+        cmap="Blues", 
+        ax=ax, 
+        cbar=False,
+        linewidths=0,        # No grid lines between cells
+        linecolor='none'     # No line color
+    )
+    
+    # Remove all spines
+    for spine in ax.spines.values():
+        spine.set_visible(False)
+    
+    # Turn off axis ticks - this removes the small lines at the edges
+    ax.tick_params(axis='both', which='both', length=0)
+    
+    # Clear the top and right spines specifically (these often remain)
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    
+    # Keep axis labels empty
     ax.set_ylabel("")
     ax.set_xlabel("")
-
+    
+    # Turn off all grid lines
+    ax.grid(False)
+    
     plt.tight_layout()
+    
+    # Return the figure
+    return fig
 
-    # Save the image temporarily and return the filename
+# New functions to add to src/app/handlers/youtube.py
+
+def generate_month_heatmap(df):
+    """Generates a heatmap showing YouTube engagement by month with absolutely no grid lines."""
+    # Extract month and year from timestamp
+    df['month'] = pd.to_datetime(df['timestamp']).dt.month
+    df['year'] = pd.to_datetime(df['timestamp']).dt.year
+    
+    # Create a pivot table to count videos by month and year
+    month_counts = df.pivot_table(
+        index='year', 
+        columns='month', 
+        values='video_title', 
+        aggfunc='count', 
+        fill_value=0
+    )
+    
+    # Map month numbers to month names
+    month_names = {
+        1: 'Jan', 2: 'Feb', 3: 'Mar', 4: 'Apr', 5: 'May', 6: 'Jun',
+        7: 'Jul', 8: 'Aug', 9: 'Sep', 10: 'Oct', 11: 'Nov', 12: 'Dec'
+    }
+    month_counts.columns = [month_names[m] for m in month_counts.columns]
+    
+    # Create figure and axes
+    fig, ax = plt.subplots(figsize=(8, 2))
+    
+    # Create heatmap with all possible grid lines removed
+    sns.heatmap(
+        month_counts, 
+        annot=True,          # Show numbers in cells
+        fmt="d",             # Format as integers
+        cmap="Blues",        # Blue color map
+        ax=ax,               # Use the created axis
+        cbar=False,          # No color bar
+        linewidths=0,        # No grid lines between cells
+        linecolor='none'     # No line color
+    )
+    
+    # Remove all spines
+    for spine in ax.spines.values():
+        spine.set_visible(False)
+    
+    # Turn off axis ticks - this removes the small lines at the edges
+    ax.tick_params(axis='both', which='both', length=0)
+    
+    # Clear the top and right spines specifically (these often remain)
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    
+    # Customize axis labels
+    ax.set_ylabel("Year", fontsize=10)
+    ax.set_xlabel("Month", fontsize=10)
+    
+    # Remove the title
+    ax.set_title("")
+    
+    # Turn off all grid lines
+    ax.grid(False)
+    
+    plt.tight_layout()
+    return fig
+
+def generate_time_of_day_heatmap(df):
+    """Generates a heatmap showing YouTube engagement by time of day with no grid lines."""
+    # Extract hour from timestamp
+    df['hour'] = pd.to_datetime(df['timestamp']).dt.hour
+    
+    # Count videos by hour
+    hour_counts = df['hour'].value_counts().sort_index()
+    
+    # Create time ranges for better visualization (4-hour blocks)
+    time_ranges = {
+        0: '12-4 AM', 1: '12-4 AM', 2: '12-4 AM', 3: '12-4 AM',
+        4: '4-8 AM', 5: '4-8 AM', 6: '4-8 AM', 7: '4-8 AM',
+        8: '8-12 PM', 9: '8-12 PM', 10: '8-12 PM', 11: '8-12 PM',
+        12: '12-4 PM', 13: '12-4 PM', 14: '12-4 PM', 15: '12-4 PM',
+        16: '4-8 PM', 17: '4-8 PM', 18: '4-8 PM', 19: '4-8 PM',
+        20: '8-12 AM', 21: '8-12 AM', 22: '8-12 AM', 23: '8-12 AM'
+    }
+    
+    # Group by time ranges
+    df['time_range'] = df['hour'].map(time_ranges)
+    time_range_counts = df['time_range'].value_counts().reindex([
+        '12-4 AM', '4-8 AM', '8-12 PM', '12-4 PM', '4-8 PM', '8-12 AM'
+    ])
+    
+    # Create the heatmap
+    hour_count_df = pd.DataFrame({'Time': time_range_counts.index, 'Count': time_range_counts.values}).set_index('Time')
+    
+    # Create figure and axes
+    fig, ax = plt.subplots(figsize=(8, 2))
+    
+    # Create heatmap with all grid lines removed
+    sns.heatmap(
+        hour_count_df.T, 
+        annot=True, 
+        fmt="d", 
+        cmap="Blues", 
+        ax=ax, 
+        cbar=False,
+        linewidths=0,        # No grid lines between cells
+        linecolor='none'     # No line color
+    )
+    
+    # Remove all spines
+    for spine in ax.spines.values():
+        spine.set_visible(False)
+    
+    # Turn off axis ticks - removes the small lines at the edges
+    ax.tick_params(axis='both', which='both', length=0)
+    
+    # Clear the top and right spines specifically
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    
+    # Keep axis labels
+    ax.set_ylabel("")
+    ax.set_xlabel("Time of Day", fontsize=10)
+    
+    # Turn off all grid lines
+    ax.grid(False)
+    
+    plt.tight_layout()
     return fig
 
 # Main data processing function
@@ -189,13 +350,12 @@ def process_youtube_file(files):
             all_data.extend(flattened_data)
 
         df = pd.DataFrame(all_data)
-        df['timestamp'] = df['timestamp'].dt.date
-
+        
         # Generate insights
         insights = {
             'total_videos': len(df),
-            'time_frame_start': df['timestamp'].min(),
-            'time_frame_end': df['timestamp'].max(),
+            'time_frame_start': df['timestamp'].min().date() if not df.empty else 'N/A',
+            'time_frame_end': df['timestamp'].max().date() if not df.empty else 'N/A',
         }
 
         # Prepare data for visualization
@@ -218,22 +378,22 @@ def process_youtube_file(files):
         # Generate bump chart image
         bump_chart_name = save_image_temp_file(generate_custom_bump_chart(top_channels_per_year))
 
-        # Generate heatmap image
-        heatmap_name = save_image_temp_file(generate_heatmap(day_counts))
+        # Generate day of week heatmap image
+        day_heatmap_name = save_image_temp_file(generate_heatmap(day_counts))
+        
+        # Generate month heatmap image
+        month_heatmap_name = save_image_temp_file(generate_month_heatmap(df))
+        
+        # Generate time of day heatmap image
+        time_heatmap_name = save_image_temp_file(generate_time_of_day_heatmap(df))
 
         # Save CSV to a user-specific temporary file
-        temp_dir = get_user_temp_dir()  # Get session-specific temp directory
-        unique_filename = f"{uuid.uuid4()}.csv"
-        temp_file_path = os.path.join(temp_dir, unique_filename)
-
-        # Replace all newline characters in the DataFrame (avoid breaking CSV format when opening in Excel)
-        df.replace(r'\n', ' ', regex=True, inplace=True)
-
-        df.to_csv(temp_file_path, index=False, quoting=csv.QUOTE_ALL, encoding='utf-8')
+        unique_filename = save_csv_temp_file(df)
         
+        # Save Excel file
         excel_filename = save_excel_temp_file(df)
         
-                # Generate HTML preview from DataFrame
+        # Generate HTML preview from DataFrame
         raw_html = df.head(5).to_html(
             classes="table table-striped text-right",
             index=False,
@@ -242,10 +402,10 @@ def process_youtube_file(files):
             border=0
         )
 
-        # Remove all inline styles (especially `style="text-align: right;"`)
+        # Remove all inline styles
         csv_preview_html = re.sub(r'style="[^"]*"', '', raw_html)
 
-        return df, excel_filename, unique_filename, insights, bump_chart_name, heatmap_name, not df.empty, csv_preview_html
+        return df, excel_filename, unique_filename, insights, bump_chart_name, day_heatmap_name, month_heatmap_name, time_heatmap_name, not df.empty, csv_preview_html
 
 
     except Exception as e:

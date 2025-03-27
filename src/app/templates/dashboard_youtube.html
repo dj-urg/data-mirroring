@@ -107,13 +107,37 @@
         </div>
         {% endif %}
 
-        <!-- Heatmap -->
-        {% if heatmap_data %}
-        <div class="card mt-3" id="heatmap">
+        <!-- Month Heatmap -->
+        {% if month_heatmap_data %}
+        <div class="card mt-3" id="month-heatmap">
+            <div class="card-body text-center">
+                <h2>Video Consumption by Month and Year</h2>
+                <div class="d-flex justify-content-center">
+                    <img src="{{ url_for('routes.download_image', filename=month_heatmap_data) }}" alt="Month Heatmap" class="img-fluid">
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Day of Week Heatmap -->
+        {% if day_heatmap_data %}
+        <div class="card mt-3" id="day-heatmap">
             <div class="card-body text-center">
                 <h2>Video Consumption Per Day of the Week</h2>
                 <div class="d-flex justify-content-center">
-                    <img src="{{ url_for('routes.download_image', filename=heatmap_data) }}" alt="Heatmap" class="img-fluid">
+                    <img src="{{ url_for('routes.download_image', filename=day_heatmap_data) }}" alt="Day of Week Heatmap" class="img-fluid">
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Time of Day Heatmap -->
+        {% if time_heatmap_data %}
+        <div class="card mt-3" id="time-heatmap">
+            <div class="card-body text-center">
+                <h2>Video Consumption by Time of Day</h2>
+                <div class="d-flex justify-content-center">
+                    <img src="{{ url_for('routes.download_image', filename=time_heatmap_data) }}" alt="Time of Day Heatmap" class="img-fluid">
                 </div>
             </div>
         </div>

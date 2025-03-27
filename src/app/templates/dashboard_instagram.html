@@ -14,8 +14,13 @@
         <div class="upload-container mt-3">
             <div class="card-body">
                 <p class="text-center mb-2">
-                    Please upload your downloaded YouTube data in <strong>JSON format</strong>.
-                </p>
+                    Please upload your downloaded Instagram data in <strong>JSON format</strong>. We currently support the following files:
+                    <ul class="list-group list-group-flush text-center">
+                        <li class="list-group-item">liked_posts.json</li>
+                        <li class="list-group-item">saved_posts.json</li>
+                        <li class="list-group-item">videos_watched.json</li>
+                        <li class="list-group-item">posts_viewed.json</li>
+                    </ul>                </p>
                 <div class="loader-overlay d-none"></div>
                 <div class="loader d-none"></div>
                 
@@ -33,7 +38,7 @@
         {% if csv_preview_html %}
         <div class="card mt-3">
             <div class="card-body">
-                <h5>CSV Data Preview</h5>
+                <h2>CSV Data Preview</h2>
                 {{ csv_preview_html | safe }}
             </div>
         </div>
@@ -79,7 +84,7 @@
         {% if plot_data %}
         <div class="card mt-3" id="visualization">
             <div class="card-body text-center">
-                <h5>Top Categories Per Year</h5>
+                <h2>Top Authors</h2>
                 <div class="d-flex justify-content-center">
                     <img src="{{ url_for('routes.download_image', filename=plot_data) }}" alt="Top Categories Per Year" class="img-fluid" style="max-width: 90%; height: auto;" />
                 </div>
@@ -87,13 +92,37 @@
         </div>
         {% endif %}
 
-        <!-- Heatmap Section: Instagram Engagement Per Day -->
-        {% if heatmap_data %}
-        <div class="card mt-3" id="heatmap">
+        <!-- Day of Week Heatmap Section -->
+        {% if day_heatmap_data %}
+        <div class="card mt-3" id="day-heatmap">
             <div class="card-body text-center">
-                <h5>Engagement Per Day of the Week</h5>
+                <h2>Engagement Per Day of the Week</h2>
                 <div class="d-flex justify-content-center">
-                    <img src="{{ url_for('routes.download_image', filename=heatmap_data) }}" alt="Heatmap showing Instagram engagement per day" class="img-fluid" style="max-width: 90%; height: auto;" />
+                    <img src="{{ url_for('routes.download_image', filename=day_heatmap_data) }}" alt="Day of Week Heatmap" class="img-fluid" style="max-width: 90%; height: auto;" />
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Month Heatmap Section -->
+        {% if month_heatmap_data %}
+        <div class="card mt-3" id="month-heatmap">
+            <div class="card-body text-center">
+                <h2>Engagement by Month and Year</h2>
+                <div class="d-flex justify-content-center">
+                    <img src="{{ url_for('routes.download_image', filename=month_heatmap_data) }}" alt="Month Heatmap" class="img-fluid" style="max-width: 90%; height: auto;" />
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Time of Day Heatmap Section -->
+        {% if time_heatmap_data %}
+        <div class="card mt-3" id="time-heatmap">
+            <div class="card-body text-center">
+                <h2>Engagement by Time of Day</h2>
+                <div class="d-flex justify-content-center">
+                    <img src="{{ url_for('routes.download_image', filename=time_heatmap_data) }}" alt="Time of Day Heatmap" class="img-fluid" style="max-width: 90%; height: auto;" />
                 </div>
             </div>
         </div>
@@ -102,7 +131,7 @@
 
     <!-- Link to external JS -->
     <script src="{{ url_for('static', filename='js/instagram_dashboard.js') }}" 
-        integrity="sha384-XSIZ1wxbVYSQkp5bgfhI0JJ1QFtMkR4Aqjnd54L4ZuGnr0Uu4VX9EWxDqgAqwkrE" 
+        integrity="sha384-e7xUO0Swl8qSD7MJYJxeZ8zFGB0WF1KTCt7cNQoaeIVrqQoh/yn4vna3sqEcD5M+" 
         crossorigin="anonymous" 
         defer></script>
 {% endblock %}

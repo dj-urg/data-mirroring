@@ -72,18 +72,19 @@ def dashboard_youtube():
     try:
         current_app.logger.info("Starting file processing...")
 
-        df, excel_filename, csv_file_name, insights, plot_data, heatmap_data, has_valid_data, csv_preview_html = process_youtube_file(files)
+        df, excel_filename, csv_file_name, insights, plot_data, day_heatmap_data, month_heatmap_data, time_heatmap_data, has_valid_data, csv_preview_html = process_youtube_file(files)
 
         current_app.logger.info("File processing completed successfully.")
-        # ... (log other data)
 
-        return render_template(  # Always render the template now
+        return render_template(
             'dashboard_youtube.html',
             insights=insights,
             excel_filename=excel_filename,
             csv_file_name=csv_file_name,
             plot_data=plot_data,
-            heatmap_data=heatmap_data,
+            day_heatmap_data=day_heatmap_data,
+            month_heatmap_data=month_heatmap_data,
+            time_heatmap_data=time_heatmap_data,
             has_valid_data=has_valid_data,
             csv_preview_html=csv_preview_html
         )
@@ -110,47 +111,58 @@ def dashboard_instagram():
     files = request.files.getlist('file')
     current_app.logger.info("Processing %d file(s) for Instagram", len(files))
 
-    df, csv_file_name, insights, bump_chart_name, heatmap_name, csv_preview_html, has_valid_data = process_instagram_file(files)
+    try:
+        df, csv_file_name, insights, bump_chart_name, day_heatmap_name, month_heatmap_name, time_heatmap_name, csv_preview_html, has_valid_data = process_instagram_file(files)
 
-    return render_template(
-        'dashboard_instagram.html',
-        insights=insights,
-        csv_file_name=csv_file_name,
-        plot_data=bump_chart_name,  # Ensure it's used correctly in the HTML
-        heatmap_data=heatmap_name,
-        has_valid_data=has_valid_data,
-        csv_preview_html=csv_preview_html  # Pass the CSV preview string to the template
-    )
+        return render_template(
+            'dashboard_instagram.html',
+            insights=insights,
+            csv_file_name=csv_file_name,
+            plot_data=bump_chart_name,
+            day_heatmap_data=day_heatmap_name,
+            month_heatmap_data=month_heatmap_name,
+            time_heatmap_data=time_heatmap_name,
+            has_valid_data=has_valid_data,
+            csv_preview_html=csv_preview_html
+        )
+    except ValueError as e:
+        flash(str(e), "danger")
+        return redirect(url_for('routes.dashboard_instagram'))
 
 @routes_bp.route('/dashboard/tiktok', methods=['GET', 'POST'])
 @requires_authentication
 @limiter.limit("10 per minute")
 def dashboard_tiktok():
-    current_app.logger.info("Dashboard accessed for TikTok, Method: %s", request.method,)
-
+    current_app.logger.info("Dashboard accessed for TikTok, Method: %s", request.method)
+    
     if request.method == 'GET':
         return render_template('dashboard_tiktok.html')
-
+    
     files = request.files.getlist('file')
     if not files or files[0].filename == '':
         flash("No file selected", "danger")
         return redirect(url_for('routes.dashboard_tiktok'))
-
+    
     current_app.logger.info("Processing %d file(s) for TikTok", len(files))
-
+    
     try:
-        df, csv_file_name, insights, plot_data, heatmap_data, has_valid_data, csv_preview_html = process_tiktok_file(files)
+        df, csv_file_name, excel_file_name, url_file_name, insights, day_heatmap_name, time_heatmap_name, month_heatmap_name, has_valid_data, csv_preview_html = process_tiktok_file(files)
+        
         data_html = df.to_html(classes="table table-bordered table-hover") if has_valid_data else None
-
+        
         return render_template(
             'dashboard_tiktok.html',
             insights=insights,
             csv_file_name=csv_file_name,
-            plot_data=plot_data,
-            heatmap_data=heatmap_data,
+            excel_file_name=excel_file_name,
+            url_file_name=url_file_name,
+            day_heatmap_name=day_heatmap_name,
+            time_heatmap_name=time_heatmap_name,
+            month_heatmap_name=month_heatmap_name,
             has_valid_data=has_valid_data,
             csv_preview_html=csv_preview_html
         )
+        
     except ValueError as e:
         flash(str(e), "danger")
         current_app.logger.error("Error processing TikTok file: %s", str(e))
@@ -280,6 +292,46 @@ def download_excel(filename):
     if os.path.exists(temp_file_path):
         try:
             response = send_file(temp_file_path, as_attachment=True, download_name=safe_filename, mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
+            # Delete AFTER the response is fully sent
+            @response.call_on_close
+            def remove_temp_file():
+                try:
+                    os.remove(temp_file_path)
+                    current_app.logger.info(f"Deleted temporary file: {temp_file_path}")
+                except Exception as e:
+                    current_app.logger.error(f"Failed to delete file {temp_file_path}: {e}")
+
+            return response
+        except Exception as e:
+            current_app.logger.error(f"Error serving file {temp_file_path}: {e}")
+            abort(500, "Internal server error")
+    else:
+        current_app.logger.warning(f"File not found: {temp_file_path}")
+        abort(404, "File not found")
+
+@routes_bp.route('/download_txt/<filename>', methods=['GET'])
+def download_txt(filename):
+    """Serve the requested text file for download and delete it immediately after."""
+
+    # Sanitize filename to prevent directory traversal attacks
+    safe_filename = secure_filename(filename)
+
+    # Define temp directory
+    temp_dir = get_user_temp_dir()
+    temp_file_path = os.path.join(temp_dir, safe_filename)
+
+    # Normalize path to prevent path traversal
+    temp_file_path = os.path.normpath(temp_file_path)
+
+    # Ensure the file is only accessed from the temp directory
+    if not temp_file_path.startswith(temp_dir):
+        current_app.logger.warning(f"Blocked attempt to access: {filename}")
+        abort(400, "Invalid file request")
+
+    if os.path.exists(temp_file_path):
+        try:
+            response = send_file(temp_file_path, as_attachment=True, download_name="tiktok_urls.txt", mimetype="text/plain")
 
             # Delete AFTER the response is fully sent
             @response.call_on_close

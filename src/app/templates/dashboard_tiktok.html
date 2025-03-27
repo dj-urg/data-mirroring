@@ -14,7 +14,7 @@
         .btn-sm { padding: 5px 10px; font-size: 14px; }
     </style>
 
-    <div class="platform-header">
+    <div class="platform-header text-center mb-4">
         <img src="https://img.icons8.com/color/96/000000/tiktok.png" alt="TikTok Logo" class="platform-logo">
         <h1 class="platform-title">TikTok Dashboard</h1>
     </div>
@@ -25,7 +25,7 @@
         <div class="upload-container mt-3">
             <div class="card-body">
                 <p class="text-center mb-2">
-                    Please upload your downloaded YouTube data in <strong>JSON format</strong>.
+                    Please upload your downloaded TikTok data in <strong>JSON format</strong>.
                 </p>
                 <div class="loader-overlay d-none"></div>
                 <div class="loader d-none"></div>
@@ -40,62 +40,94 @@
 
         </div>
 
+        <!-- Insights Section -->
+        {% if insights %}
+        <div class="card mt-3" id="insights">
+            <div class="card-body">
+                <h2>Overview</h2>
+                <p class="small-text">Total Videos: <strong>{{ insights.total_videos }}</strong></p>
+                <p class="small-text">Time Range: 
+                    <strong>{{ insights.time_frame_start }}</strong> to 
+                    <strong>{{ insights.time_frame_end }}</strong>
+                </p>
+            </div>
+        </div>
+        {% endif %}
+
         <!-- CSV Data Preview Section -->
         {% if csv_preview_html %}
         <div class="card mt-3">
             <div class="card-body">
-                <h5>CSV Data Preview</h5>
+                <h2>CSV Data Preview (including additional variables)</h2>
                 {{ csv_preview_html | safe }}
             </div>
         </div>
         {% endif %}
 
-        <!-- Insights Section -->
-        {% if insights %}
-        <div class="card mt-3" id="insights">
+        <!-- Data Table -->
+        {% if has_valid_data %}
+        <div class="card mt-3" id="dataTable">
             <div class="card-body">
-                <div class="alert alert-info">
-                    <p>Total Videos: <strong>{{ insights.total_videos }}</strong></p>
-                    <p>Data Time Frame: 
-                        <strong>{{ insights.time_frame_start }}</strong> to 
-                        <strong>{{ insights.time_frame_end }}</strong>
-                    </p>
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover">
+                        <tbody>
+                            {{ data | safe }}
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
-        {% endif %}
 
-        <!-- CSV Download -->
-        {% if csv_file_name %}
+        <!-- CSV, Excel, and URLs Download -->
         <div class="card mt-3">
             <div class="card-body text-center">
-                <p>Download your processed data in <strong>CSV format</strong>.</p>
-                {% if csv_file_name %}
-                <a href="{{ url_for('routes.download_csv', filename=csv_file_name) }}" class="btn btn-primary btn-sm">Download CSV</a>
-                {% endif %}
+                <p>Download your processed data in <strong>CSV, Excel, or URL list format</strong>. The URL list can be used for further data collection with tools like 4CAT.</p>
+                <div class="d-flex justify-content-center">
+                    {% if csv_file_name %}
+                    <a href="{{ url_for('routes.download_csv', filename=csv_file_name) }}" class="btn btn-primary btn-sm mx-2">Download CSV</a>
+                    {% endif %}
+                    {% if excel_file_name %}
+                    <a href="{{ url_for('routes.download_excel', filename=excel_file_name) }}" class="btn btn-success btn-sm mx-2">Download Excel</a>
+                    {% endif %}
+                    {% if url_file_name %}
+                    <a href="{{ url_for('routes.download_txt', filename=url_file_name) }}" class="btn btn-info btn-sm mx-2">Download URLs</a>
+                    {% endif %}
+                </div>
             </div>
-        </div>
+        </div>  
         {% endif %}
 
-        <!-- Visualization -->
-        {% if plot_data %}
-        <div class="card mt-3" id="visualization">
+        <!-- Month Heatmap -->
+        {% if month_heatmap_name %}
+        <div class="card mt-3" id="month-heatmap">
             <div class="card-body text-center">
-                <h5>Top 5 Most Watched Sources Per Year</h5>
+                <h2>Video Consumption by Month and Year</h2>
                 <div class="d-flex justify-content-center">
-                    <img src="{{ url_for('routes.download_image', filename=plot_data) }}" alt="Top 5 Sources Per Year" class="img-fluid">
+                    <img src="{{ url_for('routes.download_image', filename=month_heatmap_name) }}" alt="Month Heatmap" class="img-fluid">
                 </div>
             </div>
         </div>
         {% endif %}
 
-        <!-- Heatmap -->
-        {% if heatmap_data %}
-        <div class="card mt-3" id="heatmap">
+        <!-- Day of Week Heatmap -->
+        {% if day_heatmap_name %}
+        <div class="card mt-3" id="day-heatmap">
             <div class="card-body text-center">
-                <h5>Video Consumption Per Hour</h5>
+                <h2>Video Consumption Per Day of the Week</h2>
                 <div class="d-flex justify-content-center">
-                    <img src="{{ url_for('routes.download_image', filename=heatmap_data) }}" alt="Heatmap" class="img-fluid">
+                    <img src="{{ url_for('routes.download_image', filename=day_heatmap_name) }}" alt="Day of Week Heatmap" class="img-fluid">
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Time of Day Heatmap -->
+        {% if time_heatmap_name %}
+        <div class="card mt-3" id="time-heatmap">
+            <div class="card-body text-center">
+                <h2>Video Consumption by Time of Day</h2>
+                <div class="d-flex justify-content-center">
+                    <img src="{{ url_for('routes.download_image', filename=time_heatmap_name) }}" alt="Time of Day Heatmap" class="img-fluid">
                 </div>
             </div>
         </div>
@@ -105,7 +137,7 @@
 
     <!-- Link to external JS -->
     <script src="{{ url_for('static', filename='js/tiktok_dashboard.js') }}" 
-        integrity="sha384-OFSJr0HiS+7Wn8HjKLE8KJ8bYWpc8krvClqPo3fOqoNOY+haEn3b3sBT00vcRROp" 
+        integrity="sha384-OFSJr0HiS+7Wn8HjKLE8KJ8bYWpc8krvClqoNOY+haEn3b3sBT00vcRROp" 
         crossorigin="anonymous" 
         defer></script>
 {% endblock %}
