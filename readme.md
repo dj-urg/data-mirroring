@@ -6,7 +6,7 @@
 
 ## 🌐 Overview
 
-Welcome to the Data Mirroring research project, developed by Daniel Jurg, Sarah Vis, and Ike Picone at the Vrije Universiteit Brussel as part of the NUSE-Unit. 
+Welcome to the Data Mirroring research project, developed by Daniel Jurg, Sarah Vis, and Ike Picone at imec-SMIT, Vrije Universiteit Brussel as part of the NUSE-Unit. 
 
 This project aims to facilitate user reflection on social media usage through data conversion and visualization. The application transforms specific files in Data Download Packages (DDPs) provided by social media platforms like TikTok, Instagram, and YouTube into a more human-readable format.
 
