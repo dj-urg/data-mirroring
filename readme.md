@@ -2,6 +2,7 @@
 
 [![Requires Python 3.8](https://img.shields.io/badge/py-v3.8-blue)](https://www.python.org/) 
 [![License: MPL 2.0](https://img.shields.io/badge/license-MPL--2.0-informational)](https://github.com/dj-urg/data-mirroring?tab=License-1-ov-file#)
+[![DOI 10.5281/zenodo.15102049](https://zenodo.org/badge/DOI/10.5281/zenodo.15102049.svg)](https://zenodo.org/records/15102090)
 
 ## 🌐 Overview
 
