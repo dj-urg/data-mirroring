@@ -8,7 +8,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 import seaborn as sns
 from matplotlib.lines import Line2D
-from app.utils.file_utils import get_user_temp_dir
+from app.utils.file_manager import get_user_temp_dir
 import squarify
 from app.utils.file_validation import parse_json_file, safe_save_file
 from werkzeug.datastructures import FileStorage

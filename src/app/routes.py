@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, send_file, current_app, session, redirect, url_for, abort, g
-from app.utils.security import requires_authentication, cleanup_old_temp_files, enforce_https, apply_security_headers, cleanup_temp_files
+from app.utils.security import requires_authentication, enforce_https, apply_security_headers
+from app.utils.file_manager import TemporaryFileManager, get_user_temp_dir
 from app.utils.extensions import limiter
-from app.utils.file_utils import get_user_temp_dir
 from app.handlers.youtube import process_youtube_file
 from app.handlers.instagram import process_instagram_file
 from app.handlers.tiktok import process_tiktok_file
@@ -13,12 +13,11 @@ from flask import flash
 
 routes_bp = Blueprint('routes', __name__)
 
-# Register security functions with Flask
-routes_bp.before_request(cleanup_old_temp_files)
-routes_bp.before_request(cleanup_temp_files)
+# Change these lines in routes.py
+routes_bp.before_request(TemporaryFileManager.cleanup_temp_files)
 routes_bp.before_request(enforce_https)
 routes_bp.after_request(apply_security_headers)  # Apply security headers to responses
-routes_bp.teardown_request(cleanup_old_temp_files)  # Runs after each request
+routes_bp.teardown_request(TemporaryFileManager.cleanup_temp_files)  # Runs after each request
 
 @limiter.limit("10 per minute", key_func=lambda: session.get('user_id', request.remote_addr))
 
@@ -292,7 +291,7 @@ def download_csv(filename):
     safe_filename = secure_filename(filename)
 
     # Define temp directory
-    temp_dir = get_user_temp_dir()
+    temp_dir = get_user_temp_dir()  # Now imported from file_manager
     temp_file_path = os.path.join(temp_dir, safe_filename)
 
     # Use realpath instead of normpath for stronger path traversal protection
@@ -306,11 +305,8 @@ def download_csv(filename):
 
     if os.path.exists(temp_file_path):
         try:
-            # Add file to the list of files to clean up at the end of the request
-            if not hasattr(g, 'files_to_cleanup'):
-                g.files_to_cleanup = []
-            if temp_file_path not in g.files_to_cleanup:
-                g.files_to_cleanup.append(temp_file_path)
+            # Protect the file from immediate deletion
+            TemporaryFileManager.protect_file_for_download(temp_file_path)
                 
             response = send_file(temp_file_path, as_attachment=True, download_name=safe_filename, mimetype="text/csv")
 
@@ -319,22 +315,18 @@ def download_csv(filename):
             def remove_temp_file():
                 try:
                     if os.path.exists(temp_file_path):
-                        os.remove(temp_file_path)
-                        # If successfully deleted, remove from the cleanup list
-                        if hasattr(g, 'files_to_cleanup') and temp_file_path in g.files_to_cleanup:
-                            g.files_to_cleanup.remove(temp_file_path)
-                        current_app.logger.info(f"Deleted temporary file: {temp_file_path}")
+                        # Mark the file for cleanup
+                        TemporaryFileManager.mark_file_for_cleanup(temp_file_path)
+                        current_app.logger.info(f"Marked temporary file for deletion: {temp_file_path}")
                 except Exception as e:
-                    current_app.logger.error(f"Failed to delete file {temp_file_path}: {e}")
+                    current_app.logger.error(f"Failed to mark file {temp_file_path} for deletion: {e}")
 
             return response
         except Exception as e:
             # Try to cleanup on error too
             try:
                 if os.path.exists(temp_file_path):
-                    os.remove(temp_file_path)
-                    if hasattr(g, 'files_to_cleanup') and temp_file_path in g.files_to_cleanup:
-                        g.files_to_cleanup.remove(temp_file_path)
+                    TemporaryFileManager.mark_file_for_cleanup(temp_file_path)
             except:
                 pass  # Already logging in teardown_request
                 

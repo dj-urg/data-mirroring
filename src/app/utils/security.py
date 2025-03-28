@@ -2,10 +2,8 @@ from flask import session, redirect, url_for, request, current_app, make_respons
 from functools import wraps
 import os
 import base64
-import time
 import secrets
 from urllib.parse import urlparse, urlunparse
-from app.utils.file_utils import get_user_temp_dir
 
 def enforce_https():
     """Redirects HTTP to HTTPS only in production."""
@@ -87,66 +85,3 @@ def requires_authentication(f):
         return f(*args, **kwargs)
     
     return decorated_function
-                
-def cleanup_old_temp_files(exception=None):
-    """Deletes temporary files older than 1 hour in the temp directory."""
-    temp_dir = get_user_temp_dir()
-    # Use realpath for consistent path handling with routes.py
-    temp_dir = os.path.realpath(temp_dir)
-    one_hour_ago = time.time() - 3600  # 1 hour ago
-
-    try:
-        for file in os.listdir(temp_dir):
-            file_path = os.path.join(temp_dir, file)
-            # Use realpath for stronger path traversal protection
-            file_path = os.path.realpath(file_path)
-            
-            # Verify the file is still within the temp directory after realpath
-            if not file_path.startswith(temp_dir):
-                current_app.logger.warning(f"Skipping suspicious file path: {file_path}")
-                continue
-
-            # Ensure it's a file (not a directory) and is older than 1 hour
-            if os.path.isfile(file_path) and os.path.getmtime(file_path) < one_hour_ago:
-                try:
-                    os.remove(file_path)
-                    current_app.logger.info(f"Deleted old temp file: {file_path}")
-                except Exception as e:
-                    current_app.logger.error(f"Failed to delete old temp file {file_path}: {e}")
-    except Exception as e:
-        current_app.logger.error(f"Error during temp file cleanup: {e}")
-
-def cleanup_temp_files(exception=None):
-    """Deletes only files that were marked for deletion in the request context."""
-    if hasattr(g, "files_to_cleanup"):
-        # Create a copy to avoid modification during iteration
-        cleanup_files = g.files_to_cleanup.copy()
-        
-        for file_path in cleanup_files:
-            # Ensure the file_path is a full path and exists
-            if file_path and os.path.exists(file_path):
-                try:
-                    os.remove(file_path)
-                    # Remove from the cleanup list if deleted successfully
-                    if file_path in g.files_to_cleanup:
-                        g.files_to_cleanup.remove(file_path)
-                    current_app.logger.info(f"Deleted temporary file: {file_path}")
-                except Exception as e:
-                    current_app.logger.error(f"Failed to delete file {file_path}: {e}")
-
-def register_cleanup(app):
-    """Registers cleanup functions with Flask request lifecycle."""
-    
-    @app.before_request
-    def initialize_request_cleanup():
-        """Ensure g.files_to_cleanup exists before each request without overwriting."""
-        if not hasattr(g, 'files_to_cleanup'):
-            g.files_to_cleanup = []
-
-    @app.teardown_request
-    def cleanup_temp_files_request(exception=None):
-        """Delete only files that were marked for deletion in the request context, and old temp files."""
-        cleanup_temp_files(exception)        # Cleanup files marked for deletion
-        cleanup_old_temp_files(exception)    # Cleanup old temp files (older than 1 hour)
-
-    app.logger.info("Cleanup functions registered.")

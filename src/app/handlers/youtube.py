@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 import seaborn as sns
 import re
-from app.utils.file_utils import get_user_temp_dir
+from app.utils.file_manager import get_user_temp_dir
 import csv
 import openpyxl
 from app.utils.file_validation import parse_json_file, safe_save_file
@@ -385,12 +385,6 @@ def process_youtube_file(files):
                         'channel': subtitle_name,
                         'channel_url': subtitle_url
                     })
-                
-                # Limit the number of items to process to prevent DoS
-                max_items = 10000
-                if len(flattened_data) > max_items:
-                    logger.warning(f"Limiting YouTube data processing to {max_items} items")
-                    flattened_data = flattened_data[:max_items]
                     
                 all_data.extend(flattened_data)
                 

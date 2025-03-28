@@ -4,7 +4,6 @@ import logging
 import re
 from werkzeug.utils import secure_filename
 from flask import abort, current_app, g
-import tempfile
 import magic  # python-magic package for MIME type detection
 
 logger = logging.getLogger(__name__)
@@ -212,7 +211,7 @@ def safe_save_file(file, filename=None, directory=None):
     Returns:
         str: Full path to the saved file
     """
-    from app.utils.file_utils import get_user_temp_dir
+    from app.utils.file_manager import get_user_temp_dir
     
     # Use sanitized filename or sanitize the original
     safe_filename = filename or sanitize_filename(file.filename)

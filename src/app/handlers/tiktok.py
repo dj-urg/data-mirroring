@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import traceback
 import re
-from app.utils.file_utils import get_user_temp_dir
+from app.utils.file_manager import get_user_temp_dir
 from app.utils.file_validation import parse_json_file, safe_save_file
 from app.utils.file_validation import safe_save_file
 from werkzeug.datastructures import FileStorage
@@ -285,12 +285,7 @@ def process_tiktok_file(files):
                         source_name = section_path[-2] if len(section_path) > 2 else 'Unknown Source'
                         logger.info(f"Found {len(current_level)} videos in {source_name}")
                         
-                        # Limit processing to prevent DoS
-                        max_items = min(len(current_level), 10000)  # Set a reasonable limit
-                        if len(current_level) > max_items:
-                            logger.warning(f"Limiting processing to {max_items} items from {len(current_level)} total")
-                        
-                        for item in current_level[:max_items]:
+                        for item in current_level:
                             try:
                                 # Validate item structure
                                 if not isinstance(item, dict):

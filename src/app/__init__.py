@@ -1,4 +1,4 @@
-from flask import Flask, request, g
+from flask import Flask, g
 from flask_cors import CORS
 from flask_wtf.csrf import CSRFProtect
 import os
@@ -8,8 +8,8 @@ import base64
 from dotenv import load_dotenv
 from app.utils.extensions import limiter
 from app.utils.logging_config import setup_logging
-from app.utils.security import enforce_https, apply_security_headers, register_cleanup
-from app.utils.file_utils import get_user_temp_dir
+from app.utils.security import enforce_https, apply_security_headers
+from app.utils.file_manager import TemporaryFileManager
 
 load_dotenv()
 logger = logging.getLogger(__name__)
@@ -19,7 +19,7 @@ def create_app():
     current_dir = os.path.dirname(os.path.abspath(__file__))
     templates_dir = os.path.join(current_dir, "templates")
     app = Flask(__name__, template_folder=templates_dir)
-
+    
     # Set secret key from environment variables
     secret_key = os.getenv('SECRET_KEY')
     if not secret_key:
@@ -64,6 +64,6 @@ def create_app():
     app.register_blueprint(routes_bp, url_prefix="/")
 
     # Register cleanup functions
-    register_cleanup(app)
+    TemporaryFileManager.register_cleanup(app)
 
     return app
