@@ -44,7 +44,7 @@ This document lists the licenses for third-party dependencies used in this proje
 | rich | 13.9.4 | MIT | https://github.com/Textualize/rich |
 | seaborn | 0.13.2 | BSD-3-Clause | https://github.com/mwaskom/seaborn |
 | six | 1.17.0 | MIT | https://github.com/benjaminp/six |
-| typing_extensions | Custom File License | https://github.com/python/typing_extensions |
+| typing_extensions | 4.13.0 | Custom File License | https://github.com/python/typing_extensions |
 | tzdata | 2025.1 | Apache-2.0 | https://github.com/python/tzdata |
 | Werkzeug | 3.1.3 | BSD-3-Clause | https://github.com/pallets/werkzeug |
 | wrapt | 1.17.2 | BSD-2-Clause | https://github.com/GrahamDumpleton/wrapt |
