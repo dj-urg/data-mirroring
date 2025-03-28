@@ -12,6 +12,7 @@ from app.utils.file_manager import get_user_temp_dir
 import squarify
 from app.utils.file_validation import parse_json_file, safe_save_file
 from werkzeug.datastructures import FileStorage
+import openpyxl
 
 # Use 'Agg' backend to avoid GUI issues
 matplotlib.use('Agg')

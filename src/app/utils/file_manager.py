@@ -30,8 +30,8 @@ class TemporaryFileManager:
         """
         return secrets.token_urlsafe(32)
 
-    @staticmethod
-    def get_user_temp_dir():
+    @classmethod
+    def get_user_temp_dir(cls):
         """
         Create a secure, user-specific temporary directory.
         
@@ -39,7 +39,7 @@ class TemporaryFileManager:
             str: Path to the user's temporary directory
         """
         # Use a more secure session ID generation
-        user_session_id = session.get('user_id') or TemporaryFileManager.generate_secure_session_id()
+        user_session_id = session.get('user_id') or cls.generate_secure_session_id()
         
         if not session.get('user_id'):
             session['user_id'] = user_session_id
@@ -54,24 +54,8 @@ class TemporaryFileManager:
             # Create directory with strict permissions
             os.makedirs(user_temp_dir, mode=0o700, exist_ok=True)
             
-            # Additional security: set immutable flag if supported
-            try:
-                import platform
-                if platform.system() == 'Linux':
-                    import ctypes
-                    import ctypes.util
-                    
-                    # Attempt to set immutable flag on directory
-                    try:
-                        libc = ctypes.CDLL(ctypes.util.find_library('c'), use_errno=True)
-                        FS_IMMUTABLE_FL = 0x00000010  # Linux immutable flag
-                        libc.chattr(user_temp_dir.encode(), FS_IMMUTABLE_FL)
-                    except Exception:
-                        # Silently fail if setting immutable flag is not possible
-                        pass
-            except ImportError:
-                # Skip immutable flag if platform doesn't support it
-                pass
+            # Security note: We rely on directory permissions (0o700) 
+            # rather than immutable flags for security
             
             return user_temp_dir
         

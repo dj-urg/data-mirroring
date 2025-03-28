@@ -1,9 +1,8 @@
 import os
 import json
 import logging
-import re
 from werkzeug.utils import secure_filename
-from flask import abort, current_app, g
+from flask import g
 import magic  # python-magic package for MIME type detection
 
 logger = logging.getLogger(__name__)
