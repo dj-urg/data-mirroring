@@ -10,6 +10,8 @@ import seaborn as sns
 from matplotlib.lines import Line2D
 from app.utils.file_utils import get_user_temp_dir
 import squarify
+from app.utils.file_validation import parse_json_file, safe_save_file
+from werkzeug.datastructures import FileStorage
 
 # Use 'Agg' backend to avoid GUI issues
 matplotlib.use('Agg')
@@ -275,7 +277,6 @@ def generate_heatmap(df):
 
 def generate_author_treemap(df):
     """Generates a treemap of top authors based on engagement count."""
-    import squarify  # Import squarify locally in the function
     
     # Filter for non-unknown authors
     authors_df = df[df['author'] != 'Unknown']
@@ -327,8 +328,12 @@ def process_instagram_file(files):
         # Process the uploaded files
         for file in files:
             try:
-                data = json.load(file)
-            except json.JSONDecodeError as e:
+                
+                data, error = parse_json_file(file)
+                if error:
+                    logger.warning(f"Failed to parse JSON file {getattr(file, 'filename', 'unknown')}: {error}")
+                    continue
+            except Exception as e:
                 logger.warning(f"Failed to parse JSON file {getattr(file, 'filename', 'unknown')}: {e}")
                 continue
 
@@ -408,7 +413,7 @@ def process_instagram_file(files):
 
         if not all_data:
             logger.warning("No valid data found in uploaded Instagram files.")
-            return pd.DataFrame(), None, {}, None, None, None, None, False
+            return pd.DataFrame(), None, {}, None, None, None, None, False, False
 
         # Convert to DataFrame
         df = pd.DataFrame(all_data)
@@ -428,7 +433,7 @@ def process_instagram_file(files):
 
         if df.empty:
             logger.warning("No valid timestamps found in Instagram data.")
-            return pd.DataFrame(), None, {}, None, None, None, None, False
+            return pd.DataFrame(), None, {}, None, None, None, None, False, False
 
         # Extract insights
         time_frame_start = df['timestamp'].min()
@@ -487,12 +492,33 @@ def process_instagram_file(files):
         csv_preview_html = df.head(5).to_html(classes="table table-striped", index=False)
 
         has_valid_data = not df.empty
-
-        # Save CSV to a temporary file
-        temp_dir = get_user_temp_dir()
+        
+        # Create CSV content
+        csv_content = df.to_csv(index=False)
+        
+        # Use a temporary file and then save it safely
+        with tempfile.NamedTemporaryFile(suffix='.csv', delete=False) as temp_file:
+            temp_file.write(csv_content.encode('utf-8'))
+            temp_file_path = temp_file.name
+        
+        # Get a unique filename
         unique_filename = f"{uuid.uuid4()}.csv"
-        temp_file_path = os.path.join(temp_dir, unique_filename)
-        df.to_csv(temp_file_path, index=False)
+        
+        # Save to user temp dir using the safe function
+        temp_dir = get_user_temp_dir()
+        
+        # Convert the file to a FileStorage object for safe_save_file
+        with open(temp_file_path, 'rb') as f:
+            file_storage = FileStorage(
+                stream=f,
+                filename=unique_filename,
+                content_type='text/csv'
+            )
+            safe_file_path = safe_save_file(file_storage, unique_filename, temp_dir)
+        
+        # Clean up the temporary file
+        if os.path.exists(temp_file_path):
+            os.remove(temp_file_path)
 
         # Return all data including the new heatmaps
         return df, unique_filename, insights, bump_chart_name, day_heatmap_name, month_heatmap_name, time_heatmap_name, csv_preview_html, has_valid_data

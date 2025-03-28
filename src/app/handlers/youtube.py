@@ -12,6 +12,8 @@ import re
 from app.utils.file_utils import get_user_temp_dir
 import csv
 import openpyxl
+from app.utils.file_validation import parse_json_file, safe_save_file
+from werkzeug.datastructures import FileStorage
 
 # Use 'Agg' backend to avoid GUI issues
 matplotlib.use('Agg')
@@ -330,24 +332,76 @@ def process_youtube_file(files):
         all_data = []
 
         for file in files:
-            data = json.load(file)
-            flattened_data = []
+            try:
+                # Use secure JSON parsing from validation module
+                data, error = parse_json_file(file)
+                if error:
+                    logger.warning(f"Failed to parse YouTube JSON file: {error}")
+                    continue
+                
+                flattened_data = []
 
-            for item in data:
-                subtitles = item.get('subtitles', [{}])
-                subtitle_name = subtitles[0].get('name', 'Unknown') if subtitles else 'Unknown'
-                subtitle_url = subtitles[0].get('url', '') if subtitles else ''
-                timestamp = pd.to_datetime(item.get('time', ''), errors='coerce')
+                # Process each item with validation
+                for item in data:
+                    # Validate item is a dict
+                    if not isinstance(item, dict):
+                        logger.warning(f"Skipping non-dict item in YouTube data: {type(item)}")
+                        continue
+                        
+                    # Extract and validate subtitle info
+                    subtitles = item.get('subtitles', [{}])
+                    if not isinstance(subtitles, list):
+                        subtitles = [{}]  # Fallback for invalid data
+                        
+                    subtitle_name = subtitles[0].get('name', 'Unknown') if subtitles else 'Unknown'
+                    subtitle_url = subtitles[0].get('url', '') if subtitles else ''
+                    
+                    # Validate and sanitize URL
+                    if subtitle_url and not subtitle_url.startswith(('http://', 'https://')):
+                        subtitle_url = ''  # Clear invalid URLs
+                    
+                    # Extract and validate timestamp
+                    time_str = item.get('time', '')
+                    timestamp = pd.to_datetime(time_str, errors='coerce')
+                    
+                    # Skip items with invalid timestamps
+                    if pd.isnull(timestamp):
+                        logger.warning(f"Skipping YouTube item with invalid timestamp: {time_str}")
+                        continue
+                    
+                    # Extract and sanitize title and URL
+                    video_title = item.get('title', 'No Title')
+                    if not isinstance(video_title, str):
+                        video_title = 'No Title'
+                        
+                    video_url = item.get('titleUrl', '')
+                    if video_url and not video_url.startswith(('http://', 'https://')):
+                        video_url = ''  # Clear invalid URLs
+                    
+                    flattened_data.append({
+                        'video_title': video_title,
+                        'video_url': video_url,
+                        'timestamp': timestamp,
+                        'channel': subtitle_name,
+                        'channel_url': subtitle_url
+                    })
+                
+                # Limit the number of items to process to prevent DoS
+                max_items = 10000
+                if len(flattened_data) > max_items:
+                    logger.warning(f"Limiting YouTube data processing to {max_items} items")
+                    flattened_data = flattened_data[:max_items]
+                    
+                all_data.extend(flattened_data)
+                
+            except Exception as e:
+                logger.warning(f"Error processing YouTube file: {str(e)}")
+                continue
 
-                flattened_data.append({
-                    'video_title': item.get('title', 'No Title'),
-                    'video_url': item.get('titleUrl', ''),
-                    'timestamp': timestamp,
-                    'channel': subtitle_name,
-                    'channel_url': subtitle_url
-                })
-
-            all_data.extend(flattened_data)
+        # Check if we have valid data
+        if not all_data:
+            logger.warning("No valid data found in uploaded YouTube files")
+            raise ValueError("No valid data found in the uploaded files. Please check the file format.")
 
         df = pd.DataFrame(all_data)
         
@@ -387,11 +441,54 @@ def process_youtube_file(files):
         # Generate time of day heatmap image
         time_heatmap_name = save_image_temp_file(generate_time_of_day_heatmap(df))
 
-        # Save CSV to a user-specific temporary file
-        unique_filename = save_csv_temp_file(df)
+        # Save CSV data securely
+        csv_content = df.to_csv(index=False, quoting=csv.QUOTE_ALL, encoding='utf-8')
+        with tempfile.NamedTemporaryFile(suffix='.csv', delete=False) as temp_file:
+            temp_file.write(csv_content.encode('utf-8'))
+            temp_file_path = temp_file.name
+            
+        csv_filename = f"{uuid.uuid4()}.csv"
+        with open(temp_file_path, 'rb') as f:
+            file_storage = FileStorage(
+                stream=f,
+                filename=csv_filename,
+                content_type='text/csv'
+            )
+            safe_file_path = safe_save_file(file_storage, csv_filename)
+            unique_filename = os.path.basename(safe_file_path)
         
-        # Save Excel file
-        excel_filename = save_excel_temp_file(df)
+        # Clean up temp file
+        if os.path.exists(temp_file_path):
+            os.remove(temp_file_path)
+            
+        # Save Excel data securely
+        excel_file = tempfile.NamedTemporaryFile(suffix='.xlsx', delete=False)
+        excel_file.close()
+        
+        # Convert timezone-aware datetime columns to timezone-naive for Excel
+        excel_df = df.copy()
+        for col in excel_df.select_dtypes(include=['datetime64[ns, UTC]']).columns:
+            excel_df[col] = excel_df[col].dt.tz_localize(None)
+        
+        # Replace newlines to avoid breaking Excel format
+        excel_df.replace(r'\n', ' ', regex=True, inplace=True)
+        
+        # Save using openpyxl
+        excel_df.to_excel(excel_file.name, index=False, engine='openpyxl')
+        
+        excel_filename_uuid = f"{uuid.uuid4()}.xlsx"
+        with open(excel_file.name, 'rb') as f:
+            file_storage = FileStorage(
+                stream=f,
+                filename=excel_filename_uuid,
+                content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            )
+            excel_file_path = safe_save_file(file_storage, excel_filename_uuid)
+            excel_filename = os.path.basename(excel_file_path)
+            
+        # Clean up temp file
+        if os.path.exists(excel_file.name):
+            os.remove(excel_file.name)
         
         # Generate HTML preview from DataFrame
         raw_html = df.head(5).to_html(
@@ -407,7 +504,10 @@ def process_youtube_file(files):
 
         return df, excel_filename, unique_filename, insights, bump_chart_name, day_heatmap_name, month_heatmap_name, time_heatmap_name, not df.empty, csv_preview_html
 
-
+    except ValueError as e:
+        # Forward ValueError with its original message
+        logger.warning(f"ValueError in YouTube processing: {str(e)}")
+        raise ValueError(str(e))
     except Exception as e:
-        logger.warning(f"Error occurred: {type(e).__name__} - {str(e)}")  # Avoid logging sensitive data
+        logger.warning(f"Error processing YouTube data: {type(e).__name__} - {str(e)}")
         raise ValueError("An internal error occurred. Please try again.")

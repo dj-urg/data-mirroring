@@ -1,13 +1,12 @@
-from flask import Blueprint, render_template, request, send_file, current_app, session, redirect, url_for, abort
+from flask import Blueprint, render_template, request, send_file, current_app, session, redirect, url_for, abort, g
 from app.utils.security import requires_authentication, cleanup_old_temp_files, enforce_https, apply_security_headers, cleanup_temp_files
 from app.utils.extensions import limiter
 from app.utils.file_utils import get_user_temp_dir
 from app.handlers.youtube import process_youtube_file
 from app.handlers.instagram import process_instagram_file
 from app.handlers.tiktok import process_tiktok_file
+from app.utils.file_validation import validate_file
 import os
-import jsonify
-import tempfile
 from werkzeug.utils import secure_filename
 import re
 from flask import flash
@@ -62,17 +61,35 @@ def dashboard_youtube():
     files = request.files.getlist('file')
     if not files or files[0].filename == '':
         current_app.logger.warning("No files selected for upload.")
-        flash("No file selected", "danger")  # Keep the flash message
+        flash("No file selected", "danger")
         return redirect(url_for('routes.dashboard_youtube'))
 
     current_app.logger.info("Number of files received: %d", len(files))
+    
+    # Validate files before processing
+    valid_files = []
     for i, file in enumerate(files):
         current_app.logger.info("File %d: %s", i + 1, file.filename)
+        
+        is_valid, sanitized_name, error = validate_file(
+            file,
+            allowed_extensions=['json'],  # YouTube only accepts JSON
+            max_size_mb=16  # 16MB max file size
+        )
+        
+        if not is_valid:
+            current_app.logger.warning(f"Invalid file: {error}")
+            flash(f"Invalid file '{file.filename}': {error}", "danger")
+            return redirect(url_for('routes.dashboard_youtube'))
+            
+        # Reset file pointer and add to valid files
+        file.seek(0)
+        valid_files.append(file)
 
     try:
         current_app.logger.info("Starting file processing...")
 
-        df, excel_filename, csv_file_name, insights, plot_data, day_heatmap_data, month_heatmap_data, time_heatmap_data, has_valid_data, csv_preview_html = process_youtube_file(files)
+        df, excel_filename, csv_file_name, insights, plot_data, day_heatmap_data, month_heatmap_data, time_heatmap_data, has_valid_data, csv_preview_html = process_youtube_file(valid_files)
 
         current_app.logger.info("File processing completed successfully.")
 
@@ -91,7 +108,7 @@ def dashboard_youtube():
 
     except ValueError as e:
         current_app.logger.error("ValueError encountered during processing: %s", str(e))
-        flash(str(e), "danger")  # Keep flash messages for errors
+        flash(str(e), "danger")
         return redirect(url_for('routes.dashboard_youtube'))
 
     except Exception as e:
@@ -103,16 +120,37 @@ def dashboard_youtube():
 @requires_authentication
 @limiter.limit("10 per minute")
 def dashboard_instagram():
-    current_app.logger.info("Dashboard accessed for Instagram, Method: %s", request.method,)
+    current_app.logger.info("Dashboard accessed for Instagram, Method: %s", request.method)
 
     if request.method == 'GET':
         return render_template('dashboard_instagram.html')
 
     files = request.files.getlist('file')
+    if not files or files[0].filename == '':
+        flash("No file selected", "danger")
+        return redirect(url_for('routes.dashboard_instagram'))
+        
     current_app.logger.info("Processing %d file(s) for Instagram", len(files))
+    
+    valid_files = []
+    for file in files:
+        is_valid, sanitized_name, error = validate_file(
+            file,
+            allowed_extensions=['json'],  # Instagram only accepts JSON
+            max_size_mb=16  # 16MB max file size
+        )
+        
+        if not is_valid:
+            current_app.logger.warning(f"Invalid file: {error}")
+            flash(f"Invalid file '{file.filename}': {error}", "danger")
+            return redirect(url_for('routes.dashboard_instagram'))
+            
+        # Reset file pointer and add to valid files
+        file.seek(0)
+        valid_files.append(file)
 
     try:
-        df, csv_file_name, insights, bump_chart_name, day_heatmap_name, month_heatmap_name, time_heatmap_name, csv_preview_html, has_valid_data = process_instagram_file(files)
+        df, csv_file_name, insights, bump_chart_name, day_heatmap_name, month_heatmap_name, time_heatmap_name, csv_preview_html, has_valid_data = process_instagram_file(valid_files)
 
         return render_template(
             'dashboard_instagram.html',
@@ -145,10 +183,28 @@ def dashboard_tiktok():
     
     current_app.logger.info("Processing %d file(s) for TikTok", len(files))
     
-    try:
-        df, csv_file_name, excel_file_name, url_file_name, insights, day_heatmap_name, time_heatmap_name, month_heatmap_name, has_valid_data, csv_preview_html = process_tiktok_file(files)
+    # Validate files before processing
+    from app.utils.file_validation import validate_file
+    
+    valid_files = []
+    for file in files:
+        is_valid, sanitized_name, error = validate_file(
+            file,
+            allowed_extensions=['json'],  # TikTok only accepts JSON
+            max_size_mb=16  # 16MB max file size
+        )
         
-        data_html = df.to_html(classes="table table-bordered table-hover") if has_valid_data else None
+        if not is_valid:
+            current_app.logger.warning(f"Invalid file: {error}")
+            flash(f"Invalid file '{file.filename}': {error}", "danger")
+            return redirect(url_for('routes.dashboard_tiktok'))
+            
+        # Reset file pointer and add to valid files
+        file.seek(0)
+        valid_files.append(file)
+    
+    try:
+        df, csv_file_name, excel_file_name, url_file_name, insights, day_heatmap_name, time_heatmap_name, month_heatmap_name, has_valid_data, csv_preview_html = process_tiktok_file(valid_files)
         
         return render_template(
             'dashboard_tiktok.html',
@@ -179,8 +235,9 @@ def download_image(filename):
     temp_dir = get_user_temp_dir()
     temp_file_path = os.path.join(temp_dir, safe_filename)
 
-    # Normalize path to prevent path traversal
-    temp_file_path = os.path.normpath(temp_file_path)
+    # Use realpath instead of normpath for stronger path traversal protection
+    temp_file_path = os.path.realpath(temp_file_path)
+    temp_dir = os.path.realpath(temp_dir)
 
     # Ensure the file is only served from the temp directory
     if not temp_file_path.startswith(temp_dir):
@@ -189,19 +246,38 @@ def download_image(filename):
 
     if os.path.exists(temp_file_path):
         try:
+            # Add file to the list of files to clean up at the end of the request
+            if not hasattr(g, 'files_to_cleanup'):
+                g.files_to_cleanup = []
+            if temp_file_path not in g.files_to_cleanup:
+                g.files_to_cleanup.append(temp_file_path)
+                
             response = send_file(temp_file_path, mimetype="image/png")
 
-            # Delete AFTER the response is fully sent
+            # Still try to delete after the response is sent (primary cleanup)
             @response.call_on_close
             def remove_temp_file():
                 try:
-                    os.remove(temp_file_path)
-                    current_app.logger.info(f"Deleted temporary file: {temp_file_path}")
+                    if os.path.exists(temp_file_path):
+                        os.remove(temp_file_path)
+                        # If successfully deleted, remove from the cleanup list
+                        if hasattr(g, 'files_to_cleanup') and temp_file_path in g.files_to_cleanup:
+                            g.files_to_cleanup.remove(temp_file_path)
+                        current_app.logger.info(f"Deleted temporary file: {temp_file_path}")
                 except Exception as e:
                     current_app.logger.error(f"Failed to delete file {temp_file_path}: {e}")
 
             return response
         except Exception as e:
+            # Try to cleanup on error too
+            try:
+                if os.path.exists(temp_file_path):
+                    os.remove(temp_file_path)
+                    if hasattr(g, 'files_to_cleanup') and temp_file_path in g.files_to_cleanup:
+                        g.files_to_cleanup.remove(temp_file_path)
+            except:
+                pass  # Already logging in teardown_request
+                
             current_app.logger.error(f"Error serving file {temp_file_path}: {e}")
             abort(500, "Internal server error")
     else:
@@ -219,8 +295,9 @@ def download_csv(filename):
     temp_dir = get_user_temp_dir()
     temp_file_path = os.path.join(temp_dir, safe_filename)
 
-    # Normalize path to prevent path traversal
-    temp_file_path = os.path.normpath(temp_file_path)
+    # Use realpath instead of normpath for stronger path traversal protection
+    temp_file_path = os.path.realpath(temp_file_path)
+    temp_dir = os.path.realpath(temp_dir)
 
     # Ensure the file is only accessed from the temp directory
     if not temp_file_path.startswith(temp_dir):
@@ -229,19 +306,38 @@ def download_csv(filename):
 
     if os.path.exists(temp_file_path):
         try:
+            # Add file to the list of files to clean up at the end of the request
+            if not hasattr(g, 'files_to_cleanup'):
+                g.files_to_cleanup = []
+            if temp_file_path not in g.files_to_cleanup:
+                g.files_to_cleanup.append(temp_file_path)
+                
             response = send_file(temp_file_path, as_attachment=True, download_name=safe_filename, mimetype="text/csv")
 
-            # Delete AFTER the response is fully sent
+            # Still try to delete after the response is sent (primary cleanup)
             @response.call_on_close
             def remove_temp_file():
                 try:
-                    os.remove(temp_file_path)
-                    current_app.logger.info(f"Deleted temporary file: {temp_file_path}")
+                    if os.path.exists(temp_file_path):
+                        os.remove(temp_file_path)
+                        # If successfully deleted, remove from the cleanup list
+                        if hasattr(g, 'files_to_cleanup') and temp_file_path in g.files_to_cleanup:
+                            g.files_to_cleanup.remove(temp_file_path)
+                        current_app.logger.info(f"Deleted temporary file: {temp_file_path}")
                 except Exception as e:
                     current_app.logger.error(f"Failed to delete file {temp_file_path}: {e}")
 
             return response
         except Exception as e:
+            # Try to cleanup on error too
+            try:
+                if os.path.exists(temp_file_path):
+                    os.remove(temp_file_path)
+                    if hasattr(g, 'files_to_cleanup') and temp_file_path in g.files_to_cleanup:
+                        g.files_to_cleanup.remove(temp_file_path)
+            except:
+                pass  # Already logging in teardown_request
+                
             current_app.logger.error(f"Error serving file {temp_file_path}: {e}")
             abort(500, "Internal server error")
     else:
@@ -281,8 +377,9 @@ def download_excel(filename):
     temp_dir = get_user_temp_dir()
     temp_file_path = os.path.join(temp_dir, safe_filename)
 
-    # Normalize path to prevent path traversal
-    temp_file_path = os.path.normpath(temp_file_path)
+    # Use realpath instead of normpath for stronger path traversal protection
+    temp_file_path = os.path.realpath(temp_file_path)
+    temp_dir = os.path.realpath(temp_dir)
 
     # Ensure the file is only accessed from the temp directory
     if not temp_file_path.startswith(temp_dir):
@@ -291,19 +388,38 @@ def download_excel(filename):
 
     if os.path.exists(temp_file_path):
         try:
+            # Add file to the list of files to clean up at the end of the request
+            if not hasattr(g, 'files_to_cleanup'):
+                g.files_to_cleanup = []
+            if temp_file_path not in g.files_to_cleanup:
+                g.files_to_cleanup.append(temp_file_path)
+                
             response = send_file(temp_file_path, as_attachment=True, download_name=safe_filename, mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
-            # Delete AFTER the response is fully sent
+            # Still try to delete after the response is sent (primary cleanup)
             @response.call_on_close
             def remove_temp_file():
                 try:
-                    os.remove(temp_file_path)
-                    current_app.logger.info(f"Deleted temporary file: {temp_file_path}")
+                    if os.path.exists(temp_file_path):
+                        os.remove(temp_file_path)
+                        # If successfully deleted, remove from the cleanup list
+                        if hasattr(g, 'files_to_cleanup') and temp_file_path in g.files_to_cleanup:
+                            g.files_to_cleanup.remove(temp_file_path)
+                        current_app.logger.info(f"Deleted temporary file: {temp_file_path}")
                 except Exception as e:
                     current_app.logger.error(f"Failed to delete file {temp_file_path}: {e}")
 
             return response
         except Exception as e:
+            # Try to cleanup on error too
+            try:
+                if os.path.exists(temp_file_path):
+                    os.remove(temp_file_path)
+                    if hasattr(g, 'files_to_cleanup') and temp_file_path in g.files_to_cleanup:
+                        g.files_to_cleanup.remove(temp_file_path)
+            except:
+                pass  # Already logging in teardown_request
+                
             current_app.logger.error(f"Error serving file {temp_file_path}: {e}")
             abort(500, "Internal server error")
     else:
@@ -321,8 +437,9 @@ def download_txt(filename):
     temp_dir = get_user_temp_dir()
     temp_file_path = os.path.join(temp_dir, safe_filename)
 
-    # Normalize path to prevent path traversal
-    temp_file_path = os.path.normpath(temp_file_path)
+    # Use realpath instead of normpath for stronger path traversal protection
+    temp_file_path = os.path.realpath(temp_file_path)
+    temp_dir = os.path.realpath(temp_dir)
 
     # Ensure the file is only accessed from the temp directory
     if not temp_file_path.startswith(temp_dir):
@@ -331,19 +448,38 @@ def download_txt(filename):
 
     if os.path.exists(temp_file_path):
         try:
+            # Add file to the list of files to clean up at the end of the request
+            if not hasattr(g, 'files_to_cleanup'):
+                g.files_to_cleanup = []
+            if temp_file_path not in g.files_to_cleanup:
+                g.files_to_cleanup.append(temp_file_path)
+                
             response = send_file(temp_file_path, as_attachment=True, download_name="tiktok_urls.txt", mimetype="text/plain")
 
-            # Delete AFTER the response is fully sent
+            # Still try to delete after the response is sent (primary cleanup)
             @response.call_on_close
             def remove_temp_file():
                 try:
-                    os.remove(temp_file_path)
-                    current_app.logger.info(f"Deleted temporary file: {temp_file_path}")
+                    if os.path.exists(temp_file_path):
+                        os.remove(temp_file_path)
+                        # If successfully deleted, remove from the cleanup list
+                        if hasattr(g, 'files_to_cleanup') and temp_file_path in g.files_to_cleanup:
+                            g.files_to_cleanup.remove(temp_file_path)
+                        current_app.logger.info(f"Deleted temporary file: {temp_file_path}")
                 except Exception as e:
                     current_app.logger.error(f"Failed to delete file {temp_file_path}: {e}")
 
             return response
         except Exception as e:
+            # Try to cleanup on error too
+            try:
+                if os.path.exists(temp_file_path):
+                    os.remove(temp_file_path)
+                    if hasattr(g, 'files_to_cleanup') and temp_file_path in g.files_to_cleanup:
+                        g.files_to_cleanup.remove(temp_file_path)
+            except:
+                pass  # Already logging in teardown_request
+                
             current_app.logger.error(f"Error serving file {temp_file_path}: {e}")
             abort(500, "Internal server error")
     else:

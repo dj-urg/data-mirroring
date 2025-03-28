@@ -10,6 +10,10 @@ import seaborn as sns
 import traceback
 import re
 from app.utils.file_utils import get_user_temp_dir
+from app.utils.file_validation import parse_json_file, safe_save_file
+from app.utils.file_validation import safe_save_file
+from werkzeug.datastructures import FileStorage
+import tempfile
 import csv
 import openpyxl
 
@@ -246,12 +250,19 @@ def process_tiktok_file(files):
 
         for file in files:
             try:
-                data = json.load(file)
+                
+                data, error = parse_json_file(file)
+                if error:
+                    logger.error(f"Failed to parse JSON file: {error}")
+                    raise ValueError(f"Invalid JSON file: {error}. Please upload a valid TikTok data file.")
                 
                 # Log the top-level keys in the JSON
                 logger.info(f"Top-level keys in JSON: {list(data.keys())}")
-            except json.JSONDecodeError:
-                logger.error("Uploaded file is not valid JSON.")
+            except ValueError as e:
+                # Re-raise ValueError with our custom message
+                raise ValueError(f"Invalid JSON file: {str(e)}. Please upload a valid TikTok data file.")
+            except Exception as e:
+                logger.error(f"Error parsing file: {type(e).__name__} - {str(e)}")
                 raise ValueError("Invalid JSON file. Please upload a valid TikTok data file.")
 
             # Check multiple possible locations for video data
@@ -274,18 +285,41 @@ def process_tiktok_file(files):
                         source_name = section_path[-2] if len(section_path) > 2 else 'Unknown Source'
                         logger.info(f"Found {len(current_level)} videos in {source_name}")
                         
-                        for item in current_level:
+                        # Limit processing to prevent DoS
+                        max_items = min(len(current_level), 10000)  # Set a reasonable limit
+                        if len(current_level) > max_items:
+                            logger.warning(f"Limiting processing to {max_items} items from {len(current_level)} total")
+                        
+                        for item in current_level[:max_items]:
                             try:
-                                timestamp = pd.to_datetime(item.get('Date', ''), errors='coerce')
+                                # Validate item structure
+                                if not isinstance(item, dict):
+                                    logger.warning(f"Skipping non-dict item: {type(item)}")
+                                    continue
+                                
+                                # Extract and validate date
+                                date_str = item.get('Date', '')
+                                if not date_str:
+                                    logger.warning("Skipping item with missing date")
+                                    continue
+                                    
+                                timestamp = pd.to_datetime(date_str, errors='coerce')
                                 
                                 # Skip if timestamp is invalid
                                 if pd.isnull(timestamp):
-                                    logger.warning(f"Skipping item with invalid timestamp: {item}")
+                                    logger.warning(f"Skipping item with invalid timestamp: {date_str}")
                                     continue
+                                
+                                # Safely extract video URL with validation
+                                video_url = item.get('Link', '')
+                                if video_url:
+                                    # Basic URL validation
+                                    if not video_url.startswith(('http://', 'https://')):
+                                        video_url = ''  # Clear invalid URLs
                                 
                                 all_data.append({
                                     'video_title': f"{source_name} Video",
-                                    'video_url': item.get('Link', ''),
+                                    'video_url': video_url,
                                     'timestamp': timestamp,
                                     'source': source_name
                                 })
@@ -331,10 +365,76 @@ def process_tiktok_file(files):
         day_heatmap_name = save_image_temp_file(generate_day_heatmap(day_counts))
         month_heatmap_name = save_image_temp_file(generate_month_heatmap(df))
         
-        # Save data files
-        csv_file_name = save_csv_temp_file(df)
-        excel_file_name = save_excel_temp_file(df)
-        url_file_name = save_urls_temp_file(df)
+        # Save CSV data securely
+        csv_content = df.to_csv(index=False, quoting=csv.QUOTE_ALL, encoding='utf-8')
+        with tempfile.NamedTemporaryFile(suffix='.csv', delete=False) as temp_file:
+            temp_file.write(csv_content.encode('utf-8'))
+            temp_file_path = temp_file.name
+            
+        csv_filename = f"{uuid.uuid4()}.csv"
+        with open(temp_file_path, 'rb') as f:
+            file_storage = FileStorage(
+                stream=f,
+                filename=csv_filename,
+                content_type='text/csv'
+            )
+            csv_file_path = safe_save_file(file_storage, csv_filename)
+            csv_file_name = os.path.basename(csv_file_path)
+        
+        # Clean up temp file
+        if os.path.exists(temp_file_path):
+            os.remove(temp_file_path)
+            
+        # Save Excel data securely
+        excel_file = tempfile.NamedTemporaryFile(suffix='.xlsx', delete=False)
+        excel_file.close()
+        
+        # Convert timezone-aware datetime columns to timezone-naive for Excel
+        excel_df = df.copy()
+        for col in excel_df.select_dtypes(include=['datetime64[ns, UTC]']).columns:
+            excel_df[col] = excel_df[col].dt.tz_localize(None)
+        
+        # Replace newlines to avoid breaking Excel format
+        excel_df.replace(r'\n', ' ', regex=True, inplace=True)
+        
+        # Save using openpyxl
+        excel_df.to_excel(excel_file.name, index=False, engine='openpyxl')
+        
+        excel_filename = f"{uuid.uuid4()}.xlsx"
+        with open(excel_file.name, 'rb') as f:
+            file_storage = FileStorage(
+                stream=f,
+                filename=excel_filename,
+                content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            )
+            excel_file_path = safe_save_file(file_storage, excel_filename)
+            excel_file_name = os.path.basename(excel_file_path)
+            
+        # Clean up temp file
+        if os.path.exists(excel_file.name):
+            os.remove(excel_file.name)
+            
+        # Save URLs securely
+        urls = df['video_url'].dropna().tolist()
+        url_content = '\n'.join([url for url in urls if url and url.strip()])
+        
+        url_filename = f"{uuid.uuid4()}.txt"
+        with tempfile.NamedTemporaryFile(suffix='.txt', delete=False) as temp_file:
+            temp_file.write(url_content.encode('utf-8'))
+            temp_file_path = temp_file.name
+            
+        with open(temp_file_path, 'rb') as f:
+            file_storage = FileStorage(
+                stream=f,
+                filename=url_filename,
+                content_type='text/plain'
+            )
+            url_file_path = safe_save_file(file_storage, url_filename)
+            url_file_name = os.path.basename(url_file_path)
+            
+        # Clean up temp file
+        if os.path.exists(temp_file_path):
+            os.remove(temp_file_path)
         
         # Generate HTML preview from DataFrame
         raw_html = df.head(5).to_html(
@@ -351,6 +451,10 @@ def process_tiktok_file(files):
         # Return all necessary data
         return df, csv_file_name, excel_file_name, url_file_name, insights, day_heatmap_name, time_heatmap_name, month_heatmap_name, not df.empty, csv_preview_html
 
+    except ValueError as e:
+        # Forward ValueError with its message
+        logger.error(f"ValueError in TikTok processing: {str(e)}")
+        raise ValueError(str(e))
     except Exception as e:
         logger.error(f"Error processing TikTok file: {type(e).__name__} - {str(e)}")
         logger.error(traceback.format_exc())
