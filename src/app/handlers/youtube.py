@@ -30,53 +30,20 @@ else:
 
 logger = logging.getLogger()
 
-# Custom visualization functions
-def add_line(ax, year_values, rank_values, linewidth=3, color="black"):
-    ax.add_artist(Line2D(year_values, -rank_values, linewidth=linewidth, color=color))
-
-def add_circle(ax, year_value, rank_value, marker_size=15, color="black"):
-    ax.plot(year_value, -rank_value, 'o', color=color, markersize=marker_size)
-
-def add_text(ax, year_value, rank_value, text, offset=0.02):
-    ax.text(year_value + offset, -rank_value, text, fontsize=10, va='bottom', ha='left')
-
-def format_ticks(ax, years, padx=0.25, pady=0.1, y_label_size=16, x_label_size=18):
-    ax.set(xlim=(-padx, len(years) - 1 + padx), ylim=(-5.5 - pady, -pady))
-
-    xticks = [i for i in range(len(years))]
-    ax.set_xticks(ticks=xticks, labels=years)
-
-    # Remove y-axis labels (rank numbers)
-    ax.set_yticks([])  # No y-axis tick labels
-
-    # Only show top x-axis labels (years), disable bottom x-axis labels
-    ax.tick_params("y", labelsize=y_label_size, pad=8)
-    ax.tick_params("x", labeltop=True, bottom=False, labelsize=x_label_size, pad=4)  # Disable bottom ticks
-
-def set_custom_style():
-    plt.rcParams.update({
-        "axes.facecolor": "#FFFFFF",  # White background for the plot
-        "figure.facecolor": "#FFFFFF",  # White background for the figure
-        "grid.color": "#E4C9C9",  # Keep grid color subtle
-        "axes.grid": True,
-        "xtick.bottom": False,
-        "xtick.top": True,
-        "ytick.left": False,
-        "ytick.right": False,
-        "axes.spines.left": False,
-        "axes.spines.bottom": False,
-        "axes.spines.right": False,
-        "axes.spines.top": False
-    })
-
-# Helper function to save images as temporary files
 def save_image_temp_file(fig):
     """Saves an image in the user's temporary directory and returns the filename."""
     temp_dir = get_user_temp_dir()  # Get session-specific temp directory
     unique_filename = f"{uuid.uuid4()}.png"  # Generate a unique filename
     temp_file_path = os.path.join(temp_dir, unique_filename)
 
-    fig.savefig(temp_file_path, bbox_inches='tight')  # Save the image in the session temp directory
+    # Increase DPI for higher quality while maintaining figure dimensions
+    fig.savefig(temp_file_path, 
+                bbox_inches='tight',
+                dpi=100,              # Higher DPI for better quality
+                format='png',         # Explicitly use PNG format
+                transparent=False,    # Ensure non-transparent background
+                pad_inches=0.1)       # Small padding to avoid clipping
+    
     plt.close(fig)  # Free up memory
     logger.debug(f"Image saved at {temp_file_path}")  # Log the saved path for debugging
     return unique_filename  # Return just the filename
@@ -118,42 +85,176 @@ def save_excel_temp_file(df):
     return unique_filename  # Return just the filename
 
 def generate_custom_bump_chart(channel_ranking):
-    # Set custom style
-    set_custom_style()
-
-    # Extract years and ranks for each channel and plot the lines
+    """
+    Generate an alluvial diagram showing how channels flow between rankings across years,
+    with positioning similar to heatmaps.
+    
+    Args:
+        channel_ranking: DataFrame with columns 'channel', 'year', and 'rank'
+        
+    Returns:
+        matplotlib figure object
+    """
+    import matplotlib.pyplot as plt
+    import matplotlib.patches as patches
+    import numpy as np
+    from matplotlib.path import Path
+    
+    # Extract years and channels
+    years = sorted(channel_ranking['year'].unique())
     channels = channel_ranking['channel'].unique()
-    years = sorted(channel_ranking['year'].unique())  # List of years to plot
-
-    # Adjust figure size (reduce height)
-    fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(8, 3))  # Width remains, height reduced significantly
-
-    # Adjust the tick formatting and spacing
-    format_ticks(ax, years)
-
-    colors = plt.get_cmap("tab10").colors  # Color palette
-
-    # Draw lines or circles for each channel
-    for i, channel in enumerate(channels):
-        channel_data = channel_ranking[channel_ranking['channel'] == channel]
-        year_values = [years.index(year) for year in channel_data['year']]
-        rank_values = channel_data['rank'].values
-        color = colors[i % len(colors)]  # Rotate through colors
-
-        if len(year_values) > 1:
-            # Draw lines for channels that appear in multiple years
-            add_line(ax, year_values, rank_values, color=color)
-            for j, year in enumerate(year_values):
-                add_circle(ax, year, rank_values[j], color=color)
-            add_text(ax, year_values[-1], rank_values[-1], channel)
-        else:
-            # Draw circles for channels that only appear in one year
-            add_circle(ax, year_values[0], rank_values[0], color=color)
-            add_text(ax, year_values[0], rank_values[0], channel)
-
-    plt.tight_layout()  # Ensure the plot fits nicely
-
-    # Save the image temporarily and return the filename
+    
+    # Create figure and axis - adjust to match heatmap proportions
+    fig, ax = plt.subplots(figsize=(8, 4), dpi=100)  # Changed to 100 DPI and adjusted dimensions
+    
+    # Set up colors
+    cmap = plt.get_cmap("tab10")
+    channel_colors = {channel: cmap(i % 10) for i, channel in enumerate(channels)}
+    
+    # Constants for layout - adjusted for better alignment with heatmap
+    node_width = 0.6
+    node_spacing = 0.1
+    year_spacing = 2.8  # Reduced spacing between years for better proportion
+    node_height = 0.8
+    
+    # Track all nodes for connection lines
+    nodes_by_year_channel = {}
+    
+    # Function to draw a beautiful flow between nodes
+    def draw_flow(start_x, start_y, end_x, end_y, height1, height2, color, alpha=0.7):
+        """Draw a sophisticated flow connection between nodes"""
+        height_factor = 2.5
+        width_factor = abs(start_y - end_y) / (5 * year_spacing)
+        
+        # Calculate control points for a more natural flow
+        cp1_x = start_x + (end_x - start_x) * 0.35
+        cp2_x = start_x + (end_x - start_x) * 0.65
+        
+        # Create points for the top curve
+        top_curve = [
+            (start_x, start_y + (height1 / height_factor)),
+            (cp1_x, start_y + (height1 / height_factor)),
+            (cp2_x, end_y + (height2 / height_factor)),
+            (end_x, end_y + (height2 / height_factor))
+        ]
+        
+        # Create points for the bottom curve
+        bottom_curve = [
+            (end_x, end_y - (height2 / height_factor)),
+            (cp2_x, end_y - (height2 / height_factor)),
+            (cp1_x, start_y - (height1 / height_factor)),
+            (start_x, start_y - (height1 / height_factor))
+        ]
+        
+        # Combine curves to form a closed path
+        verts = top_curve + bottom_curve + [(start_x, start_y + (height1 / height_factor))]
+        
+        # Create codes for the path
+        codes = [Path.MOVETO] + [Path.CURVE4] * 3 + [Path.LINETO] + [Path.CURVE4] * 3 + [Path.CLOSEPOLY]
+        
+        # Create the path
+        path = Path(verts, codes)
+        
+        # Create patch
+        patch = patches.PathPatch(
+            path, facecolor=color, alpha=alpha, edgecolor='none', lw=0
+        )
+        ax.add_patch(patch)
+    
+    # Calculate horizontal positioning to center content like the heatmap
+    total_width = (len(years) - 1) * year_spacing + node_width
+    left_margin = 0.2  # Small left margin
+    
+    # Draw nodes for each year and channel
+    for year_idx, year in enumerate(years):
+        x_pos = left_margin + year_idx * year_spacing
+        
+        # Get channels for this year
+        year_data = channel_ranking[channel_ranking['year'] == year]
+        year_data = year_data.sort_values('rank')
+        
+        # Draw nodes for each channel in this year
+        for i, (_, row) in enumerate(year_data.iterrows()):
+            channel = row['channel']
+            rank = row['rank']
+            y_pos = (rank - 1) * (node_height + node_spacing)
+            
+            # Draw rectangle for the node
+            rect = patches.Rectangle(
+                (x_pos, y_pos), 
+                node_width, 
+                node_height, 
+                facecolor=channel_colors[channel],
+                edgecolor='white',
+                linewidth=1,
+                alpha=0.9
+            )
+            ax.add_patch(rect)
+            
+            # Add channel label
+            ax.text(
+                x_pos + node_width + 0.1, 
+                y_pos + node_height/2, 
+                channel, 
+                va='center', 
+                ha='left', 
+                fontsize=10,
+                fontweight='medium'
+            )
+            
+            # Store node position for connection lines
+            nodes_by_year_channel[(year, channel)] = (x_pos, y_pos, node_height)
+    
+    # Draw connections between nodes across years
+    for channel in channels:
+        channel_years = channel_ranking[channel_ranking['channel'] == channel]['year'].unique()
+        
+        # Sort years to ensure connections go from earlier to later years
+        channel_years = sorted(channel_years)
+        
+        # Connect nodes across consecutive years
+        for i in range(len(channel_years) - 1):
+            year1 = channel_years[i]
+            year2 = channel_years[i + 1]
+            
+            # Get node positions
+            node1_x, node1_y, node1_height = nodes_by_year_channel[(year1, channel)]
+            node2_x, node2_y, node2_height = nodes_by_year_channel[(year2, channel)]
+            
+            # Draw flow connection
+            draw_flow(
+                node1_x + node_width, node1_y + node1_height/2,
+                node2_x, node2_y + node2_height/2,
+                node1_height, node2_height,
+                channel_colors[channel],
+                alpha=0.8
+            )
+    
+    # Add year labels with better alignment to match heatmap
+    for year_idx, year in enumerate(years):
+        ax.text(
+            left_margin + year_idx * year_spacing + node_width/2, 
+            -1.2,  # Position higher
+            str(year),
+            ha='center',
+            va='center',
+            fontsize=12,  # Slightly smaller font to match heatmap
+            fontweight='bold'
+        )
+    
+    # Remove Greek letters per latest screenshot - they're not in the example
+    
+    # Set axis limits - adjust to match heatmap proportions
+    max_rank = channel_ranking['rank'].max()
+    ax.set_xlim(-0.5, left_margin + (len(years) - 1) * year_spacing + node_width + 2)
+    ax.set_ylim(-1.5, (max_rank) * (node_height + node_spacing) + 0.3)
+    
+    # Remove axes and spines
+    ax.set_axis_off()
+    
+    # Adjust margins to match heatmap layout
+    plt.subplots_adjust(left=0.05, right=0.95, top=0.95, bottom=0.1)
+    
     return fig
 
 def generate_heatmap(day_counts):
