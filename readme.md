@@ -2,10 +2,11 @@
 
 [![Requires Python 3.8](https://img.shields.io/badge/py-v3.8-blue)](https://www.python.org/) 
 [![License: MPL 2.0](https://img.shields.io/badge/license-MPL--2.0-informational)](https://github.com/dj-urg/data-mirroring?tab=License-1-ov-file#)
+[![DOI 10.5281/zenodo.15102049](https://zenodo.org/badge/DOI/10.5281/zenodo.15102049.svg)](https://zenodo.org/records/15102090)
 
 ## 🌐 Overview
 
-Welcome to the Data Mirroring research project, developed by Daniel Jurg, Sarah Vis, and Ike Picone at the Vrije Universiteit Brussel as part of the NUSE-Unit. 
+Welcome to the Data Mirroring research project, developed by Daniel Jurg, Sarah Vis, and Ike Picone at imec-SMIT, Vrije Universiteit Brussel as part of the NUSE-Unit. 
 
 This project aims to facilitate user reflection on social media usage through data conversion and visualization. The application transforms specific files in Data Download Packages (DDPs) provided by social media platforms like TikTok, Instagram, and YouTube into a more human-readable format.
 

@@ -6,7 +6,7 @@ This document lists the licenses for third-party dependencies used in this proje
 |---------|---------|---------|-----|
 | blinker | 1.9.0 | MIT | https://github.com/jek/blinker |
 | cachelib | 0.13.0 | BSD-3-Clause | https://github.com/pallets/cachelib |
-| click | 8.1.8 | BSD-3-Clause | https://palletsprojects.com/p/click/ |
+| click | 8.1.8 | BSD-3-Clause | https://github.com/pallets/click |
 | contourpy | 1.3.1 | BSD-3-Clause | https://github.com/contourpy/contourpy |
 | cycler | 0.12.1 | BSD-3-Clause | https://github.com/matplotlib/cycler |
 | Deprecated | 1.2.18 | MIT | https://github.com/tantale/deprecated |
@@ -17,40 +17,40 @@ This document lists the licenses for third-party dependencies used in this proje
 | Flask-WTF | 1.2.2 | BSD-3-Clause | https://github.com/wtforms/flask-wtf |
 | fonttools | 4.56.0 | MIT | https://github.com/fonttools/fonttools |
 | gunicorn | 23.0.0 | MIT | https://gunicorn.org/ |
-| itsdangerous | 2.2.0 | BSD-3-Clause | https://palletsprojects.com/p/itsdangerous/ |
-| Jinja2 | 3.1.6 | BSD-3-Clause | https://palletsprojects.com/p/jinja/ |
-| jsonify | 0.5 | MIT | https://github.com/brettcannon/jsonify |
+| itsdangerous | 2.2.0 | BSD-3-Clause | https://github.com/pallets/itsdangerous |
+| Jinja2 | 3.1.6 | BSD-3-Clause | [https://palletsprojects.com/p/jinja/](https://github.com/pallets/jinja) |
+| jsonify | 0.5 | MIT | [https://github.com/brettcannon/jsonify](https://github.com/ljharb/jsonify) |
 | kiwisolver | 1.4.8 | BSD-3-Clause | https://github.com/nucleic/kiwi |
-| libmagic | 1.0 | MIT | https://github.com/file/file |
+| libmagic | 1.0 | Custom File License | https://github.com/file/file |
 | limits | 4.4.1 | MIT | https://github.com/alisaifee/limits |
 | markdown-it-py | 3.0.0 | MIT | https://github.com/executablebooks/markdown-it-py |
-| MarkupSafe | 3.0.2 | BSD-3-Clause | https://palletsprojects.com/p/markupsafe/ |
-| matplotlib | 3.10.1 | PSF-based | https://matplotlib.org/ |
+| MarkupSafe | 3.0.2 | BSD-3-Clause | [https://palletsprojects.com/p/markupsafe/](https://github.com/pallets/markupsafe) |
+| matplotlib | 3.10.1 | PSF-based | [https://matplotlib.org/](https://github.com/matplotlib/matplotlib) |
 | mdurl | 0.1.2 | MIT | https://github.com/executablebooks/mdurl |
 | msgspec | 0.19.0 | BSD-3-Clause | https://github.com/jcrist/msgspec |
-| narwhals | 1.32.0 | MIT | [license URL to be filled] |
-| numpy | 2.2.3 | BSD-3-Clause | https://numpy.org/ |
+| narwhals | 1.32.0 | MIT | https://github.com/narwhals-dev/narwhals |
+| numpy | 2.2.3 | Custom File License | https://github.com/numpy/numpy |
 | ordered-set | 4.1.0 | MIT | https://github.com/rspeer/ordered-set |
 | packaging | 24.2 | Apache-2.0 / BSD-2-Clause | https://github.com/pypa/packaging |
-| pandas | 2.2.3 | BSD-3-Clause | https://pandas.pydata.org/ |
-| pillow | 11.1.0 | HPND | https://python-pillow.org/ |
+| pandas | 2.2.3 | BSD-3-Clause | https://github.com/pandas-dev/pandas |
+| pillow | 11.1.0 | MIT-CMU | https://github.com/python-pillow/Pillow/blob/main/LICENSE |
 | plotly | 6.0.1 | MIT | https://plotly.com/python/ |
-| Pygments | 2.19.1 | BSD-2-Clause | https://pygments.org/ |
+| Pygments | 2.19.1 | BSD-2-Clause | https://github.com/pygments/pygments |
 | pyparsing | 3.2.1 | MIT | https://github.com/pyparsing/pyparsing |
-| python-dateutil | 2.9.0.post0 | Apache-2.0 / BSD-3-Clause | https://github.com/dateutil/dateutil |
+| python-dateutil | 2.9.0.post0 | Apache-2.0 | https://github.com/dateutil/dateutil |
 | python-dotenv | 1.0.1 | BSD-3-Clause | https://github.com/theskumar/python-dotenv |
 | python-magic | 0.4.27 | MIT | https://github.com/ahupp/python-magic |
-| pytz | 2025.1 | MIT | https://pythonhosted.org/pytz/ |
+| pytz | 2025.1 | MIT | https://github.com/stub42/pytz |
 | rich | 13.9.4 | MIT | https://github.com/Textualize/rich |
-| seaborn | 0.13.2 | BSD-3-Clause | https://seaborn.pydata.org/ |
+| seaborn | 0.13.2 | BSD-3-Clause | https://github.com/mwaskom/seaborn |
 | six | 1.17.0 | MIT | https://github.com/benjaminp/six |
-| typing_extensions | 4.12.2 | PSF-2.0 | https://github.com/python/typing_extensions |
+| typing_extensions | 4.13.0 | Custom File License | https://github.com/python/typing_extensions |
 | tzdata | 2025.1 | Apache-2.0 | https://github.com/python/tzdata |
-| Werkzeug | 3.1.3 | BSD-3-Clause | https://palletsprojects.com/p/werkzeug/ |
+| Werkzeug | 3.1.3 | BSD-3-Clause | https://github.com/pallets/werkzeug |
 | wrapt | 1.17.2 | BSD-2-Clause | https://github.com/GrahamDumpleton/wrapt |
-| WTForms | 3.2.1 | BSD-3-Clause | https://wtforms.readthedocs.io/ |
-| openpyxl | 3.1.5 | MIT | https://openpyxl.readthedocs.io/ |
-| squarify | 0.4.3 | MIT | https://github.com/laserson/squarify |
+| WTForms | 3.2.1 | BSD-3-Clause | https://github.com/pallets-eco/wtforms |
+| openpyxl | 3.1.5 | MIT | https://github.com/soxhub/openpyxl |
+| squarify | 0.4.3 | Apache-2.0 | https://github.com/laserson/squarify |
 
 ## License Details
 
@@ -87,35 +87,18 @@ The BSD 3-clause license allows you almost unlimited freedom with the software s
 ```
 BSD 3-Clause License
 
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
+Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
 
-1. Redistributions of source code must retain the above copyright notice, this
-   list of conditions and the following disclaimer.
+1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
 
-2. Redistributions in binary form must reproduce the above copyright notice,
-   this list of conditions and the following disclaimer in the documentation
-   and/or other materials provided with the distribution.
+2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
 
-3. Neither the name of the copyright holder nor the names of its
-   contributors may be used to endorse or promote products derived from
-   this software without specific prior written permission.
+3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS “AS IS” AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ```
 
 ### Apache License 2.0
-
-The Apache License 2.0 is a permissive license that also provides an express grant of patent rights from contributors to users.
 
 ```
 Apache License
@@ -133,40 +116,55 @@ The PSF license is a BSD-style license that is compatible with GPL. It is used f
 
 ```
 1. This LICENSE AGREEMENT is between the Python Software Foundation ("PSF"), and
-   the Individual or Organization ("Licensee") accessing and otherwise using Python
-   [version] software in source or binary form and its associated documentation.
+   the Individual or Organization ("Licensee") accessing and otherwise using this
+   software ("Python") in source or binary form and its associated documentation.
 
 2. Subject to the terms and conditions of this License Agreement, PSF hereby
    grants Licensee a nonexclusive, royalty-free, world-wide license to reproduce,
    analyze, test, perform and/or display publicly, prepare derivative works,
-   distribute, and otherwise use Python [version] alone or in any derivative
+   distribute, and otherwise use Python alone or in any derivative
    version, provided, however, that PSF's License Agreement and PSF's notice of
-   copyright, i.e., "Copyright © [year] Python Software Foundation; All Rights
-   Reserved" are retained in Python [version] alone or in any derivative version
+   copyright, i.e., "Copyright © 2001-2024 Python Software Foundation; All Rights
+   Reserved" are retained in Python alone or in any derivative version
    prepared by Licensee.
 
-[Complete text omitted for brevity]
+[Complete text omitted for brevity - refer to https://docs.python.org/3/license.html#bsd0]
 ```
 
-### Historical Permission Notice and Disclaimer (HPND)
+### MIT-CMU License
 
 This is the license under which Pillow is distributed.
 
 ```
-Permission to use, copy, modify, and distribute this software and its
+The Python Imaging Library (PIL) is
+
+    Copyright © 1997-2011 by Secret Labs AB
+    Copyright © 1995-2011 by Fredrik Lundh and contributors
+
+Pillow is the friendly PIL fork. It is
+
+    Copyright © 2010 by Jeffrey A. Clark and contributors
+
+Like PIL, Pillow is licensed under the open source MIT-CMU License:
+
+By obtaining, using, and/or copying this software and/or its associated
+documentation, you agree that you have read, understood, and will comply
+with the following terms and conditions:
+
+Permission to use, copy, modify and distribute this software and its
 documentation for any purpose and without fee is hereby granted,
-provided that the above copyright notice appear in all copies and that
-both that copyright notice and this permission notice appear in
-supporting documentation, and that the name of [copyright holder] not be used in
-advertising or publicity pertaining to distribution of the software
+provided that the above copyright notice appears in all copies, and that
+both that copyright notice and this permission notice appear in supporting
+documentation, and that the name of Secret Labs AB or the author not be
+used in advertising or publicity pertaining to distribution of the software
 without specific, written prior permission.
 
-[COPYRIGHT HOLDER] DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,
-INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO
-EVENT SHALL [COPYRIGHT HOLDER] BE LIABLE FOR ANY SPECIAL, INDIRECT OR
-CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF
-USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
-OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+SECRET LABS AB AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS
+SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS.
+IN NO EVENT SHALL SECRET LABS AB OR THE AUTHOR BE LIABLE FOR ANY SPECIAL,
+INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 PERFORMANCE OF THIS SOFTWARE.
 ```
 
@@ -177,30 +175,11 @@ The BSD 2-clause license is similar to the BSD 3-clause license but omits the no
 ```
 BSD 2-Clause License
 
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
+Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
 
-1. Redistributions of source code must retain the above copyright notice, this
-   list of conditions and the following disclaimer.
+1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
 
-2. Redistributions in binary form must reproduce the above copyright notice,
-   this list of conditions and the following disclaimer in the documentation
-   and/or other materials provided with the distribution.
+2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS “AS IS” AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ```
-
-## Notes
-
-- This file was generated as a template. Please verify all license information and URLs before publishing.
-- Some packages may have dependencies with different licenses. Check each package for complete license information.
-- For packages with "[license URL to be filled]", please find and insert the appropriate URL.
