@@ -4,6 +4,9 @@
 [![License: MPL 2.0](https://img.shields.io/badge/license-MPL--2.0-informational)](https://github.com/dj-urg/data-mirroring?tab=License-1-ov-file#)
 [![DOI 10.5281/zenodo.15102049](https://zenodo.org/badge/DOI/10.5281/zenodo.15102049.svg)](https://zenodo.org/records/15102090)
 
+<img width="49%" alt="Screenshot 2025-03-31 at 13 34 47" src="https://github.com/user-attachments/assets/0aec8e38-c616-447d-a58c-1e19f1c8d745" /> <img width="49%" alt="Screenshot 2025-03-31 at 13 36 14" src="https://github.com/user-attachments/assets/67d82655-a524-427a-8dbb-36af22b9766e" />
+
+
 ## 🌐 Overview
 
 Welcome to the Data Mirroring research project, developed by Daniel Jurg, Sarah Vis, and Ike Picone at imec-SMIT, Vrije Universiteit Brussel as part of the NUSE-Unit. 
