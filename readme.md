@@ -2,6 +2,7 @@
 
 [![Requires Python 3.8](https://img.shields.io/badge/py-v3.8-blue)](https://www.python.org/) 
 [![License: MPL 2.0](https://img.shields.io/badge/license-MPL--2.0-informational)](https://github.com/dj-urg/data-mirroring?tab=License-1-ov-file#)
+[![Security: bandit](https://img.shields.io/badge/security-bandit-yellow.svg)](https://github.com/PyCQA/bandit)
 [![DOI: 10.5281/zenodo.15102049](https://zenodo.org/badge/DOI/10.5281/zenodo.15102049.svg)](https://doi.org/10.5281/zenodo.15102049)
 [![Vrije Universiteit Brussel](https://img.shields.io/badge/University-Vrije_Universiteit_Brussel-0089CF)](https://www.vub.be/nl)
 [![imec-SMIT](https://img.shields.io/badge/Research-imec--SMIT-red)](https://smit.research.vub.be/en)
