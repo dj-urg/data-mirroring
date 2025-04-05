@@ -1,11 +1,14 @@
 import json
 import pandas as pd
+import re
 import os
 import tempfile
 import uuid
 import logging
 import matplotlib
 import matplotlib.pyplot as plt
+import matplotlib.patches as patches
+from matplotlib.path import Path
 import seaborn as sns
 from matplotlib.lines import Line2D
 from app.utils.file_manager import get_user_temp_dir
@@ -13,6 +16,7 @@ import squarify
 from app.utils.file_validation import parse_json_file, safe_save_file
 from werkzeug.datastructures import FileStorage
 import openpyxl
+import numpy as np
 
 # Use 'Agg' backend to avoid GUI issues
 matplotlib.use('Agg')
@@ -22,22 +26,6 @@ FLASK_ENV = os.getenv('FLASK_ENV', 'production')
 logging_level = logging.DEBUG if FLASK_ENV == 'development' else logging.WARNING
 logging.basicConfig(level=logging_level, format="%(asctime)s %(levelname)s: %(message)s")
 logger = logging.getLogger()
-
-# Custom visualization functions
-def add_line(ax, year_values, rank_values, linewidth=3, color="black"):
-    ax.add_artist(Line2D(year_values, -rank_values, linewidth=linewidth, color=color))
-
-def add_circle(ax, year_value, rank_value, marker_size=15, color="black"):
-    ax.plot(year_value, -rank_value, 'o', color=color, markersize=marker_size)
-
-def add_text(ax, year_value, rank_value, text, offset=0.02):
-    ax.text(year_value + offset, -rank_value, text, fontsize=10, va='bottom', ha='left')
-
-def format_ticks(ax, years):
-    ax.set(xlim=(-0.5, len(years) - 0.5), ylim=(-5.5, -0.5))
-    ax.set_xticks(ticks=range(len(years)), labels=years)
-    ax.set_yticks([])
-    ax.tick_params("x", labeltop=True, bottom=False, labelsize=12, pad=4)
 
 def save_image_temp_file(fig):
     """Saves an image in the user's temporary directory and returns the filename."""
@@ -50,26 +38,192 @@ def save_image_temp_file(fig):
     logger.debug(f"Image saved at {temp_file_path}")  # Log the saved path for debugging
     return unique_filename  # Return just the filename
 
-def generate_custom_bump_chart(df):
-    """Generates a bump chart for Instagram engagement per year."""
-    years = sorted(df['year'].unique())
-    fig, ax = plt.subplots(figsize=(8, 3))
-    format_ticks(ax, years)
-
-    colors = plt.get_cmap("tab10").colors
-    for i, category in enumerate(df['category'].unique()):
-        category_data = df[df['category'] == category]
-        year_values = [years.index(year) for year in category_data['year']]
-        rank_values = category_data['rank'].values
-        color = colors[i % len(colors)]
-
-        add_line(ax, year_values, rank_values, color=color)
-        for j, year in enumerate(year_values):
-            add_circle(ax, year, rank_values[j], color=color)
-        add_text(ax, year_values[-1], rank_values[-1], category)
-
-    plt.tight_layout()
-    return fig  # Return the figure itself, not the filename
+def generate_custom_bump_chart(channel_ranking):
+    """
+    Generate an alluvial diagram showing how channels/authors flow between rankings across years.
+    
+    Args:
+        channel_ranking: DataFrame with columns 'author', 'year', and 'rank'
+        
+    Returns:
+        matplotlib figure object
+    """
+    
+    # Check if we're using 'channel' or 'author' column
+    channel_col = 'channel' if 'channel' in channel_ranking.columns else 'author'
+    
+    # Extract years and channels/authors
+    years = sorted(channel_ranking['year'].unique())
+    channels = channel_ranking[channel_col].unique()
+    
+    # Create figure and axis
+    fig, ax = plt.subplots(figsize=(8, 4), dpi=100)
+    
+    # Set up colors
+    cmap = plt.get_cmap("tab10")
+    channel_colors = {channel: cmap(i % 10) for i, channel in enumerate(channels)}
+    
+    # Constants for layout
+    node_width = 0.6
+    node_spacing = 0.1
+    year_spacing = 2.8
+    node_height = 0.8
+    
+    # Track all nodes for connection lines
+    nodes_by_year_channel = {}
+    
+    # Function to draw a flow between nodes
+    def draw_flow(start_x, start_y, end_x, end_y, height1, height2, color, alpha=0.7):
+        height_factor = 2.5
+        
+        # Calculate control points for a natural flow
+        cp1_x = start_x + (end_x - start_x) * 0.35
+        cp2_x = start_x + (end_x - start_x) * 0.65
+        
+        # Create points for the top curve
+        top_curve = [
+            (start_x, start_y + (height1 / height_factor)),
+            (cp1_x, start_y + (height1 / height_factor)),
+            (cp2_x, end_y + (height2 / height_factor)),
+            (end_x, end_y + (height2 / height_factor))
+        ]
+        
+        # Create points for the bottom curve
+        bottom_curve = [
+            (end_x, end_y - (height2 / height_factor)),
+            (cp2_x, end_y - (height2 / height_factor)),
+            (cp1_x, start_y - (height1 / height_factor)),
+            (start_x, start_y - (height1 / height_factor))
+        ]
+        
+        # Combine curves to form a closed path
+        verts = top_curve + bottom_curve + [(start_x, start_y + (height1 / height_factor))]
+        
+        # Create codes for the path
+        codes = [Path.MOVETO] + [Path.CURVE4] * 3 + [Path.LINETO] + [Path.CURVE4] * 3 + [Path.CLOSEPOLY]
+        
+        # Create the path
+        path = Path(verts, codes)
+        
+        # Create patch
+        patch = patches.PathPatch(
+            path, facecolor=color, alpha=alpha, edgecolor='none', lw=0
+        )
+        ax.add_patch(patch)
+    
+    # Calculate horizontal positioning
+    left_margin = 0.2
+    
+    # Draw nodes for each year and channel
+    for year_idx, year in enumerate(years):
+        x_pos = left_margin + year_idx * year_spacing
+        
+        # Get channels for this year
+        year_data = channel_ranking[channel_ranking['year'] == year]
+        
+        # MODIFIED: Sort by engagement_count instead of rank to put highest engagement at top
+        if 'engagement_count' in year_data.columns:
+            year_data = year_data.sort_values('engagement_count', ascending=False)
+        else:
+            # Reverse rank order so rank 1 (highest) is at the top
+            year_data = year_data.sort_values('rank')
+        
+        # Draw nodes for each channel in this year
+        for i, (_, row) in enumerate(year_data.iterrows()):
+            channel = row[channel_col]
+            
+            max_items = len(year_data)
+            y_pos = (max_items - 1 - i) * (node_height + node_spacing)
+            
+            # Draw rectangle for the node
+            rect = patches.Rectangle(
+                (x_pos, y_pos), 
+                node_width, 
+                node_height, 
+                facecolor=channel_colors[channel],
+                edgecolor='white',
+                linewidth=1,
+                alpha=0.9
+            )
+            ax.add_patch(rect)
+            
+            # Add channel label
+            ax.text(
+                x_pos + node_width + 0.1, 
+                y_pos + node_height/2, 
+                channel, 
+                va='center', 
+                ha='left', 
+                fontsize=10,
+                fontweight='medium'
+            )
+            
+            # Add engagement count label inside node
+            if 'engagement_count' in row:
+                engagement_count = row['engagement_count']
+                ax.text(
+                    x_pos + node_width/2, 
+                    y_pos + node_height/2, 
+                    str(engagement_count), 
+                    va='center', 
+                    ha='center', 
+                    fontsize=9,
+                    fontweight='medium',
+                    color='black'
+                )
+            
+            # Store node position for connection lines
+            nodes_by_year_channel[(year, channel)] = (x_pos, y_pos, node_height)
+    
+    # Draw connections between nodes across years
+    for channel in channels:
+        channel_years = channel_ranking[channel_ranking[channel_col] == channel]['year'].unique()
+        
+        # Sort years to ensure connections go from earlier to later years
+        channel_years = sorted(channel_years)
+        
+        # Connect nodes across consecutive years
+        for i in range(len(channel_years) - 1):
+            year1 = channel_years[i]
+            year2 = channel_years[i + 1]
+            
+            # Get node positions
+            node1_x, node1_y, node1_height = nodes_by_year_channel[(year1, channel)]
+            node2_x, node2_y, node2_height = nodes_by_year_channel[(year2, channel)]
+            
+            # Draw flow connection
+            draw_flow(
+                node1_x + node_width, node1_y + node1_height/2,
+                node2_x, node2_y + node2_height/2,
+                node1_height, node2_height,
+                channel_colors[channel],
+                alpha=0.8
+            )
+    
+    # Add year labels
+    for year_idx, year in enumerate(years):
+        ax.text(
+            left_margin + year_idx * year_spacing + node_width/2, 
+            -1.2,
+            str(year),
+            ha='center',
+            va='center',
+            fontsize=12,
+            fontweight='bold'
+        )
+    
+    # Set axis limits
+    max_nodes = max([len(channel_ranking[channel_ranking['year'] == year]) for year in years])
+    ax.set_xlim(-0.5, left_margin + (len(years) - 1) * year_spacing + node_width + 2)
+    ax.set_ylim(-1.5, (max_nodes) * (node_height + node_spacing) + 0.3)
+    
+    # Remove axes and spines
+    ax.set_axis_off()
+    
+    # Adjust margins
+    plt.subplots_adjust(left=0.05, right=0.95, top=0.95, bottom=0.1)
+    
+    return fig
 
 def generate_heatmap(df):
     """Generates a heatmap showing Instagram engagement by day of the week."""
@@ -116,8 +270,8 @@ def generate_month_heatmap(df):
     }
     month_counts.columns = [month_names[m] for m in month_counts.columns]
     
-    # Create figure and axes
-    fig, ax = plt.subplots(figsize=(8, 2))
+    # Create figure with larger size to accommodate larger values
+    fig, ax = plt.subplots(figsize=(10, len(month_counts) * 0.6))
     
     # Create heatmap with all possible grid lines removed
     sns.heatmap(
@@ -128,7 +282,8 @@ def generate_month_heatmap(df):
         ax=ax,               # Use the created axis
         cbar=False,          # No color bar
         linewidths=0,        # No grid lines between cells
-        linecolor='none'     # No line color
+        linecolor='none',    # No line color
+        annot_kws={"size": 10}  # Increase annotation text size
     )
     
     # Remove all spines
@@ -143,13 +298,20 @@ def generate_month_heatmap(df):
     ax.spines['right'].set_visible(False)
     
     # Customize axis labels
-    ax.set_ylabel("Year", fontsize=10)
-    ax.set_xlabel("Month", fontsize=10)
+    ax.set_ylabel("")
+    ax.set_xlabel("")
+    
+    # Increase font size of tick labels
+    ax.tick_params(labelsize=11)
+    
+    # Increase the cell size
+    plt.subplots_adjust(left=0.15, right=0.95, top=0.95, bottom=0.15)
     
     # Turn off all grid lines
     ax.grid(False)
     
-    plt.tight_layout()
+    # Use a more flexible layout approach instead of tight_layout
+    plt.tight_layout(pad=0.5)
     return fig
 
 def generate_time_of_day_heatmap(df):
@@ -216,7 +378,7 @@ def generate_time_of_day_heatmap(df):
     
     # Keep axis labels
     ax.set_ylabel("")
-    ax.set_xlabel("Time of Day", fontsize=10)
+    ax.set_xlabel("")
     
     # Turn off all grid lines
     ax.grid(False)
@@ -268,7 +430,7 @@ def generate_heatmap(df):
     
     # Keep axis labels
     ax.set_ylabel("")
-    ax.set_xlabel("Day of the Week", fontsize=10)
+    ax.set_xlabel("")
     
     # Turn off all grid lines
     ax.grid(False)
@@ -324,18 +486,33 @@ def generate_author_treemap(df):
 def process_instagram_file(files):
     """Processes Instagram JSON data, extracts insights, and generates visualizations."""
     try:
+        # Debug information for file uploads
+        file_count = len(files) if files else 0
+        logger.info(f"Processing {file_count} Instagram file(s)")
+        
+        # Collect filenames for logging
+        filenames = []
+        for file in files:
+            filename = getattr(file, 'filename', 'unknown')
+            filenames.append(filename)
+            logger.info(f"Processing file: {filename}")
+            
         all_data = []
+        processed_files = []  # New list to track what files were processed
 
         # Process the uploaded files
         for file in files:
             try:
+                file_name = getattr(file, 'filename', 'unknown')
+                logger.info(f"Processing Instagram file: {file_name}")
+                processed_files.append(file_name)  # Add to processed files list
                 
                 data, error = parse_json_file(file)
                 if error:
-                    logger.warning(f"Failed to parse JSON file {getattr(file, 'filename', 'unknown')}: {error}")
+                    logger.warning(f"Failed to parse JSON file {file_name}: {error}")
                     continue
             except Exception as e:
-                logger.warning(f"Failed to parse JSON file {getattr(file, 'filename', 'unknown')}: {e}")
+                logger.warning(f"Failed to parse JSON file {file_name}: {e}")
                 continue
 
             # Extract relevant data
@@ -449,6 +626,7 @@ def process_instagram_file(files):
 
         # Prepare data for visualization
         df['year'] = pd.to_datetime(df['timestamp']).dt.year
+        df['month_name'] = pd.to_datetime(df['timestamp']).dt.strftime('%B')
         df['day_of_week'] = pd.to_datetime(df['timestamp']).dt.day_name()
 
         # Count activity per day of the week
@@ -473,9 +651,15 @@ def process_instagram_file(files):
             top_authors_per_year = author_data.groupby('year').apply(lambda x: x.nlargest(5, 'engagement_count')).reset_index(drop=True)
             top_authors_per_year['rank'] = top_authors_per_year.groupby('year')['engagement_count'].rank(ascending=False, method='first')
 
-        # Generate author tree map
-        author_treemap_fig = generate_author_treemap(df)
-        bump_chart_name = save_image_temp_file(author_treemap_fig)
+
+        # Generate category/author bump chart
+        if len(top_authors_per_year) > 0 and len(top_authors_per_year['year'].unique()) > 1:
+            bump_chart_fig = generate_custom_bump_chart(top_authors_per_year)
+            bump_chart_name = save_image_temp_file(bump_chart_fig)
+        else:
+            # Fallback to treemap if not enough years for a bump chart
+            author_treemap_fig = generate_author_treemap(df)
+            bump_chart_name = save_image_temp_file(author_treemap_fig)
 
         # Generate day of week heatmap
         day_heatmap_fig = generate_heatmap(df)
@@ -489,8 +673,17 @@ def process_instagram_file(files):
         time_heatmap_fig = generate_time_of_day_heatmap(df_with_time)
         time_heatmap_name = save_image_temp_file(time_heatmap_fig) if time_heatmap_fig is not None else None
         
+        # Generate HTML preview from DataFrame
+        raw_html = df.head(5).to_html(
+            classes="table table-striped text-right",
+            index=False,
+            escape=False,
+            render_links=True,
+            border=0
+        )
+        
         # Generate a preview of the CSV
-        csv_preview_html = df.head(5).to_html(classes="table table-striped", index=False)
+        csv_preview_html = re.sub(r'style="[^"]*"', '', raw_html)
 
         has_valid_data = not df.empty
         

@@ -19,21 +19,25 @@
         <h1 class="platform-title">YouTube Dashboard</h1>
     </div>
 
-    <div class="container mt-5">
+    <div class="container mt-3">
 
         <!-- Upload Form -->
-        <div class="upload-container mt-3">
+        <div class="card mb-4">
             <div class="card-body">
-                <p class="text-center mb-2">
-                    Please upload your downloaded YouTube data in <strong>JSON format</strong>.
+                <p class="upload-instructions">
+                    We'd love to help you gain insights from your YouTube data! Please upload your downloaded YouTube JSON files using the form below. You can include only include the following file: <strong>youtube_history.json</strong>. If you are not sure where to find these files, please refer to our <a href="https://github.com/dj-urg/data-mirroring/wiki/Uploading-Data-From-Digital-Platforms" target="_blank">GitHub Wiki</a> for instructions on how to upload your data.
                 </p>
+                <p class="upload-instructions">
+                    Once you have your files ready, simply click the <strong>Choose File</strong> button to select your files (you can select multiple files at once or one after the other), then press the <strong>Add to List</strong> button to add them for analysis. To begin the analysis, press the <strong>Analyze Data</strong> button. Once your data is processed, you'll see visualizations and have the option to download your data in CSV format.
+                </p>
+                
                 <div class="loader-overlay d-none"></div>
                 <div class="loader d-none"></div>
                 
                 <form id="uploadForm" action="{{ url_for('routes.dashboard_youtube') }}" method="post" enctype="multipart/form-data">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <input type="file" name="file" id="fileInput" accept=".json" multiple required class="form-control mb-2">
-                    <button type="submit" id="uploadButton" class="btn btn-primary btn-sm">Upload Data</button>
+                    <input type="file" name="file" id="fileInput" accept=".json" multiple required class="form-control">
+                    <button type="submit" id="uploadButton" class="btn btn-primary">Analyze Data</button>
                 </form>                       
             </div>
         </div>

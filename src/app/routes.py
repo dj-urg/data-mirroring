@@ -45,6 +45,12 @@ def data_processing_info():
     current_app.logger.info("Data processing info page accessed.")
     return render_template('data_processing_info.html')
 
+@routes_bp.route('/generate_synthetic_data')
+@requires_authentication
+def generate_synthetic_data():
+    current_app.logger.info("Generating synthetic data page accessed.")
+    return render_template('generate_synthetic_data.html')
+
 @routes_bp.route('/dashboard/youtube', methods=['GET', 'POST'])
 @requires_authentication
 @limiter.limit("10 per minute")

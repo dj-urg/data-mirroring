@@ -3,135 +3,174 @@
 {% block title %}Instagram Dashboard{% endblock %}
 
 {% block content %}
+
+    {# Styles are now expected to be in the external style.css file #}
+
     <div class="platform-header text-center mb-4">
         <img src="https://img.icons8.com/color/96/000000/instagram-new.png" alt="Instagram Logo" class="platform-logo">
         <h1 class="platform-title">Instagram Dashboard</h1>
     </div>
 
-    <div class="container mt-5">
+    <div class="container mt-3">
 
-        <!-- Upload Form -->
-        <div class="upload-container mt-3">
+        {# ----- Upload Form Section ----- #}
+        <div class="card mb-4">
             <div class="card-body">
-                <p class="text-center mb-2">
-                    Please upload your downloaded Instagram data in <strong>JSON format</strong>. We currently support the following files:
-                    <ul class="list-group list-group-flush text-center">
-                        <li class="list-group-item">liked_posts.json</li>
-                        <li class="list-group-item">saved_posts.json</li>
-                        <li class="list-group-item">videos_watched.json</li>
-                        <li class="list-group-item">posts_viewed.json</li>
-                    </ul>                </p>
+                <p class="upload-instructions">
+                    We'd love to help you gain insights from your Instagram data! Please upload your downloaded Instagram JSON files using the form below. You can include any of these files: <strong>liked_posts.json</strong>, <strong>saved_posts.json</strong>, <strong>videos_watched.json</strong>, or <strong>posts_viewed.json</strong>. If you are not sure where to find these files, please refer to our <a href="https://github.com/dj-urg/data-mirroring/wiki/Uploading-Data-From-Digital-Platforms" target="_blank">GitHub Wiki</a> for instructions on how to upload your data.
+                </p>
+                <p class="upload-instructions">
+                    Once you have your files ready, simply click the <strong>Choose File</strong> button to select your files (you can select multiple files at once or one after the other), then press the <strong>Add to List</strong> button to add them for analysis. To begin the analysis, press the <strong>Analyze Data</strong> button. Once your data is processed, you'll see visualizations and have the option to download your data in CSV format.
+                </p>
+
                 <div class="loader-overlay d-none"></div>
                 <div class="loader d-none"></div>
-                
-                <form id="uploadForm" action="{{ url_for('routes.dashboard_instagram') }}" method="post" enctype="multipart/form-data">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <input type="file" name="file" id="fileInput" accept=".json" multiple required class="form-control mb-2">
-                    <button type="submit" id="uploadButton" class="btn btn-primary btn-sm">Upload Data</button>
-                </form>                       
+
+                <form id="fileSelectionForm" class="form-group">
+                    <div class="file-selection-row">
+                        <input type="file" name="fileInput" id="fileInput" accept=".json" class="form-control">
+                        <button type="button" id="addFileButton" class="btn btn-secondary">Add to List</button>
+                    </div>
+                </form>
             </div>
-        </div>
+        </div> {# Closing card mb-4 for upload form #}
 
-        </div>
-
-        <!-- CSV Data Preview Section -->
-        {% if csv_preview_html %}
-        <div class="card mt-3">
+        {# ----- Selected Files and Process Form Section ----- #}
+        <div class="card mb-4"> {# Wrap these controls in their own card or structure #}
             <div class="card-body">
-                <h2>CSV Data Preview</h2>
-                {{ csv_preview_html | safe }}
+                <div id="selectedFilesContainer" class="selected-files-container">
+                    <p><strong>Files added for processing</strong></p>
+                    <ul id="selectedFilesList" class="selected-files-list">
+                        <li class="no-files-message">No files added yet</li>
+                    </ul>
+                </div>
+
+                <form id="processDataForm" action="{{ url_for('routes.dashboard_instagram') }}" method="post" enctype="multipart/form-data">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div id="hiddenFileInputs"></div>
+                    <div class="process-button-container">
+                        <button type="submit" id="processButton" class="btn btn-primary" disabled>Analyze Data</button>
+                    </div>
+                </form>
+            </div>
+        </div> {# Closing card mb-4 for selected files/process #}
+
+        {# ----- Insights Section ----- #}
+        {% if insights %}
+        <div class="uploaded-files-summary card mb-4"> {# Combined classes for consistent look #}
+             <div class="card-body"> {# Added card-body #}
+                <h2>Processed Data</h2>
+                <p><strong>Number of items:</strong> {{ insights.total_entries }}</p>
+                <p><strong>Date range:</strong>
+                    {{ insights.time_frame_start }} to
+                    {{ insights.time_frame_end }}
+                </p>
             </div>
         </div>
-        {% else %}
         {% endif %}
 
-        <!-- Uploaded Data Table Section (conditionally displayed) -->
-        {% if data %}
-        <button onclick="toggleTable()" class="btn btn-primary">Toggle Table</button>
-
-        <div class="card mt-3" id="dataTable" style="display: none;">
+        {# ----- CSV Preview Section ----- #}
+        {% if csv_preview_html %}
+        <div class="card mb-4">
             <div class="card-body">
-                <div class="table-responsive" style="max-height: 400px; overflow: auto;">
+                <h2 class="text-center mb-3">Data Preview</h2>
+                <div class="table-responsive"> {# Scrollbars removed by not having .table-scroll-container class #}
+                    {# WARNING: Potential inline styles within this safe block are still a CSP risk #}
+                    {{ csv_preview_html | safe }}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {# ----- Data Table Section ----- #}
+        {% if data %}
+        {# Removed onclick, added id. Assumes JS uses this ID. #}
+        <button id="toggleTableButton" class="btn btn-primary mb-2">Toggle Table</button>
+
+        {# Uses 'initially-hidden' class from external CSS. JS needs to toggle this class. #}
+        <div class="card mt-3 initially-hidden" id="dataTable">
+            <div class="card-body">
+                <div class="table-responsive"> {# Scrollbars removed by not having .table-scroll-container class #}
                     <table class="table table-bordered table-hover table-striped table-sm">
                         <tbody>
+                            {# WARNING: Potential inline styles within this safe block are still a CSP risk #}
                             {{ data | safe }}
                         </tbody>
                     </table>
                 </div>
             </div>
         </div>
-        {% endif %}        
-
-        <!-- CSV Download Section -->
-        {% if csv_file_name %}
-        <div class="card mt-3">
-            <div class="card-body text-center">
-                <p class="mb-2">
-                    You can download your processed Instagram data in <strong>CSV format</strong>.
-                </p>
-
-                <!-- Centering the button -->
-                <div class="d-flex justify-content-center">
-                    <a href="{{ url_for('routes.download_csv', filename=csv_file_name) }}" class="btn btn-success btn-sm">
-                        Download CSV
-                    </a>
-                </div>
-            </div>
-        </div>
         {% endif %}
 
-        <!-- Visualization Section: Top Categories Per Year -->
+        {# ----- Visualization Sections ----- #}
         {% if plot_data %}
         <div class="card mt-3" id="visualization">
             <div class="card-body text-center">
-                <h2>Top Authors</h2>
+                <h2>Author Engagement Visualization</h2>
                 <div class="d-flex justify-content-center">
-                    <img src="{{ url_for('routes.download_image', filename=plot_data) }}" alt="Top Categories Per Year" class="img-fluid" style="max-width: 90%; height: auto;" />
+                    {# Uses 'visualization-image' class from external CSS #}
+                    <img src="{{ url_for('routes.download_image', filename=plot_data) }}" alt="Author Engagement Visualization" class="img-fluid visualization-image" />
                 </div>
             </div>
         </div>
         {% endif %}
 
-        <!-- Day of Week Heatmap Section -->
-        {% if day_heatmap_data %}
-        <div class="card mt-3" id="day-heatmap">
-            <div class="card-body text-center">
-                <h2>Engagement Per Day of the Week</h2>
-                <div class="d-flex justify-content-center">
-                    <img src="{{ url_for('routes.download_image', filename=day_heatmap_data) }}" alt="Day of Week Heatmap" class="img-fluid" style="max-width: 90%; height: auto;" />
-                </div>
-            </div>
-        </div>
-        {% endif %}
-
-        <!-- Month Heatmap Section -->
         {% if month_heatmap_data %}
         <div class="card mt-3" id="month-heatmap">
             <div class="card-body text-center">
                 <h2>Engagement by Month and Year</h2>
                 <div class="d-flex justify-content-center">
-                    <img src="{{ url_for('routes.download_image', filename=month_heatmap_data) }}" alt="Month Heatmap" class="img-fluid" style="max-width: 90%; height: auto;" />
+                     {# Uses 'visualization-image' class from external CSS #}
+                    <img src="{{ url_for('routes.download_image', filename=month_heatmap_data) }}" alt="Month Heatmap" class="img-fluid visualization-image" />
                 </div>
             </div>
         </div>
         {% endif %}
 
-        <!-- Time of Day Heatmap Section -->
+        {% if day_heatmap_data %}
+        <div class="card mt-3" id="day-heatmap">
+            <div class="card-body text-center">
+                <h2>Engagement Per Day of the Week</h2>
+                <div class="d-flex justify-content-center">
+                     {# Uses 'visualization-image' class from external CSS #}
+                    <img src="{{ url_for('routes.download_image', filename=day_heatmap_data) }}" alt="Day of Week Heatmap" class="img-fluid visualization-image" />
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
         {% if time_heatmap_data %}
         <div class="card mt-3" id="time-heatmap">
             <div class="card-body text-center">
                 <h2>Engagement by Time of Day</h2>
                 <div class="d-flex justify-content-center">
-                    <img src="{{ url_for('routes.download_image', filename=time_heatmap_data) }}" alt="Time of Day Heatmap" class="img-fluid" style="max-width: 90%; height: auto;" />
+                     {# Uses 'visualization-image' class from external CSS #}
+                    <img src="{{ url_for('routes.download_image', filename=time_heatmap_data) }}" alt="Time of Day Heatmap" class="img-fluid visualization-image" />
                 </div>
             </div>
         </div>
         {% endif %}
-    </div>
 
-    <!-- Link to external JS -->
-    <script src="{{ url_for('static', filename='js/instagram_dashboard.js') }}" 
-        integrity="sha384-e7xUO0Swl8qSD7MJYJxeZ8zFGB0WF1KTCt7cNQoaeIVrqQoh/yn4vna3sqEcD5M+" 
-        crossorigin="anonymous" 
+    </div> {# Closing container mt-3 #}
+
+    {# ----- CSV Download Section ----- #}
+    {% if csv_file_name %}
+    <div class="container mt-3"> {# Added container for consistent spacing #}
+        <div class="card mb-4">
+            <div class="card-body text-center">
+                <h2 class="mb-3">Download Your Data</h2>
+                <div class="d-flex justify-content-center"></div>
+                <a href="{{ url_for('routes.download_csv', filename=csv_file_name) }}" class="btn btn-success">
+                    <i class="fas fa-download"></i> Download CSV
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {# ----- Script Link ----- #}
+    <script src="{{ url_for('static', filename='js/instagram_dashboard.js') }}"
+        integrity="sha384-yKYHbmQYZ/0tvn0XolK1jIRLaNgbKAdnY5tHFbDF1ZXefTZ4Vh6RCXjBCjjdXgVj"
+        crossorigin="anonymous"
         defer></script>
 {% endblock %}
