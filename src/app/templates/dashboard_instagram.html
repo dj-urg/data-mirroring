@@ -170,7 +170,11 @@
 
     {# ----- Script Link ----- #}
     <script src="{{ url_for('static', filename='js/instagram_dashboard.js') }}"
-        integrity="sha384-yKYHbmQYZ/0tvn0XolK1jIRLaNgbKAdnY5tHFbDF1ZXefTZ4Vh6RCXjBCjjdXgVj"
+        integrity="sha384-tvbqMH+6gPf04f3AOde7lPlh1qUTLzIFSswxCuxGBD1l8M7yrF9NaC26+FB3Jr2o"
         crossorigin="anonymous"
         defer></script>
+
+    {# ----- Zoom Overlay (Hidden by default) ----- #}
+    <div id="zoomOverlay" class="zoom-overlay"></div>
+
 {% endblock %}

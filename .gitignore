@@ -38,3 +38,7 @@ tests/
 test*.py
 test*.js
 test*.html
+
+# Jypter Notebook
+*.ipynb_checkpoints
+jupyter

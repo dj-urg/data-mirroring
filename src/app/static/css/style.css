@@ -1012,3 +1012,58 @@ h1.platform-title, p.platform-description {
 .section-spacer {
     margin-top: 40px;
 }
+
+/* Styles for the enlarged image modal */
+.enlarged-image-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8); /* Semi-transparent black background */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000; /* Ensure it's on top of everything */
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease-in-out, visibility 0s linear 0.3s;
+    cursor: pointer; /* Indicate clicking to close */
+}
+
+.enlarged-image-overlay.active {
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.3s ease-in-out;
+}
+
+.enlarged-image-container {
+    max-width: 90%; /* Adjust as needed */
+    max-height: 90%; /* Adjust as needed */
+    position: relative; /* For close button positioning */
+}
+
+.enlarged-image {
+    display: block;
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain; /* Ensures the entire image is visible */
+}
+
+.close-enlarged-image {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: none;
+    border: none;
+    color: white;
+    font-size: 24px;
+    font-weight: bold;
+    cursor: pointer;
+    opacity: 0.8;
+    transition: opacity 0.2s ease-in-out;
+}
+
+.close-enlarged-image:hover {
+    opacity: 1;
+}

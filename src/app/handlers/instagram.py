@@ -38,191 +38,171 @@ def save_image_temp_file(fig):
     logger.debug(f"Image saved at {temp_file_path}")  # Log the saved path for debugging
     return unique_filename  # Return just the filename
 
-def generate_custom_bump_chart(channel_ranking):
+# --- Chart Function ---
+def generate_custom_bump_chart(
+    channel_ranking,
+    title="",
+    label_length_limit=25,
+    figure_width=18,
+    figure_height_scale=0.6
+    ):
     """
-    Generate an alluvial diagram showing how channels/authors flow between rankings across years.
-    
+    Generate an alluvial diagram with labels showing rank on first appearance
+    and all text set to black.
+
     Args:
-        channel_ranking: DataFrame with columns 'author', 'year', and 'rank'
-        
+        channel_ranking: DataFrame with columns 'author'/'channel', 'year', 'rank',
+                         and optionally 'engagement_count'.
+        title (str): The title for the chart.
+        label_length_limit (int): Max characters for author/channel names in labels.
+        figure_width (float): Width of the matplotlib figure in inches.
+        figure_height_scale (float): Factor to scale figure height by number of channels.
+
     Returns:
-        matplotlib figure object
+        matplotlib.figure.Figure: The figure object containing the chart.
     """
-    
-    # Check if we're using 'channel' or 'author' column
+    # --- Input Validation ---
+    if not {'year', 'rank'}.issubset(channel_ranking.columns):
+        raise ValueError("DataFrame must contain 'year' and 'rank' columns.")
+    if 'channel' not in channel_ranking.columns and 'author' not in channel_ranking.columns:
+         raise ValueError("DataFrame must contain either 'channel' or 'author' column.")
     channel_col = 'channel' if 'channel' in channel_ranking.columns else 'author'
-    
-    # Extract years and channels/authors
-    years = sorted(channel_ranking['year'].unique())
-    channels = channel_ranking[channel_col].unique()
-    
-    # Create figure and axis
-    fig, ax = plt.subplots(figsize=(8, 4), dpi=100)
-    
-    # Set up colors
-    cmap = plt.get_cmap("tab10")
-    channel_colors = {channel: cmap(i % 10) for i, channel in enumerate(channels)}
-    
-    # Constants for layout
+    has_engagement = 'engagement_count' in channel_ranking.columns
+
+    # --- Data Preparation ---
+    df = channel_ranking.copy()
+    if has_engagement:
+        df['engagement_count'] = pd.to_numeric(df['engagement_count'], errors='coerce')
+        df['engagement_count'] = df['engagement_count'].fillna(-np.inf)
+    df['year'] = df['year'].astype(int)
+    df['rank'] = df['rank'].astype(int) # Ensure rank is integer if used for sorting
+    years = sorted(df['year'].unique())
+    channels = df[channel_col].unique()
+
+    # --- Figure Setup ---
+    figure_height = max(8, len(channels) * figure_height_scale)
+    fig, ax = plt.subplots(figsize=(figure_width, figure_height), dpi=120)
+
+    # --- Colors, Constants ---
+    cmap = plt.get_cmap("tab20" if len(channels) > 10 else "tab10")
+    channel_colors = {channel: cmap(i % cmap.N) for i, channel in enumerate(channels)}
+
     node_width = 0.6
-    node_spacing = 0.1
-    year_spacing = 2.8
-    node_height = 0.8
-    
-    # Track all nodes for connection lines
+    node_spacing = 0.2
+    year_spacing = (figure_width - 3) / max(1, len(years) - 1) if len(years) > 1 else 3
+    node_height = 0.7
+    label_offset = 0.15
+    left_margin = 2.5 # Slightly more margin maybe needed for rank in label
+
+    # --- Tracking ---
     nodes_by_year_channel = {}
-    
-    # Function to draw a flow between nodes
-    def draw_flow(start_x, start_y, end_x, end_y, height1, height2, color, alpha=0.7):
-        height_factor = 2.5
-        
-        # Calculate control points for a natural flow
-        cp1_x = start_x + (end_x - start_x) * 0.35
-        cp2_x = start_x + (end_x - start_x) * 0.65
-        
-        # Create points for the top curve
-        top_curve = [
-            (start_x, start_y + (height1 / height_factor)),
-            (cp1_x, start_y + (height1 / height_factor)),
-            (cp2_x, end_y + (height2 / height_factor)),
-            (end_x, end_y + (height2 / height_factor))
-        ]
-        
-        # Create points for the bottom curve
-        bottom_curve = [
-            (end_x, end_y - (height2 / height_factor)),
-            (cp2_x, end_y - (height2 / height_factor)),
-            (cp1_x, start_y - (height1 / height_factor)),
-            (start_x, start_y - (height1 / height_factor))
-        ]
-        
-        # Combine curves to form a closed path
+
+    # --- Draw Flow Function (Unchanged from V3) ---
+    def draw_flow(start_x, start_y, end_x, end_y, height1, height2, color, alpha=0.6):
+        height_factor = 4.0
+        cp1_x = start_x + (end_x - start_x) * 0.35; cp2_x = start_x + (end_x - start_x) * 0.65
+        top_curve = [(start_x, start_y + (height1 / height_factor)), (cp1_x, start_y + (height1 / height_factor)), (cp2_x, end_y + (height2 / height_factor)), (end_x, end_y + (height2 / height_factor))]
+        bottom_curve = [(end_x, end_y - (height2 / height_factor)), (cp2_x, end_y - (height2 / height_factor)), (cp1_x, start_y - (height1 / height_factor)), (start_x, start_y - (height1 / height_factor))]
         verts = top_curve + bottom_curve + [(start_x, start_y + (height1 / height_factor))]
-        
-        # Create codes for the path
         codes = [Path.MOVETO] + [Path.CURVE4] * 3 + [Path.LINETO] + [Path.CURVE4] * 3 + [Path.CLOSEPOLY]
-        
-        # Create the path
-        path = Path(verts, codes)
-        
-        # Create patch
-        patch = patches.PathPatch(
-            path, facecolor=color, alpha=alpha, edgecolor='none', lw=0
-        )
+        path = Path(verts, codes); patch = patches.PathPatch(path, facecolor=color, alpha=alpha, edgecolor='none', lw=0)
         ax.add_patch(patch)
-    
-    # Calculate horizontal positioning
-    left_margin = 0.2
-    
-    # Draw nodes for each year and channel
+
+    # --- Draw Nodes and First-Appearance Labels with Rank ---
+    max_nodes_in_year = 0
     for year_idx, year in enumerate(years):
         x_pos = left_margin + year_idx * year_spacing
-        
-        # Get channels for this year
-        year_data = channel_ranking[channel_ranking['year'] == year]
-        
-        # MODIFIED: Sort by engagement_count instead of rank to put highest engagement at top
-        if 'engagement_count' in year_data.columns:
-            year_data = year_data.sort_values('engagement_count', ascending=False)
-        else:
-            # Reverse rank order so rank 1 (highest) is at the top
-            year_data = year_data.sort_values('rank')
-        
-        # Draw nodes for each channel in this year
-        for i, (_, row) in enumerate(year_data.iterrows()):
+        year_data = df[df['year'] == year].copy()
+
+        # Define sort key based on available columns
+        # Note: using rank from input data only if engagement is not present
+        sort_col = 'engagement_count' if has_engagement else 'rank'
+        ascending_sort = False if has_engagement else True # Desc for engagement, Asc for rank
+
+        year_data = year_data.sort_values(sort_col, ascending=ascending_sort)
+        year_data.reset_index(drop=True, inplace=True) # Reset index to get 0-based position
+
+        max_nodes_in_year = max(max_nodes_in_year, len(year_data))
+
+        for i, row in year_data.iterrows(): # Use simple iterrows after reset_index
             channel = row[channel_col]
-            
-            max_items = len(year_data)
-            y_pos = (max_items - 1 - i) * (node_height + node_spacing)
-            
-            # Draw rectangle for the node
+            if pd.isna(channel): continue
+
+            max_items = len(year_data) # Use length after potential filtering/sorting
+            y_pos = (max_items - 1 - i) * (node_height + node_spacing) # Position based on 0-index 'i'
+            node_color = channel_colors.get(channel, 'grey')
+
+            # Draw Node
             rect = patches.Rectangle(
-                (x_pos, y_pos), 
-                node_width, 
-                node_height, 
-                facecolor=channel_colors[channel],
-                edgecolor='white',
-                linewidth=1,
-                alpha=0.9
+                (x_pos, y_pos), node_width, node_height,
+                facecolor=node_color, edgecolor='white', linewidth=0.5, alpha=0.9
             )
             ax.add_patch(rect)
-            
-            # Add channel label
+
+            # --- Label Above Every Node ---
+            name_part = str(channel)
+            # Truncate if needed (consider shorter limit if placing above node)
+            if len(name_part) > (label_length_limit - 5): # Slightly shorter limit maybe
+                name_part = name_part[:label_length_limit-8] + "..."
+            label_text = name_part
+
+            # Define a small vertical offset for the label above the node
+            label_vertical_offset = 0.05
+
             ax.text(
-                x_pos + node_width + 0.1, 
-                y_pos + node_height/2, 
-                channel, 
-                va='center', 
-                ha='left', 
-                fontsize=10,
-                fontweight='medium'
+                x_pos + node_width / 2,                 # Center horizontally on the node
+                y_pos + node_height + label_vertical_offset, # Position slightly above the node top
+                label_text,
+                va='bottom',       # Vertical alignment: text bottom sits above the y-coord
+                ha='center',       # Horizontal alignment: center
+                fontsize=7,        # Smaller font size likely needed
+                fontweight='normal',
+                color='black'
             )
-            
-            # Add engagement count label inside node
-            if 'engagement_count' in row:
-                engagement_count = row['engagement_count']
+
+            # --- Engagement Count Label (Inside Node, Black Text) ---
+            if has_engagement and row['engagement_count'] != -np.inf:
+                engagement_count = int(row['engagement_count'])
                 ax.text(
-                    x_pos + node_width/2, 
-                    y_pos + node_height/2, 
-                    str(engagement_count), 
-                    va='center', 
-                    ha='center', 
-                    fontsize=9,
-                    fontweight='medium',
-                    color='black'
+                    x_pos + node_width / 2, y_pos + node_height / 2, f"{engagement_count:,}",
+                    va='center', ha='center', fontsize=8,
+                    fontweight='bold', color='black' # Explicitly black
                 )
-            
-            # Store node position for connection lines
+
+            # Store node position
             nodes_by_year_channel[(year, channel)] = (x_pos, y_pos, node_height)
-    
-    # Draw connections between nodes across years
+
+    # --- Draw Connections (Unchanged from V3) ---
     for channel in channels:
-        channel_years = channel_ranking[channel_ranking[channel_col] == channel]['year'].unique()
-        
-        # Sort years to ensure connections go from earlier to later years
-        channel_years = sorted(channel_years)
-        
-        # Connect nodes across consecutive years
+        if pd.isna(channel): continue
+        channel_data = df[df[channel_col] == channel]
+        channel_years = sorted(channel_data['year'].unique())
         for i in range(len(channel_years) - 1):
-            year1 = channel_years[i]
-            year2 = channel_years[i + 1]
-            
-            # Get node positions
-            node1_x, node1_y, node1_height = nodes_by_year_channel[(year1, channel)]
-            node2_x, node2_y, node2_height = nodes_by_year_channel[(year2, channel)]
-            
-            # Draw flow connection
-            draw_flow(
-                node1_x + node_width, node1_y + node1_height/2,
-                node2_x, node2_y + node2_height/2,
-                node1_height, node2_height,
-                channel_colors[channel],
-                alpha=0.8
-            )
-    
-    # Add year labels
+            year1, year2 = channel_years[i], channel_years[i+1]
+            if (year1, channel) in nodes_by_year_channel and (year2, channel) in nodes_by_year_channel:
+                node1_x, node1_y, node1_h = nodes_by_year_channel[(year1, channel)]
+                node2_x, node2_y, node2_h = nodes_by_year_channel[(year2, channel)]
+                draw_flow(node1_x + node_width, node1_y + node1_h / 2, node2_x, node2_y + node2_h / 2, node1_h, node2_h, channel_colors.get(channel, 'grey'), alpha=0.5)
+
+    # --- Year Labels (Bottom, Black Text) ---
+    year_label_y = -0.5
     for year_idx, year in enumerate(years):
         ax.text(
-            left_margin + year_idx * year_spacing + node_width/2, 
-            -1.2,
-            str(year),
-            ha='center',
-            va='center',
-            fontsize=12,
-            fontweight='bold'
+            left_margin + year_idx * year_spacing + node_width / 2, year_label_y, str(year),
+            ha='center', va='top', fontsize=11,
+            fontweight='bold', color='black' # Explicitly black
         )
-    
-    # Set axis limits
-    max_nodes = max([len(channel_ranking[channel_ranking['year'] == year]) for year in years])
-    ax.set_xlim(-0.5, left_margin + (len(years) - 1) * year_spacing + node_width + 2)
-    ax.set_ylim(-1.5, (max_nodes) * (node_height + node_spacing) + 0.3)
-    
-    # Remove axes and spines
+
+    # --- Set Limits and Appearance ---
+    right_limit = left_margin + (len(years) - 1) * year_spacing + node_width + 1.0
+    ax.set_xlim(0, right_limit)
+    ax.set_ylim(year_label_y - 0.5 , max_nodes_in_year * (node_height + node_spacing) + 0.5)
+
+    ax.set_title(title, fontsize=16, fontweight='bold', pad=25, color='black') # Explicitly black
     ax.set_axis_off()
-    
-    # Adjust margins
-    plt.subplots_adjust(left=0.05, right=0.95, top=0.95, bottom=0.1)
-    
+
+    fig.tight_layout(rect=[0.02, 0.05, 0.98, 0.95])
+
     return fig
 
 def generate_heatmap(df):
