@@ -869,3 +869,146 @@ h1.platform-title, p.platform-description {
     max-width: 90%;
     height: auto;
 }
+/* Section containers */
+.section-container {
+    margin-bottom: 40px;
+}
+
+.section-header {
+    margin-bottom: 20px;
+}
+
+.section-header h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.section-header p {
+    color: #6c757d;
+    margin-bottom: 0;
+}
+
+/* Grid layouts */
+.grid-container {
+    display: grid;
+    grid-gap: 20px;
+}
+
+.persona-grid {
+    grid-template-columns: repeat(5, 1fr);
+}
+
+.activity-grid {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+.output-grid {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+/* Card styling */
+.selection-card {
+    border: 2px solid #dee2e6;
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: #f8f9fa;
+}
+
+.selection-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+    border-color: #ced4da;
+}
+
+.selection-card.selected {
+    background-color: #e7f1ff;
+    border-color: #4285F4;
+    box-shadow: 0 5px 15px rgba(66, 133, 244, 0.15);
+}
+
+/* Icon styling */
+.icon-circle {
+    width: 70px;
+    height: 70px;
+    background-color: #e9ecef;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 15px;
+}
+
+.selection-card.selected .icon-circle {
+    background-color: #4285F4;
+    color: white;
+}
+
+.icon-circle i {
+    font-size: 28px;
+    color: #495057;
+}
+
+.selection-card.selected .icon-circle i {
+    color: white;
+}
+
+/* Text styling */
+.card-label {
+    font-weight: 600;
+    font-size: 1.1rem;
+    margin-bottom: 3px;
+}
+
+.card-description {
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+/* Button styling */
+#generateButton {
+    background-color: #4285F4;
+    border-color: #4285F4;
+    padding: 10px 25px;
+    font-size: 1.1rem;
+}
+
+#generateButton:hover {
+    background-color: #3367d6;
+    border-color: #3367d6;
+}
+
+/* Responsive adjustments */
+@media (max-width: 992px) {
+    .persona-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .persona-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .activity-grid, .output-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 576px) {
+    .persona-grid, .activity-grid, .output-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.section-spacer {
+    margin-top: 40px;
+}

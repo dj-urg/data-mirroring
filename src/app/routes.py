@@ -483,3 +483,155 @@ def download_txt(filename):
     else:
         current_app.logger.warning(f"File not found: {temp_file_path}")
         abort(404, "File not found")
+        
+@routes_bp.route('/generate_synthetic_data_api', methods=['POST'])
+@requires_authentication
+@limiter.limit("10 per minute")
+def generate_synthetic_data_api():
+    from app.handlers.generate_synthetic_data import generate_synthetic_data
+    import json
+    import traceback
+    from flask import jsonify, request, current_app
+    
+    try:
+        current_app.logger.info("Synthetic data generation API called")
+        
+        # Parse input from request
+        data = request.get_json()
+        current_app.logger.info(f"Request data: {data}")
+        
+        if not data:
+            current_app.logger.error("No JSON data received")
+            return jsonify({"error": "Invalid request data"}), 400
+            
+        persona_type = data.get('persona_type')
+        activity_level = data.get('activity_level')
+        output_filename = data.get('output_filename')
+        
+        # Validate inputs
+        if not all([persona_type, activity_level, output_filename]):
+            missing = []
+            if not persona_type: missing.append("persona_type")
+            if not activity_level: missing.append("activity_level")
+            if not output_filename: missing.append("output_filename")
+            
+            current_app.logger.error(f"Missing parameters: {', '.join(missing)}")
+            return jsonify({"error": f"Missing required parameters: {', '.join(missing)}"}), 400
+            
+        # Get user temp directory to save the file
+        from app.utils.file_manager import get_user_temp_dir
+        temp_dir = get_user_temp_dir()
+        current_app.logger.info(f"Temp directory: {temp_dir}")
+        
+        # Ensure temp directory exists
+        os.makedirs(temp_dir, exist_ok=True)
+        
+        output_path = os.path.join(temp_dir, output_filename)
+        current_app.logger.info(f"Full output path: {output_path}")
+        
+        # Generate the data
+        current_app.logger.info("Calling data generation function")
+        result = generate_synthetic_data(persona_type, activity_level, output_path)
+        
+        if not result:
+            current_app.logger.error("Data generation function returned None")
+            return jsonify({"error": "Failed to generate data"}), 500
+            
+        # Log success
+        current_app.logger.info("Data generation successful")
+        
+        # Count items in the result
+        if isinstance(result, dict) and "data" in result:
+            data = result["data"]
+            stats = result["stats"]
+            return jsonify({
+                "status": "success",
+                "filename": output_filename,
+                "total_saves": stats["total_saves"],
+                "total_likes": stats["total_likes"],
+                "total_watches": stats["total_watches"]
+            })
+        else:
+            # Handle legacy format
+            total_saves = len(result.get('saved_saved_media', []))
+            total_likes = len(result.get('likes_media_likes', []))
+            total_watches = len(result.get('impressions_history_videos_watched', []))
+            
+            return jsonify({
+                "status": "success",
+                "filename": output_filename,
+                "total_saves": total_saves,
+                "total_likes": total_likes,
+                "total_watches": total_watches
+            })
+        
+    except Exception as e:
+        current_app.logger.error(f"Error generating synthetic data: {str(e)}")
+        current_app.logger.error(traceback.format_exc())  # This shows the full stack trace
+        return jsonify({"error": f"An error occurred: {str(e)}"}), 500
+
+@routes_bp.route('/download/<filename>', methods=['GET'])
+@requires_authentication
+def download_generated_file(filename):
+    """Serve the generated file for download."""
+    # Sanitize filename to prevent directory traversal attacks
+    safe_filename = secure_filename(filename)
+
+    # Define temp directory
+    temp_dir = get_user_temp_dir()
+    temp_file_path = os.path.join(temp_dir, safe_filename)
+
+    # Use realpath for stronger path traversal protection
+    temp_file_path = os.path.realpath(temp_file_path)
+    temp_dir = os.path.realpath(temp_dir)
+
+    # Ensure the file is only accessed from the temp directory
+    if not temp_file_path.startswith(temp_dir):
+        current_app.logger.warning(f"Blocked attempt to access: {filename}")
+        abort(400, "Invalid file request")
+
+    if os.path.exists(temp_file_path):
+        try:
+            # Add file to the list of files to clean up at the end of the request
+            if not hasattr(g, 'files_to_cleanup'):
+                g.files_to_cleanup = []
+            if temp_file_path not in g.files_to_cleanup:
+                g.files_to_cleanup.append(temp_file_path)
+                
+            # Determine content type based on file extension
+            content_type = "application/json" if filename.endswith('.json') else "text/plain"
+                
+            response = send_file(temp_file_path, 
+                                as_attachment=True, 
+                                download_name=safe_filename, 
+                                mimetype=content_type)
+
+            # Try to delete after the response is sent
+            @response.call_on_close
+            def remove_temp_file():
+                try:
+                    if os.path.exists(temp_file_path):
+                        os.remove(temp_file_path)
+                        # If successfully deleted, remove from the cleanup list
+                        if hasattr(g, 'files_to_cleanup') and temp_file_path in g.files_to_cleanup:
+                            g.files_to_cleanup.remove(temp_file_path)
+                        current_app.logger.info(f"Deleted temporary file: {temp_file_path}")
+                except Exception as e:
+                    current_app.logger.error(f"Failed to delete file {temp_file_path}: {e}")
+
+            return response
+        except Exception as e:
+            # Try to cleanup on error too
+            try:
+                if os.path.exists(temp_file_path):
+                    os.remove(temp_file_path)
+                    if hasattr(g, 'files_to_cleanup') and temp_file_path in g.files_to_cleanup:
+                        g.files_to_cleanup.remove(temp_file_path)
+            except:
+                pass
+                
+            current_app.logger.error(f"Error serving file {temp_file_path}: {e}")
+            abort(500, "Internal server error")
+    else:
+        current_app.logger.warning(f"File not found: {temp_file_path}")
+        abort(404, "File not found")

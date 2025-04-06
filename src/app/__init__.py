@@ -40,6 +40,12 @@ def create_app():
     def apply_headers(response):
         """Apply strict security headers to all responses."""
         return apply_security_headers(response)
+        
+    # Add the context processor to make CSP nonce available in templates
+    @app.context_processor
+    def inject_csp_nonce():
+        """Make CSP nonce available in templates."""
+        return dict(csp_nonce=lambda: getattr(g, 'csp_nonce', ''))
 
     # Load configurations
     from app.utils.config import configure_app
