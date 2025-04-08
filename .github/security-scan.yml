@@ -5,19 +5,37 @@ on:
     branches: [ master ]
   pull_request:
     branches: [ master ]
+  schedule:
+    - cron: '0 0 * * 0'  # Weekly scan on Sundays
 
 jobs:
   security:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4  # Update to v4
+      
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5  # Update to v5
         with:
-          python-version: 3.8
+          python-version: '3.13'  # Update to match your Dockerfile
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install bandit
-      - name: Run security scan
-        run: bandit -r .
+          pip install -r requirements.txt
+          pip install bandit safety flake8 flake8-bandit flake8-django
+
+      - name: Run Bandit security scan
+        run: bandit -r . -x "./tests,./venv"
+      
+      - name: Run Safety check on dependencies
+        run: safety check -r requirements.txt
+
+      - name: Run Flake8 with security plugins
+        run: flake8 --select=S . --exclude=./venv,./tests
+
+      - name: Check for Flask-specific issues
+        run: |
+          # Custom checks for Flask-specific security issues
+          grep -r "debug=True" --include="*.py" . || true
+          grep -r "SECRET_KEY" --include="*.py" . || true
