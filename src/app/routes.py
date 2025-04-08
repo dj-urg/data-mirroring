@@ -566,9 +566,12 @@ def generate_synthetic_data_api():
             })
         
     except Exception as e:
+        # Log the detailed error for debugging (this stays private on the server)
         current_app.logger.error(f"Error generating synthetic data: {str(e)}")
         current_app.logger.error(traceback.format_exc())  # This shows the full stack trace
-        return jsonify({"error": f"An error occurred: {str(e)}"}), 500
+        
+        # Return a generic error message to the user
+        return jsonify({"error": "An internal error occurred while processing your request"}), 500
 
 @routes_bp.route('/download/<filename>', methods=['GET'])
 @requires_authentication

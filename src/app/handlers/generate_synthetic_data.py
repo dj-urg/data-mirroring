@@ -8,6 +8,8 @@ import os
 import uuid
 from zoneinfo import ZoneInfo
 import logging
+from werkzeug.utils import secure_filename
+from app.utils.file_manager import get_user_temp_dir
 
 # Expanded persona-specific content dictionaries
 PERSONA_CONTENT = {
@@ -167,17 +169,37 @@ def generate_synthetic_data(persona_type, activity_level, output_filename):
     """
     logger = logging.getLogger()
     logger.info(f"Generating synthetic data: persona={persona_type}, activity={activity_level}, output={output_filename}")
+        
+    # 1. Sanitize the filename
+    safe_filename = secure_filename(os.path.basename(output_filename))
     
-    # Ensure the directory exists
-    output_dir = os.path.dirname(os.path.abspath(output_filename))
+    # 2. Get the proper user temp directory
+    temp_dir = get_user_temp_dir()
+    
+    # 3. Join safely with the intended directory
+    output_path = os.path.join(temp_dir, safe_filename)
+    
+    # 4. Additional protection: verify the resulting path is still within the temp directory
+    real_output_path = os.path.realpath(output_path)
+    real_temp_dir = os.path.realpath(temp_dir)
+    
+    if not real_output_path.startswith(real_temp_dir):
+        logger.error(f"Path traversal attempt detected with filename: {output_filename}")
+        raise ValueError("Security error: Invalid filename")
+    
+    # Now we can safely create the directory if needed
+    output_dir = os.path.dirname(real_output_path)
     os.makedirs(output_dir, exist_ok=True)
+    
+    # Reassign output_filename to the secure path
+    output_filename = real_output_path
     
     # Check file permissions
     try:
-        # Test write permission
-        with open(output_filename, 'a') as test_file:
+        # Test write permission using the secure, sanitized path
+        with open(real_output_path, 'a') as test_file:
             pass
-        logger.info(f"Write permission OK for {output_filename}")
+        logger.info(f"Write permission OK for {real_output_path}")
     except Exception as e:
         logger.error(f"Cannot write to output file: {e}")
         return None
@@ -304,8 +326,8 @@ def generate_synthetic_data(persona_type, activity_level, output_filename):
                 random.shuffle(timestamps)
                 
                 # Determine which content to generate based on output filename
-                # Only generate the content that matches the specified output filename
-                if 'saved_posts.json' in output_filename:
+                # SECURITY FIX: Use safe_filename for pattern checking
+                if 'saved_posts.json' in safe_filename:
                     # Generate Saves
                     for _ in range(min(num_saves, len(timestamps))):
                         ts = timestamps.pop() if timestamps else month_start_ts
@@ -321,7 +343,7 @@ def generate_synthetic_data(persona_type, activity_level, output_filename):
                             }
                         })
                     
-                elif 'liked_posts.json' in output_filename:
+                elif 'liked_posts.json' in safe_filename:
                     # Generate Likes with higher probability for favorite authors
                     for _ in range(min(num_likes, len(timestamps))):
                         ts = timestamps.pop() if timestamps else random.randint(month_start_ts, month_end_ts - 1)
@@ -344,7 +366,7 @@ def generate_synthetic_data(persona_type, activity_level, output_filename):
                             ]
                         })
                 
-                elif 'videos_watched.json' in output_filename:
+                elif 'videos_watched.json' in safe_filename:
                     # Generate Watches
                     for _ in range(min(num_watches, len(timestamps))):
                         ts = timestamps.pop() if timestamps else random.randint(month_start_ts, month_end_ts - 1)
@@ -378,21 +400,22 @@ def generate_synthetic_data(persona_type, activity_level, output_filename):
         # Only include relevant data based on the output filename
         final_data = {}
         
-        if 'saved_posts.json' in output_filename:
+        # SECURITY FIX: Use safe_filename for pattern checking
+        if 'saved_posts.json' in safe_filename:
             final_data["saved_saved_media"] = saved_media
-        elif 'liked_posts.json' in output_filename:
+        elif 'liked_posts.json' in safe_filename:
             final_data["likes_media_likes"] = media_likes
-        elif 'videos_watched.json' in output_filename:
+        elif 'videos_watched.json' in safe_filename:
             final_data["impressions_history_videos_watched"] = videos_watched
 
         # Save to file - use ensure_ascii=True to handle encoding issues
         output_json = json.dumps(final_data, indent=None, ensure_ascii=True)
         
-        logger.info(f"Saving to file: {output_filename}")
+        logger.info(f"Saving to file: {real_output_path}")
         try:
-            with open(output_filename, "w", encoding="utf-8") as f:
+            with open(real_output_path, "w", encoding="utf-8") as f:
                 f.write(output_json)
-            logger.info(f"File saved successfully: {output_filename}")
+            logger.info(f"File saved successfully: {real_output_path}")
         except Exception as write_error:
             logger.error(f"Error writing file: {write_error}")
             raise
@@ -413,6 +436,7 @@ def generate_synthetic_data(persona_type, activity_level, output_filename):
         }
     
     except Exception as e:
+        # SECURITY FIX: Don't expose detailed error information in the return value
         logger.error(f"An error occurred during JSON generation or saving: {e}")
         import traceback
         logger.error(traceback.format_exc())
