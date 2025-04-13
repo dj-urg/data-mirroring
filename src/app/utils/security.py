@@ -28,12 +28,12 @@ def apply_security_headers(response):
     """Adds essential security headers to every response, ensuring security best practices are applied."""
 
     # Generate a CSP nonce dynamically per request
-    nonce = g.csp_nonce = base64.b64encode(secrets.token_bytes(16)).decode('utf-8')
+    nonce = g.csp_nonce
 
     # Content-Security-Policy
     response.headers["Content-Security-Policy"] = (
         f"default-src 'none'; "  # Deny all by default
-        f"script-src 'self' 'nonce-{nonce}' 'nonce-{g.csp_nonce}' https://cdnjs.cloudflare.com; "  # Allow scripts with nonce and from trusted CDN
+        f"script-src 'self' 'nonce-{nonce}' https://cdnjs.cloudflare.com; "  # Allow scripts with nonce and from trusted CDN
         f"style-src 'self' 'nonce-{nonce}' https://cdnjs.cloudflare.com https://fonts.googleapis.com; " 
         f"style-src-elem 'self' 'nonce-{nonce}' https://cdnjs.cloudflare.com https://data-mirror.org https://data-mirror-72f6ffc87917.herokuapp.com; "  # Add nonce here too!
         f"img-src 'self' https://img.icons8.com https://upload.wikimedia.org data:; "  # Allow trusted image sources
