@@ -674,6 +674,7 @@ def process_instagram_file(files):
         with tempfile.NamedTemporaryFile(suffix='.csv', delete=False) as temp_file:
             temp_file.write(csv_content.encode('utf-8'))
             temp_file_path = temp_file.name
+            os.chmod(temp_file_path, 0o600)  # Add secure file permissions
         
         # Get a unique filename
         unique_filename = f"{uuid.uuid4()}.csv"

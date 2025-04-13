@@ -541,6 +541,7 @@ def process_youtube_file(files):
         with tempfile.NamedTemporaryFile(suffix='.csv', delete=False) as temp_file:
             temp_file.write(csv_content.encode('utf-8'))
             temp_file_path = temp_file.name
+            os.chmod(temp_file_path, 0o600)  # Add secure file permissions
             
         csv_filename = f"{uuid.uuid4()}.csv"
         with open(temp_file_path, 'rb') as f:
