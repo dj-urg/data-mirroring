@@ -10,6 +10,7 @@ import os
 from werkzeug.utils import secure_filename
 import re
 from flask import flash
+import hmac
 
 routes_bp = Blueprint('routes', __name__)
 
@@ -343,6 +344,10 @@ def download_csv(filename):
         abort(404, "File not found")
     
 def is_valid_code(code):
+    """
+    Ensure the code is alphanumeric and has a reasonable length.
+    Returns True if the code format is valid, False otherwise.
+    """
     # Ensure the code is alphanumeric and has a reasonable length
     return bool(re.match(r'^[a-zA-Z0-9]{1,20}$', code))  # Adjust length as needed
 
@@ -352,11 +357,12 @@ def enter_code():
     if request.method == 'POST':
         code = request.form.get('code')
 
-        # Validate the input code before comparing
+        # Validate the input code format before comparing
         if not is_valid_code(code):
             return render_template('enter_code.html', error="Invalid access code format.")
         
-        if code == ACCESS_CODE:
+        # Use constant-time comparison to prevent timing attacks
+        if ACCESS_CODE and hmac.compare_digest(code, ACCESS_CODE):
             session['authenticated'] = True  # Set authenticated status in session
             return redirect(url_for('routes.landing_page'))
         else:
