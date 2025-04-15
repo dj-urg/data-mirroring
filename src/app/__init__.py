@@ -63,16 +63,14 @@ def create_app(config_name=None):
     CORS(app, resources={r"/*": {"origins": allowed_origins}})
 
     # Configure limiter dynamically based on environment
-    limiter.init_app(app)
-    
-    # Set storage URI separately
+    # Initialize limiter with storage options directly
     if os.environ.get('DYNO'):  # Running on Heroku
-        limiter.storage_options = {"storage_uri": "memory://"}
+        limiter.init_app(app, storage_uri="memory://")
     else:  # Local/dev environment
         rate_limit_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'data', 'rate_limits')
         os.makedirs(rate_limit_dir, exist_ok=True)
         os.chmod(rate_limit_dir, 0o700)
-        limiter.storage_options = {"storage_uri": f"filesystem://{rate_limit_dir}"}
+        limiter.init_app(app, storage_uri=f"filesystem://{rate_limit_dir}")
     
     # Set the key function separately
     limiter.key_func = get_remote_address
