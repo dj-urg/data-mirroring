@@ -63,19 +63,18 @@ def create_app(config_name=None):
     CORS(app, resources={r"/*": {"origins": allowed_origins}})
 
     # Configure limiter dynamically based on environment
-    # Initialize limiter with storage options directly
     if os.environ.get('DYNO'):  # Running on Heroku
-        limiter.init_app(app, storage_uri="memory://")
+        storage = "memory"
     else:  # Local/dev environment
         rate_limit_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'data', 'rate_limits')
         os.makedirs(rate_limit_dir, exist_ok=True)
         os.chmod(rate_limit_dir, 0o700)
-        limiter.init_app(app, storage_uri=f"filesystem://{rate_limit_dir}")
+        storage = f"filesystem:{rate_limit_dir}"
     
-    # Set the key function separately
+    # Initialize limiter with correct parameters
+    limiter.init_app(app)
+    limiter.storage = storage
     limiter.key_func = get_remote_address
-    
-    # Set default limits
     limiter.default_limits = ["200 per day", "50 per hour"]
 
     # Register Blueprints (Routes)
