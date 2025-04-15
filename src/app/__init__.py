@@ -14,7 +14,7 @@ from app.utils.file_manager import TemporaryFileManager
 load_dotenv()
 logger = logging.getLogger(__name__)
 
-def create_app():
+def create_app(config_name=None):
     # Dynamically locate the templates folder
     current_dir = os.path.dirname(os.path.abspath(__file__))
     templates_dir = os.path.join(current_dir, "templates")
@@ -62,7 +62,13 @@ def create_app():
     allowed_origins = os.getenv("CORS_ALLOWED_ORIGINS", "https://data-mirror-72f6ffc87917.herokuapp.com").split(",")
     CORS(app, resources={r"/*": {"origins": allowed_origins}})
 
-    # Rate Limiting
+    # Update the limiter configuration to use memory storage on Heroku
+    if os.environ.get('DYNO'):  # Check if running on Heroku
+        app.config['RATELIMIT_STORAGE_URL'] = 'memory://'
+    else:
+        # Keep your existing filesystem storage for local development
+        app.config['RATELIMIT_STORAGE_URL'] = 'filesystem:///app/src/app/data/rate_limits'
+    
     limiter.init_app(app)
 
     # Register Blueprints (Routes)
