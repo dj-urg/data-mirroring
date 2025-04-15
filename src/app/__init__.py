@@ -64,15 +64,15 @@ def create_app(config_name=None):
 
     # Configure limiter dynamically based on environment
     if os.environ.get('DYNO'):  # Running on Heroku
-        storage_string = "memory"
+        storage_string = "memory://"
     else:  # Local/dev environment
         rate_limit_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'data', 'rate_limits')
         os.makedirs(rate_limit_dir, exist_ok=True)
         os.chmod(rate_limit_dir, 0o700)
-        storage_string = f"filesystem:{rate_limit_dir}"
+        storage_string = f"filesystem://{rate_limit_dir}"
 
-    # Update the storage options before init_app
-    limiter.storage_options = {"uri": storage_string}
+    # Initialize limiter with the correct storage string
+    limiter.storage_uri = storage_string
     limiter.init_app(app)
 
     # Register Blueprints (Routes)
