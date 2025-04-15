@@ -47,18 +47,6 @@ def create_app(config_name=None):
         """Make CSP nonce available in templates."""
         return dict(csp_nonce=lambda: getattr(g, 'csp_nonce', ''))
 
-    @app.before_request
-    def validate_session():
-        """Validate session hasn't been hijacked by checking IP."""
-        if 'authenticated' in session and 'ip' in session:
-            if session['ip'] != request.remote_addr:
-                # Possible session hijacking - terminate session
-                session.clear()
-                return redirect(url_for('routes.enter_code'))
-        elif 'authenticated' in session:
-            # Store IP with session for future validation
-            session['ip'] = request.remote_addr
-
     # Load configurations
     from app.utils.config import configure_app
     configure_app(app)
