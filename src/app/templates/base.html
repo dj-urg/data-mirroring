@@ -19,6 +19,12 @@
         integrity="sha384-5e2ESR8Ycmos6g3gAKr1Jvwye8sW4U1u/cAKulfVJnkakCcMqhOudbtPnvJ+nbv7"
         crossorigin="anonymous">
 
+    <!-- Add Google Fonts for fancy cursive title -->
+    <link 
+        href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" 
+        rel="stylesheet"
+        nonce="{{ csp_nonce }}">
+
     <!-- Link to the main local style.css -->
     <link
         href="{{ url_for('static', filename='css/style.css') }}"
