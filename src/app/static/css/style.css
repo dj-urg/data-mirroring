@@ -39,7 +39,7 @@ body {
     margin: 0; /* Remove default margin */
     padding-bottom: 60px; /* Create space for the footer */
     background-color: #ffffff; /* Background color for the body */
-    font-family: 'Roboto', sans-serif; /* Font settings */
+    font-family: 'Inter', sans-serif; /* Updated font to Inter */
     font-size: small;
     color: #2C3E50; /* Default text color */
     opacity: 0; /* Start with hidden body */
@@ -205,9 +205,17 @@ body.loading .loader {
 p {
     text-align: justify;
     color: #2C3E50;
+    font-family: 'Inter', sans-serif;
     font-size: 1.2em;
     line-height: 1.7;
     margin-bottom: 30px;
+    font-weight: 400; /* Regular weight for body text */
+}
+
+/* Update headings to use Inter with appropriate weights */
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Inter', sans-serif;
+    font-weight: 600; /* Semi-bold for headings */
 }
 
 /* ========================= */
@@ -1066,4 +1074,20 @@ h1.platform-title, p.platform-description {
 
 .close-enlarged-image:hover {
     opacity: 1;
+}
+
+/* ========================= */
+/* Fancy Title Styling       */
+/* ========================= */
+/* Optional enhancements for Great Vibes */
+.fancy-title {
+    font-family: 'Great Vibes';
+    font-size: 4.2rem; /* Slightly larger for better readability */
+    color: #2C3E50;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+    margin-bottom: 1.5rem;
+    text-align: center;
+    font-weight: normal;
+    line-height: 1.2; /* Adjusted line height for script font */
+    letter-spacing: 0.02em; /* Slight positive tracking for script font */
 }
