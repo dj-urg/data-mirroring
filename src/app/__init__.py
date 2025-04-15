@@ -62,24 +62,20 @@ def create_app(config_name=None):
     allowed_origins = os.getenv("CORS_ALLOWED_ORIGINS", "https://data-mirror-72f6ffc87917.herokuapp.com").split(",")
     CORS(app, resources={r"/*": {"origins": allowed_origins}})
 
-    # Configure limiter dynamically based on environment
-    if os.environ.get('DYNO'):  # Running on Heroku
-        storage_string = "memory://"
-    else:  # Local/dev environment
-        rate_limit_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'data', 'rate_limits')
-        os.makedirs(rate_limit_dir, exist_ok=True)
-        os.chmod(rate_limit_dir, 0o700)
-        storage_string = f"filesystem://{rate_limit_dir}"
-
-    # Initialize limiter with the correct storage string
-    limiter.storage_uri = storage_string
-    limiter.init_app(app)
-
     # Register Blueprints (Routes)
     from app.routes import routes_bp
     app.register_blueprint(routes_bp, url_prefix="/")
 
     # Register cleanup functions
     TemporaryFileManager.register_cleanup(app)
+
+    # Configure limiter at the end
+    try:
+        # Using in-memory storage for rate limiting to ensure no persistent data is stored,
+        # in line with the application's privacy-first approach
+        limiter.init_app(app)
+        app.logger.info("Rate limiter initialized with in-memory storage")
+    except Exception as e:
+        app.logger.error(f"Failed to initialize rate limiter: {e}")
 
     return app
