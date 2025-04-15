@@ -70,12 +70,10 @@ def create_app(config_name=None):
         os.makedirs(rate_limit_dir, exist_ok=True)
         os.chmod(rate_limit_dir, 0o700)
         storage_string = f"filesystem:{rate_limit_dir}"
-    
-    # Initialize limiter with updated syntax for Flask-Limiter 3.x
+
+    # Update the storage options before init_app
+    limiter.storage_options = {"uri": storage_string}
     limiter.init_app(app)
-    limiter.key_func = get_remote_address
-    limiter.default_limits = ["200 per day", "50 per hour"]
-    limiter.storage_uri = storage_string
 
     # Register Blueprints (Routes)
     from app.routes import routes_bp
