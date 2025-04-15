@@ -11,13 +11,23 @@ on:
 jobs:
   security:
     runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write  # Required for code scanning alerts
+
     steps:
-      - uses: actions/checkout@v4  # Update to v4
+      - uses: actions/checkout@v4
       
-      - name: Set up Python
-        uses: actions/setup-python@v5  # Update to v5
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
         with:
-          python-version: '3.13'  # Update to match your Dockerfile
+          languages: python
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
 
       - name: Install dependencies
         run: |
@@ -27,7 +37,7 @@ jobs:
 
       - name: Run Bandit security scan
         run: bandit -r . -x "./tests,./venv"
-      
+
       - name: Run Safety check on dependencies
         run: safety check -r requirements.txt
 
@@ -36,6 +46,8 @@ jobs:
 
       - name: Check for Flask-specific issues
         run: |
-          # Custom checks for Flask-specific security issues
           grep -r "debug=True" --include="*.py" . || true
           grep -r "SECRET_KEY" --include="*.py" . || true
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
