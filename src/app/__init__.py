@@ -6,6 +6,7 @@ import logging
 import secrets
 import base64
 from dotenv import load_dotenv
+from flask_limiter.util import get_remote_address
 from app.utils.extensions import limiter
 from app.utils.logging_config import setup_logging
 from app.utils.security import enforce_https, apply_security_headers
@@ -41,7 +42,6 @@ def create_app(config_name=None):
         """Apply strict security headers to all responses."""
         return apply_security_headers(response)
         
-    # Add the context processor to make CSP nonce available in templates
     @app.context_processor
     def inject_csp_nonce():
         """Make CSP nonce available in templates."""
@@ -62,14 +62,21 @@ def create_app(config_name=None):
     allowed_origins = os.getenv("CORS_ALLOWED_ORIGINS", "https://data-mirror-72f6ffc87917.herokuapp.com").split(",")
     CORS(app, resources={r"/*": {"origins": allowed_origins}})
 
-    # Update the limiter configuration to use memory storage on Heroku
-    if os.environ.get('DYNO'):  # Check if running on Heroku
-        app.config['RATELIMIT_STORAGE_URL'] = 'memory://'
-    else:
-        # Keep your existing filesystem storage for local development
-        app.config['RATELIMIT_STORAGE_URL'] = 'filesystem:///app/src/app/data/rate_limits'
-    
-    limiter.init_app(app)
+    # Configure limiter dynamically based on environment
+    if os.environ.get('DYNO'):  # Running on Heroku
+        storage_uri = "memory://"
+    else:  # Local/dev environment
+        rate_limit_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'data', 'rate_limits')
+        os.makedirs(rate_limit_dir, exist_ok=True)
+        os.chmod(rate_limit_dir, 0o700)
+        storage_uri = f"filesystem://{rate_limit_dir}"
+
+    limiter.init_app(
+        app,
+        key_func=get_remote_address,
+        default_limits=["200 per day", "50 per hour"],
+        storage_uri=storage_uri
+    )
 
     # Register Blueprints (Routes)
     from app.routes import routes_bp

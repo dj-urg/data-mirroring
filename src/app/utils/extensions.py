@@ -16,8 +16,4 @@ def get_limiter_storage_uri():
     # In development, memory storage is acceptable
     return "memory://"
 
-limiter = Limiter(
-    key_func=get_remote_address,
-    default_limits=["200 per day", "50 per hour"],
-    storage_uri=get_limiter_storage_uri()
-)
+limiter = Limiter()
