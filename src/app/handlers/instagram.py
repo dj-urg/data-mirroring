@@ -337,7 +337,7 @@ def generate_time_of_day_heatmap(df):
     sns.heatmap(
         hour_count_df.T, 
         annot=True, 
-        fmt="d", 
+        fmt=".0f", 
         cmap="Blues", 
         ax=ax, 
         cbar=False,
