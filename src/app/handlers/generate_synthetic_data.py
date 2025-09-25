@@ -438,6 +438,9 @@ def generate_synthetic_data(persona_type, activity_level, output_filename):
     except Exception as e:
         # SECURITY FIX: Don't expose detailed error information in the return value
         logger.error(f"An error occurred during JSON generation or saving: {e}")
-        import traceback
-        logger.error(traceback.format_exc())
+        # Import secure logging functions
+        from app.utils.logging_config import log_error_safely, log_stack_trace_safely
+        
+        log_error_safely(e, "Synthetic data generation", logger)
+        log_stack_trace_safely(e, logger)
         return None

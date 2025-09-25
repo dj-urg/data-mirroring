@@ -15,11 +15,14 @@ def configure_app(app):
             WTF_CSRF_CHECK_REFERRER=True,
             WTF_CSRF_SSL_STRICT=True,
             MAX_CONTENT_LENGTH=16 * 1024 * 1024,
+            MAX_FORM_MEMORY_SIZE=500 * 1024,  # 500KB
+            MAX_FORM_PARTS=1000,
+            TRUSTED_HOSTS=['data-mirror.org', 'data-mirror-72f6ffc87917.herokuapp.com'],
         )
         app.logger.info(
             "Production configuration applied: "
             "Secure session cookies, CSRF strict enabled, session lifetime of 30 minutes, "
-            "and a maximum content length of 16MB."
+            "max content length 16MB, form limits 500KB/1000 parts, trusted hosts configured."
         )
     else:
         app.config.update(

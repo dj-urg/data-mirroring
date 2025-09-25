@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, request, send_file, current_app, s
 from app.utils.security import requires_authentication, enforce_https, apply_security_headers
 from app.utils.file_manager import TemporaryFileManager, get_user_temp_dir
 from app.utils.extensions import limiter
+from app.utils.logging_config import log_request_data_safely, log_file_operation_safely, log_security_event_safely, log_error_safely, log_stack_trace_safely
 from app.handlers.youtube import process_youtube_file
 from app.handlers.instagram import process_instagram_file
 from app.handlers.tiktok import process_tiktok_file
@@ -114,12 +115,13 @@ def dashboard_youtube():
         )
 
     except ValueError as e:
-        current_app.logger.error("ValueError encountered during processing: %s", str(e))
+        log_error_safely(e, "YouTube file processing", current_app.logger)
         flash(str(e), "danger")
         return redirect(url_for('routes.dashboard_youtube'))
 
     except Exception as e:
-        current_app.logger.error("Unexpected error during file processing: %s", str(e))
+        log_error_safely(e, "Unexpected error during YouTube file processing", current_app.logger)
+        log_stack_trace_safely(e, current_app.logger)
         flash("An unexpected error occurred during file processing. Please try again.", "danger")
         return redirect(url_for('routes.dashboard_youtube'))
 
@@ -227,8 +229,8 @@ def dashboard_tiktok():
         )
         
     except ValueError as e:
+        log_error_safely(e, "TikTok file processing", current_app.logger)
         flash(str(e), "danger")
-        current_app.logger.error("Error processing TikTok file: %s", str(e))
         return redirect(url_for('routes.dashboard_tiktok'))
     
 @routes_bp.route('/dashboard/netflix', methods=['GET', 'POST'])
@@ -284,8 +286,8 @@ def dashboard_netflix():
         )
         
     except ValueError as e:
+        log_error_safely(e, "Netflix file processing", current_app.logger)
         flash(str(e), "danger")
-        current_app.logger.error("Error processing Netflix file: %s", str(e))
         return redirect(url_for('routes.dashboard_netflix'))
     
 @routes_bp.route('/download_image/<filename>', methods=['GET'])
@@ -305,7 +307,7 @@ def download_image(filename):
 
     # Ensure the file is only served from the temp directory
     if not temp_file_path.startswith(temp_dir):
-        current_app.logger.warning(f"Blocked attempt to access an invalid file")
+        log_security_event_safely("blocked_file_access", f"filename: {filename}", current_app.logger)
         abort(400, "Invalid file request")
 
     if os.path.exists(temp_file_path):
@@ -327,7 +329,7 @@ def download_image(filename):
                         # If successfully deleted, remove from the cleanup list
                         if hasattr(g, 'files_to_cleanup') and temp_file_path in g.files_to_cleanup:
                             g.files_to_cleanup.remove(temp_file_path)
-                        current_app.logger.info(f"Deleted temporary file: {temp_file_path}")
+                        log_file_operation_safely("file_deleted", temp_file_path, current_app.logger)
                 except Exception as e:
                     current_app.logger.error(f"Failed to delete file {temp_file_path}: {e}")
 
@@ -365,7 +367,7 @@ def download_csv(filename):
 
     # Ensure the file is only accessed from the temp directory
     if not temp_file_path.startswith(temp_dir):
-        current_app.logger.warning(f"Blocked attempt to access: {filename}")
+        log_security_event_safely("blocked_file_access", f"filename: {filename}", current_app.logger)
         abort(400, "Invalid file request")
 
     if os.path.exists(temp_file_path):
@@ -382,7 +384,7 @@ def download_csv(filename):
                     if os.path.exists(temp_file_path):
                         # Mark the file for cleanup
                         TemporaryFileManager.mark_file_for_cleanup(temp_file_path)
-                        current_app.logger.info(f"Marked temporary file for deletion: {temp_file_path}")
+                        log_file_operation_safely("file_marked_for_deletion", temp_file_path, current_app.logger)
                 except Exception as e:
                     current_app.logger.error(f"Failed to mark file {temp_file_path} for deletion: {e}")
 
@@ -445,7 +447,7 @@ def download_excel(filename):
 
     # Ensure the file is only accessed from the temp directory
     if not temp_file_path.startswith(temp_dir):
-        current_app.logger.warning(f"Blocked attempt to access: {filename}")
+        log_security_event_safely("blocked_file_access", f"filename: {filename}", current_app.logger)
         abort(400, "Invalid file request")
 
     if os.path.exists(temp_file_path):
@@ -467,7 +469,7 @@ def download_excel(filename):
                         # If successfully deleted, remove from the cleanup list
                         if hasattr(g, 'files_to_cleanup') and temp_file_path in g.files_to_cleanup:
                             g.files_to_cleanup.remove(temp_file_path)
-                        current_app.logger.info(f"Deleted temporary file: {temp_file_path}")
+                        log_file_operation_safely("file_deleted", temp_file_path, current_app.logger)
                 except Exception as e:
                     current_app.logger.error(f"Failed to delete file {temp_file_path}: {e}")
 
@@ -505,7 +507,7 @@ def download_txt(filename):
 
     # Ensure the file is only accessed from the temp directory
     if not temp_file_path.startswith(temp_dir):
-        current_app.logger.warning(f"Blocked attempt to access: {filename}")
+        log_security_event_safely("blocked_file_access", f"filename: {filename}", current_app.logger)
         abort(400, "Invalid file request")
 
     if os.path.exists(temp_file_path):
@@ -527,7 +529,7 @@ def download_txt(filename):
                         # If successfully deleted, remove from the cleanup list
                         if hasattr(g, 'files_to_cleanup') and temp_file_path in g.files_to_cleanup:
                             g.files_to_cleanup.remove(temp_file_path)
-                        current_app.logger.info(f"Deleted temporary file: {temp_file_path}")
+                        log_file_operation_safely("file_deleted", temp_file_path, current_app.logger)
                 except Exception as e:
                     current_app.logger.error(f"Failed to delete file {temp_file_path}: {e}")
 
@@ -562,7 +564,7 @@ def generate_synthetic_data_api():
         
         # Parse input from request
         data = request.get_json()
-        current_app.logger.info(f"Request data: {data}")
+        log_request_data_safely(data, current_app.logger)
         
         if not data:
             current_app.logger.error("No JSON data received")
@@ -585,13 +587,13 @@ def generate_synthetic_data_api():
         # Get user temp directory to save the file
         from app.utils.file_manager import get_user_temp_dir
         temp_dir = get_user_temp_dir()
-        current_app.logger.info(f"Temp directory: {temp_dir}")
+        log_file_operation_safely("temp_dir_access", temp_dir, current_app.logger)
         
         # Ensure temp directory exists
         os.makedirs(temp_dir, exist_ok=True)
         
         output_path = os.path.join(temp_dir, output_filename)
-        current_app.logger.info(f"Full output path: {output_path}")
+        log_file_operation_safely("output_path_created", output_path, current_app.logger)
         
         # Generate the data
         current_app.logger.info("Calling data generation function")
@@ -630,9 +632,9 @@ def generate_synthetic_data_api():
             })
         
     except Exception as e:
-        # Log the detailed error for debugging (this stays private on the server)
-        current_app.logger.error(f"Error generating synthetic data: {str(e)}")
-        current_app.logger.error(traceback.format_exc())  # This shows the full stack trace
+        # Log the error safely based on environment
+        log_error_safely(e, "Synthetic data generation", current_app.logger)
+        log_stack_trace_safely(e, current_app.logger)
         
         # Return a generic error message to the user
         return jsonify({"error": "An internal error occurred while processing your request"}), 500
@@ -654,7 +656,7 @@ def download_generated_file(filename):
 
     # Ensure the file is only accessed from the temp directory
     if not temp_file_path.startswith(temp_dir):
-        current_app.logger.warning(f"Blocked attempt to access: {filename}")
+        log_security_event_safely("blocked_file_access", f"filename: {filename}", current_app.logger)
         abort(400, "Invalid file request")
 
     if os.path.exists(temp_file_path):
@@ -682,7 +684,7 @@ def download_generated_file(filename):
                         # If successfully deleted, remove from the cleanup list
                         if hasattr(g, 'files_to_cleanup') and temp_file_path in g.files_to_cleanup:
                             g.files_to_cleanup.remove(temp_file_path)
-                        current_app.logger.info(f"Deleted temporary file: {temp_file_path}")
+                        log_file_operation_safely("file_deleted", temp_file_path, current_app.logger)
                 except Exception as e:
                     current_app.logger.error(f"Failed to delete file {temp_file_path}: {e}")
 

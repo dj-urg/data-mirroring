@@ -449,9 +449,13 @@ def process_tiktok_file(files):
 
     except ValueError as e:
         # Forward ValueError with its message
-        logger.error(f"ValueError in TikTok processing: {str(e)}")
+        from app.utils.logging_config import log_error_safely
+        log_error_safely(e, "TikTok processing ValueError", logger)
         raise ValueError(str(e))
     except Exception as e:
-        logger.error(f"Error processing TikTok file: {type(e).__name__} - {str(e)}")
-        logger.error(traceback.format_exc())
+        # Import secure logging functions
+        from app.utils.logging_config import log_error_safely, log_stack_trace_safely
+        
+        log_error_safely(e, "TikTok file processing", logger)
+        log_stack_trace_safely(e, logger)
         raise ValueError(f"Error processing TikTok data: {str(e)}")

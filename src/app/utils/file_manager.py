@@ -199,6 +199,50 @@ class TemporaryFileManager:
             current_app.logger.error(f"Secure file deletion failed: {e}")
 
     @classmethod
+    def cleanup_all_temp_files(cls):
+        """
+        Clean up ALL temporary files on server startup.
+        This ensures no user data persists through server restarts.
+        """
+        try:
+            temp_base_dir = tempfile.gettempdir()
+            print("Starting server startup cleanup of all temporary files")
+            
+            # Find all user_* directories in temp directory
+            cleaned_count = 0
+            for item in os.listdir(temp_base_dir):
+                if item.startswith('user_'):
+                    user_temp_dir = os.path.join(temp_base_dir, item)
+                    
+                    try:
+                        if os.path.isdir(user_temp_dir):
+                            # Securely delete all files in the directory
+                            for file_item in os.listdir(user_temp_dir):
+                                file_path = os.path.join(user_temp_dir, file_item)
+                                try:
+                                    if os.path.isfile(file_path):
+                                        cls._secure_file_delete(file_path)
+                                    elif os.path.isdir(file_path):
+                                        shutil.rmtree(file_path, ignore_errors=True)
+                                except Exception as e:
+                                    print(f"Error deleting {file_path}: {e}")
+                            
+                            # Remove the user directory itself
+                            shutil.rmtree(user_temp_dir, ignore_errors=True)
+                            cleaned_count += 1
+                            print(f"Cleaned up orphaned user directory: {item}")
+                    
+                    except Exception as e:
+                        print(f"Error cleaning up {user_temp_dir}: {e}")
+            
+            print(f"Server startup cleanup completed. Cleaned {cleaned_count} user directories")
+            return cleaned_count
+            
+        except Exception as e:
+            print(f"Server startup cleanup failed: {e}")
+            return 0
+
+    @classmethod
     def register_cleanup(cls, app):
         """
         Register comprehensive cleanup functions.
@@ -237,6 +281,72 @@ class TemporaryFileManager:
             
             except Exception as cleanup_error:
                 current_app.logger.error(f"Final cleanup error: {cleanup_error}")
+
+        # Add periodic cleanup for orphaned files
+        import threading
+        import time
+        
+        def periodic_cleanup():
+            """Run periodic cleanup every 10 minutes to catch orphaned files."""
+            while True:
+                try:
+                    time.sleep(600)  # 10 minutes
+                    with app.app_context():
+                        cls.cleanup_orphaned_files()
+                except Exception as e:
+                    with app.app_context():
+                        app.logger.error(f"Periodic cleanup error: {e}")
+        
+        # Start periodic cleanup in a background thread
+        cleanup_thread = threading.Thread(target=periodic_cleanup, daemon=True)
+        cleanup_thread.start()
+        app.logger.info("Periodic cleanup thread started")
+
+    @classmethod
+    def cleanup_orphaned_files(cls):
+        """
+        Clean up orphaned files that may have been left behind.
+        This runs periodically to catch any files that weren't cleaned up properly.
+        """
+        try:
+            temp_base_dir = tempfile.gettempdir()
+            current_time = time.time()
+            cleaned_count = 0
+            
+            for item in os.listdir(temp_base_dir):
+                if item.startswith('user_'):
+                    user_temp_dir = os.path.join(temp_base_dir, item)
+                    
+                    try:
+                        if os.path.isdir(user_temp_dir):
+                            # Check if directory is older than 2 hours (orphaned)
+                            dir_age = current_time - os.path.getctime(user_temp_dir)
+                            if dir_age > 7200:  # 2 hours
+                                # Securely delete all files in the directory
+                                for file_item in os.listdir(user_temp_dir):
+                                    file_path = os.path.join(user_temp_dir, file_item)
+                                    try:
+                                        if os.path.isfile(file_path):
+                                            cls._secure_file_delete(file_path)
+                                        elif os.path.isdir(file_path):
+                                            shutil.rmtree(file_path, ignore_errors=True)
+                                    except Exception as e:
+                                        # Use print for logging when outside app context
+                                        print(f"Error deleting {file_path}: {e}")
+                                
+                                # Remove the user directory itself
+                                shutil.rmtree(user_temp_dir, ignore_errors=True)
+                                cleaned_count += 1
+                                print(f"Cleaned up orphaned directory: {item}")
+                    
+                    except Exception as e:
+                        print(f"Error cleaning up {user_temp_dir}: {e}")
+            
+            if cleaned_count > 0:
+                print(f"Periodic cleanup completed. Cleaned {cleaned_count} orphaned directories")
+            
+        except Exception as e:
+            print(f"Periodic cleanup failed: {e}")
 
 # Convenience imports and functions
 get_user_temp_dir = TemporaryFileManager.get_user_temp_dir

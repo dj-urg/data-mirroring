@@ -62,6 +62,14 @@ def create_app(config_name=None):
     allowed_origins = os.getenv("CORS_ALLOWED_ORIGINS", "https://data-mirror-72f6ffc87917.herokuapp.com").split(",")
     CORS(app, resources={r"/*": {"origins": allowed_origins}})
 
+    # Clean up any orphaned files from previous server sessions
+    # This ensures no user data persists through server restarts
+    try:
+        cleaned_count = TemporaryFileManager.cleanup_all_temp_files()
+        print(f"Server startup cleanup completed. Removed {cleaned_count} orphaned user directories")
+    except Exception as e:
+        print(f"Server startup cleanup failed: {e}")
+
     # Register Blueprints (Routes)
     from app.routes import routes_bp
     app.register_blueprint(routes_bp, url_prefix="/")
