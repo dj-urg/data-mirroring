@@ -29,8 +29,9 @@
                 <p>
                 Our application is built with a <strong>privacy-first approach</strong>. 
                 When you upload a file, it is temporarily stored in a <strong>secure location</strong> and only accessible during your session. 
-                Once you terminate your session, close your browser, <strong>your data is automatically deleted</strong>, ensuring no persistent storage of personal data. 
-                We take steps to clean up temporary files both during and after your session to protect your privacy.
+                Your data is automatically deleted within <strong>30 minutes</strong> of inactivity, and all temporary files are completely removed when you close your browser or end your session. 
+                You can also manually remove all your data instantly by clicking the <strong>"End Session"</strong> button in the top navigation. 
+                We implement multiple cleanup mechanisms including per-request cleanup, periodic cleanup every 2 minutes, and server startup cleanup to ensure no persistent storage of personal data.
                 </p>
 
                 <p>
@@ -45,17 +46,26 @@
         <div class="content-container mt-3">
             <h3 class="mt-4">Hosting & Infrastructure Security</h3>
             <p>
-                Our application is hosted on <strong>Heroku's EU-based servers</strong>, ensuring compliance with European data protection regulations. <strong>Heroku encrypts all data in transit and at rest</strong>, preventing unauthorized access.
+                Our application is hosted on <strong>Heroku in EU-based data centers</strong>. Heroku manages infrastructure, scaling, and platform security, applying industry best practices and rapid security updates. All data is encrypted in transit and at rest, and Heroku maintains compliance certifications such as <strong>ISO 27001, SOC 2, and PCI DSS</strong>.
             </p>
             <p>
                 For more details, please visit: <a href="https://www.heroku.com/policy/security" target="_blank">Heroku's Security Policy</a>.
             </p>
             <p>
-                In addition, we use <strong>HTTPS encryption</strong> to secure your data in transit, and we strictly allow only specific, safe file types to minimize security risks. 
-                To enhance security, we have implemented <strong>Expedited WAF (Web Application Firewall)</strong> to protect our application.
+                When accessing our tool from <strong>data-mirror.org</strong>, all traffic is routed through <strong>Cloudflare</strong>, which provides:
+            </p>
+            <ul class="list-unstyled mt-3">
+                <li> <strong>TLS/SSL encryption</strong> for all connections</li>
+                <li> <strong>Unmetered DDoS protection</strong> and IP-based rate limiting</li>
+                <li> <strong>Web Application Firewall (WAF)</strong> with protections against common high-severity vulnerabilities</li>
+                <li> <strong>Bot protection</strong> to block automated threats</li>
+                <li> <strong>Global CDN</strong> to ensure performance and availability worldwide</li>
+            </ul>
+            <p>
+                Additionally, our application enforces <strong>strict file type restrictions</strong> for uploads to minimize risks from malicious content.
             </p>
             <p>
-                For more details, please visit: <a href="https://devcenter.heroku.com/articles/expeditedwaf" target="_blank">Heroku's Expedited WAF Add-on</a>.
+                For more details please visit <a href="https://www.cloudflare.com/en-gb/application-services/solutions/" target="_blank">Secure & accelerate applications with Cloudflare</a>.
             </p>
         </div>
 
@@ -73,7 +83,8 @@
             </ul>
             <p>
                 For more details, refer to:
-                <a href="https://devcenter.heroku.com/articles/gdpr" target="_blank">Heroku GDPR Compliance</a>.
+                <a href="https://devcenter.heroku.com/articles/gdpr" target="_blank">Heroku GDPR Compliance</a> and 
+                <a href="https://www.cloudflare.com/en-gb/trust-hub/gdpr/" target="_blank">Cloudflare and GDPR compliance</a>.
             </p>
         </div>
 

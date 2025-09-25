@@ -18,7 +18,7 @@ class TemporaryFileManager:
     DOWNLOAD_WINDOW = 1800  # 30 minutes in seconds
     MAX_TEMP_FILES_PER_USER = 50  # Limit number of temporary files
     MAX_TEMP_STORAGE_MB = 500  # Maximum total temporary storage per user
-    MAX_FILE_AGE_SECONDS = 3600  # Maximum file age (1 hour)
+    MAX_FILE_AGE_SECONDS = 1800  # Maximum file age (30 minutes)
 
     @staticmethod
     def generate_secure_session_id():
@@ -282,15 +282,48 @@ class TemporaryFileManager:
             except Exception as cleanup_error:
                 current_app.logger.error(f"Final cleanup error: {cleanup_error}")
 
-        # Add periodic cleanup for orphaned files
+        # Enhanced session-based cleanup - immediate cleanup when session ends
+        @app.before_request
+        def check_session_cleanup():
+            """Check for expired sessions and clean up immediately."""
+            try:
+                # Check if session is expired or invalid
+                if not session.get('authenticated') and session.get('user_id'):
+                    # Session ended, clean up immediately
+                    user_id = session.get('user_id')
+                    if user_id:
+                        cls.cleanup_user_files_immediately(user_id)
+                        session.clear()
+                
+                # Also check for session expiration based on time
+                if session.get('user_id') and session.get('last_activity'):
+                    import time
+                    current_time = time.time()
+                    last_activity = session.get('last_activity', 0)
+                    session_timeout = 1800  # 30 minutes
+                    
+                    if current_time - last_activity > session_timeout:
+                        # Session expired, clean up immediately
+                        user_id = session.get('user_id')
+                        if user_id:
+                            cls.cleanup_user_files_immediately(user_id)
+                            session.clear()
+                else:
+                    # Update last activity timestamp
+                    session['last_activity'] = time.time()
+                    
+            except Exception as e:
+                current_app.logger.error(f"Session cleanup check error: {e}")
+
+        # Reduced periodic cleanup - only for server startup and edge cases
         import threading
         import time
         
         def periodic_cleanup():
-            """Run periodic cleanup every 10 minutes to catch orphaned files."""
+            """Run periodic cleanup every 2 minutes for edge cases only."""
             while True:
                 try:
-                    time.sleep(600)  # 10 minutes
+                    time.sleep(120)  # 2 minutes (reduced from 5)
                     with app.app_context():
                         cls.cleanup_orphaned_files()
                 except Exception as e:
@@ -300,7 +333,39 @@ class TemporaryFileManager:
         # Start periodic cleanup in a background thread
         cleanup_thread = threading.Thread(target=periodic_cleanup, daemon=True)
         cleanup_thread.start()
-        app.logger.info("Periodic cleanup thread started")
+        app.logger.info("Enhanced session-based cleanup registered")
+
+    @classmethod
+    def cleanup_user_files_immediately(cls, user_id):
+        """
+        Immediately clean up all files for a specific user.
+        This is called when a session ends to ensure immediate cleanup.
+        
+        Args:
+            user_id (str): The user's session ID
+        """
+        try:
+            temp_base_dir = tempfile.gettempdir()
+            user_temp_dir = os.path.join(temp_base_dir, f"user_{user_id}")
+            
+            if os.path.exists(user_temp_dir) and os.path.isdir(user_temp_dir):
+                # Securely delete all files in the directory
+                for file_item in os.listdir(user_temp_dir):
+                    file_path = os.path.join(user_temp_dir, file_item)
+                    try:
+                        if os.path.isfile(file_path):
+                            cls._secure_file_delete(file_path)
+                        elif os.path.isdir(file_path):
+                            shutil.rmtree(file_path, ignore_errors=True)
+                    except Exception as e:
+                        current_app.logger.error(f"Error deleting {file_path}: {e}")
+                
+                # Remove the user directory itself
+                shutil.rmtree(user_temp_dir, ignore_errors=True)
+                current_app.logger.info(f"Immediate cleanup completed for user: {user_id}")
+                
+        except Exception as e:
+            current_app.logger.error(f"Immediate user cleanup failed for {user_id}: {e}")
 
     @classmethod
     def cleanup_orphaned_files(cls):
@@ -319,9 +384,9 @@ class TemporaryFileManager:
                     
                     try:
                         if os.path.isdir(user_temp_dir):
-                            # Check if directory is older than 2 hours (orphaned)
+                            # Check if directory is older than 30 minutes (orphaned)
                             dir_age = current_time - os.path.getctime(user_temp_dir)
-                            if dir_age > 7200:  # 2 hours
+                            if dir_age > 1800:  # 30 minutes
                                 # Securely delete all files in the directory
                                 for file_item in os.listdir(user_temp_dir):
                                     file_path = os.path.join(user_temp_dir, file_item)

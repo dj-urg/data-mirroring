@@ -37,6 +37,18 @@
     crossorigin="anonymous"
     defer></script>
 
+    <!-- End Session Button Handler -->
+    <script 
+        src="{{ url_for('static', filename='js/end_session.js') }}" 
+        nonce="{{ csp_nonce }}" 
+        defer></script>
+    
+    <!-- Session Cleanup Handler -->
+    <script 
+        src="{{ url_for('static', filename='js/session_cleanup.js') }}" 
+        nonce="{{ csp_nonce }}" 
+        defer></script>
+
 </head>
 <body>
 
@@ -49,6 +61,7 @@
                 <li><a href="{{ url_for('routes.info') }}">Project Info</a></li>
                 <li><a href="{{ url_for('routes.data_processing_info') }}">Data Processing</a></li>
                 <li><a href="{{ url_for('routes.generate_synthetic_data') }}">Create Persona</a></li>
+                <li><a href="{{ url_for('routes.logout') }}" class="end-session-btn">End Session</a></li>
             </ul>
         </nav>
     </header>

@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, send_file, current_app, session, redirect, url_for, abort, g
+from flask import Blueprint, render_template, request, send_file, current_app, session, redirect, url_for, abort, g, jsonify
 from app.utils.security import requires_authentication, enforce_https, apply_security_headers
 from app.utils.file_manager import TemporaryFileManager, get_user_temp_dir
 from app.utils.extensions import limiter
@@ -429,6 +429,51 @@ def enter_code():
             return render_template('enter_code.html', error="Invalid access code.")
     
     return render_template('enter_code.html')
+
+@routes_bp.route('/logout')
+def logout():
+    """Explicitly clear all session data and user files."""
+    try:
+        # Clear all session data
+        session.clear()
+        
+        # Clean up user's temporary files immediately
+        from app.utils.file_manager import TemporaryFileManager
+        TemporaryFileManager.cleanup_temp_files()
+        
+        # Remove user's temp directory completely
+        temp_dir = TemporaryFileManager.get_user_temp_dir()
+        if os.path.exists(temp_dir):
+            import shutil
+            shutil.rmtree(temp_dir, ignore_errors=True)
+            current_app.logger.info(f"User logout: completely removed temp directory {temp_dir}")
+        
+        current_app.logger.info("User logged out and all data cleared")
+        return redirect(url_for('routes.enter_code'))
+        
+    except Exception as e:
+        current_app.logger.error(f"Logout cleanup error: {e}")
+        # Still redirect even if cleanup fails
+        return redirect(url_for('routes.enter_code'))
+
+@routes_bp.route('/cleanup-session', methods=['POST'])
+def cleanup_session():
+    """Handle cleanup requests from client-side (browser close, etc.)."""
+    try:
+        from app.utils.file_manager import TemporaryFileManager
+        
+        # Get user ID from session
+        user_id = session.get('user_id')
+        if user_id:
+            # Immediately clean up user files
+            TemporaryFileManager.cleanup_user_files_immediately(user_id)
+            current_app.logger.info(f"Client-triggered cleanup completed for user: {user_id}")
+        
+        return jsonify({"status": "success", "message": "Cleanup completed"})
+        
+    except Exception as e:
+        current_app.logger.error(f"Client cleanup error: {e}")
+        return jsonify({"status": "error", "message": "Cleanup failed"}), 500
 
 @routes_bp.route('/download_excel/<filename>', methods=['GET'])
 def download_excel(filename):

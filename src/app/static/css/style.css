@@ -1113,3 +1113,47 @@ h1.platform-title, p.platform-description {
     line-height: 1.2; /* Adjusted line height for script font */
     letter-spacing: 0.02em; /* Slight positive tracking for script font */
 }
+
+/* ========================= */
+/* End Session Button        */
+/* ========================= */
+.end-session-btn {
+    background-color: #dc3545;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 6px;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 16px;
+    box-shadow: 0 2px 4px rgba(220, 53, 69, 0.3);
+    border: 2px solid #c82333;
+    display: inline-block;
+    transition: all 0.2s ease;
+}
+
+.end-session-btn:hover {
+    background-color: #c82333;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(220, 53, 69, 0.4);
+    color: white;
+    text-decoration: none;
+}
+
+/* ========================= */
+/* Privacy Notice            */
+/* ========================= */
+.privacy-notice {
+    text-align: center;
+    background-color: #e8f4fd;
+    border: 1px solid #bee5eb;
+    border-radius: 8px;
+    padding: 15px;
+    margin: 20px 0 0 0;
+    color: #0c5460;
+    font-size: 14px;
+}
+
+.privacy-notice a {
+    color: #0c5460;
+    text-decoration: underline;
+}
