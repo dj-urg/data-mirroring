@@ -371,6 +371,28 @@ label:hover {
     width: 100%; /* Ensure it takes up full width of container */
 }
 
+/* Netflix data preview table specific styling */
+#netflix-preview-table {
+    min-width: 1200px; /* Ensure table has minimum width for proper column display */
+    table-layout: auto; /* Allow columns to size naturally */
+}
+
+#netflix-preview-table th,
+#netflix-preview-table td {
+    white-space: nowrap; /* Prevent text wrapping */
+    padding: 8px 12px; /* Better padding for readability */
+    text-align: left; /* Left align for better readability */
+    border: 1px solid #dee2e6; /* Add borders for better separation */
+}
+
+#netflix-preview-table th {
+    background-color: #f8f9fa; /* Light background for headers */
+    font-weight: 600; /* Bold headers */
+    position: sticky; /* Sticky headers when scrolling */
+    top: 0;
+    z-index: 10;
+}
+
 /* Links within Table */
 td a {
     color: #007bff;

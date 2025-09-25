@@ -26,6 +26,10 @@
                     <input type="radio" name="platform" value="tiktok" class="platform-radio">
                     <i class="fab fa-tiktok platform-icon"></i> TikTok
                 </label>
+                <label id="netflixLabel">
+                    <input type="radio" name="platform" value="netflix" class="platform-radio">
+                    <i class="fas fa-play-circle platform-icon netflix-red"></i> Netflix
+                </label>
             </div>
             <div class="center">
                 <input type="button" value="Continue" id="continueButton" class="button-link">
@@ -36,7 +40,7 @@
 
     <!-- Link to external JS file -->
     <script src="{{ url_for('static', filename='js/platform-selection.js') }}" 
-        integrity="sha384-QO96Ox3FuAHKq9GCuSzm6U2LaTSyTa+qfp1d+2GLSHq7ta2OIN7ZLYAOUT3LXa+0"
+        integrity="sha384-5vRj9ZmUKQzhWZTOGJQE0J7tebxhTgmUTM9mWeJoFs4XoH5SpBHQML+hax/C5jX0"
         crossorigin="anonymous"
         defer></script>
 {% endblock %}

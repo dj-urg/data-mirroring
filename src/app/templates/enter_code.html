@@ -12,7 +12,7 @@
         </div>
 
         <!-- Access Code Form (initially hidden) -->
-        <div id="access-code-section" style="display: none;">
+        <div id="access-code-section" style="display: none;" nonce="{{ g.csp_nonce }}">
             <h1>Enter Access Code</h1>
             <form method="POST">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"> <!-- CSRF token -->

@@ -3,13 +3,20 @@
 {% block title %}Information Page{% endblock %}
 
 {% block content %}
-    <div class="container mt-5">
+    <!-- Inline styles moved to a <style> block with a nonce -->
+    <style nonce="{{ g.csp_nonce }}">
+        .platform-header { text-align: center; margin-bottom: 30px; }
+        .platform-title { font-size: 24px; font-weight: bold; }
+        .content-container { padding: 15px; background-color: #ffffff; border-radius: 5px; }
+        .list-unstyled li { margin-bottom: 15px; }
+    </style>
+
+    <div class="container mt-3">
 
         <!-- Page Title -->
         <h2 class="center">Welcome to Data Mirroring</h2>
-
-        <!-- Introduction Section -->
-        <p class="text-center mb-5" style="line-height: 1.8;">
+        
+        <p class="lead">
             This project helps users reflect on their social media usage by transforming platform data 
             into insightful visualizations. By uploading your data from platforms like TikTok, Instagram, 
             and YouTube, you can see how your interactions and activities unfold over time.
@@ -18,70 +25,78 @@
         <!-- Divider -->
         <hr class="mb-5">
 
-        <!-- About the Project Section -->
-        <h2 class="mt-5">About the Project</h2>
-        <p style="line-height: 1.8;">
-            The <strong>Data Mirroring</strong> project is designed to empower users to explore their digital presence 
-            and social media interactions in a more accessible way. Many social media platforms offer Data 
-            Download Packages (DDPs), which are often complex and not easily understood by non-technical users. 
-            This application converts those DDPs from TikTok, Instagram, and YouTube into easy-to-read tables, 
-            graphs, and summaries. The goal is to help users better understand their digital behavior, providing 
-            a tool for reflection on time spent online, interactions, and content consumption patterns.
-        </p>
-
-        <!-- Features Section -->
-        <h2 class="mt-5">Key Features</h2>
-        <ul style="line-height: 1.8;">
-            <li><strong>Data Upload:</strong> Upload JSON data packages from TikTok, Instagram, or YouTube directly into the dashboard.</li>
-            <li><strong>Data Conversion:</strong> The app converts the uploaded data into CSV files for easier interpretation and further analysis.</li>
-            <li><strong>Visualizations:</strong> Interactive graphs that display trends in social media engagement, such as your most-watched videos or liked posts over time.</li>
-            <li><strong>Insights:</strong> Summary statistics such as the total number of videos watched, posts liked, and time periods covered by your data.</li>
-            <li><strong>Privacy Focused:</strong> All data is processed locally, and no user data is stored or shared without consent.</li>
-        </ul>
+        <div class="content-container mt-3">
+            <h3 class="mt-4">About the Project</h3>
+            <p>
+                The <strong>Data Mirroring</strong> project is designed to empower users to explore their digital presence 
+                and social media interactions in a more accessible way. Many social media platforms offer Data 
+                Download Packages (DDPs), which are often complex and not easily understood by non-technical users. 
+                This application converts those DDPs from TikTok, Instagram, and YouTube into easy-to-read tables, 
+                graphs, and summaries. The goal is to help users better understand their digital behavior, providing 
+                a tool for reflection on time spent online, interactions, and content consumption patterns.
+            </p>
+        </div>
 
         <!-- Divider -->
         <hr class="mb-5">
 
-        <!-- How to Use Section -->
-        <h2 class="mt-5">How to Use the Application</h2>
-        <p style="line-height: 1.8;">
-            Using the Data Mirroring app is simple:
-        </p>
-        <ol style="line-height: 1.8;">
-            <li>Select your platform (TikTok, Instagram, or YouTube) from the dashboard.</li>
-            <li>Upload your downloaded JSON files (which can be requested from each platform).</li>
-            <li>Wait for the app to process your data.</li>
-            <li>Explore the resulting insights through tables and visualizations, including charts and engagement metrics.</li>
-            <li>Download a CSV file of your processed data if you want to inspect it further or donate it for research purposes.</li>
-        </ol>
+        <div class="content-container mt-3">
+            <h3 class="mt-4">Key Features</h3>
+            <ul class="list-unstyled mt-3">
+                <li><strong>Data Upload:</strong> Upload JSON data packages from TikTok, Instagram, or YouTube directly into the dashboard.</li>
+                <li><strong>Data Conversion:</strong> The app converts the uploaded data into CSV files for easier interpretation and further analysis.</li>
+                <li><strong>Visualizations:</strong> Interactive graphs that display trends in social media engagement, such as your most-watched videos or liked posts over time.</li>
+                <li><strong>Insights:</strong> Summary statistics such as the total number of videos watched, posts liked, and time periods covered by your data.</li>
+                <li><strong>Privacy Focused:</strong> All data is processed locally, and no user data is stored or shared without consent.</li>
+            </ul>
+        </div>
 
         <!-- Divider -->
         <hr class="mb-5">
 
-        <!-- Privacy & Data Usage Section -->
-        <h2 class="mt-5">Privacy & Data Usage</h2>
-        <p style="line-height: 1.8;">
-            This application is designed with privacy as a priority:
-        </p>
-        <ul style="line-height: 1.8;">
-            <li>All data processing happens locally on your device. Your data is never uploaded to external servers.</li>
-            <li>Once you close the app or session, no data is stored or kept except any downloaded data on your own computer.</li>
-            Additional information about data processing can be found on the <a href="{{ url_for('routes.data_processing_info') }}">Data Processing Info Page</a>.</li>
-        </ul>
+        <div class="content-container mt-3">
+            <h3 class="mt-4">How to Use the Application</h3>
+            <p>
+                Using the Data Mirroring app is simple:
+            </p>
+            <ol class="list-unstyled mt-3">
+                <li>1. Select your platform (TikTok, Instagram, or YouTube) from the dashboard.</li>
+                <li>2. Upload your downloaded JSON files (which can be requested from each platform).</li>
+                <li>3. Wait for the app to process your data.</li>
+                <li>4. Explore the resulting insights through tables and visualizations, including charts and engagement metrics.</li>
+                <li>5. Download a CSV file of your processed data if you want to inspect it further or donate it for research purposes.</li>
+            </ol>
+        </div>
 
         <!-- Divider -->
         <hr class="mb-5">
 
-        <!-- Contact Information Section -->
-        <h2 class="mt-5">Contact Information</h2>
-        <p style="line-height: 1.8;">
-            If you have any questions or would like to contribute to the project, feel free to reach out via the following:
-        </p>
-        <ul style="line-height: 1.8;">
-            <li>Email: <a href="mailto:daniel.jurg@vub.be">daniel.jurg@vub.be</a></li>
-            <li>GitHub: <a href="https://github.com/dj-urg/data-mirroring-overview" target="_blank">Data Mirroring Project</a></li>
-            <li>Contribute: Visit our GitHub repository to report issues, request features, or contribute to the project.</li>
-        </ul>
+        <div class="content-container mt-3">
+            <h3 class="mt-4">Privacy & Data Usage</h3>
+            <p>
+                This application is designed with privacy as a priority:
+            </p>
+            <ul class="list-unstyled mt-3">
+                <li>All data processing happens locally on your device. Your data is never uploaded to external servers.</li>
+                <li>Once you close the app or session, no data is stored or kept except any downloaded data on your own computer.</li>
+                <li>Additional information about data processing can be found on the <a href="{{ url_for('routes.data_processing_info') }}">Data Processing Info Page</a>.</li>
+            </ul>
+        </div>
+
+        <!-- Divider -->
+        <hr class="mb-5">
+
+        <div class="content-container mt-3">
+            <h3 class="mt-4">Contact Information</h3>
+            <p>
+                If you have any questions or would like to contribute to the project, feel free to reach out via the following:
+            </p>
+            <ul class="list-unstyled mt-3">
+                <li>Email: <a href="mailto:daniel.jurg@vub.be">daniel.jurg@vub.be</a></li>
+                <li>GitHub: <a href="https://github.com/dj-urg/data-mirroring-overview" target="_blank">Data Mirroring Project</a></li>
+                <li>Contribute: Visit our GitHub repository to report issues, request features, or contribute to the project.</li>
+            </ul>
+        </div>
 
     </div>
 {% endblock %}
