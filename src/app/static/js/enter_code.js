@@ -72,17 +72,17 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Check if cookies have already been accepted
     if (localStorage.getItem("cookiesAccepted")) {
-        cookieBanner.style.display = "none"; // Hide cookie banner
-        accessCodeSection.style.display = "block"; // Show access code section
+        cookieBanner.classList.add("hidden"); // Hide cookie banner
+        accessCodeSection.classList.remove("hidden"); // Show access code section
     } else {
-        cookieBanner.style.display = "block"; // Show cookie banner
-        accessCodeSection.style.display = "none"; // Hide access code section
+        cookieBanner.classList.remove("hidden"); // Show cookie banner
+        accessCodeSection.classList.add("hidden"); // Hide access code section
     }
 
     // When "Accept" is clicked, save consent and show the access code section
     acceptCookiesButton.addEventListener("click", function () {
         localStorage.setItem("cookiesAccepted", "true");
-        cookieBanner.style.display = "none"; // Hide cookie banner
-        accessCodeSection.style.display = "block"; // Show access code section
+        cookieBanner.classList.add("hidden"); // Hide cookie banner
+        accessCodeSection.classList.remove("hidden"); // Show access code section
     });
 });

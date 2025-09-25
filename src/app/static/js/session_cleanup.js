@@ -17,8 +17,7 @@ document.addEventListener('DOMContentLoaded', function() {
         fetch('/cleanup-session', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': document.querySelector('meta[name=csrf-token]')?.getAttribute('content') || ''
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify({ cleanup: true })
         }).catch(error => {

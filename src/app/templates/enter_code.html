@@ -1,4 +1,7 @@
 {% block content %}
+    <style nonce="{{ g.csp_nonce }}">
+        .hidden { display: none; }
+    </style>
     <div class="container">
         <!-- Cookie Banner -->
         <div id="cookie-banner">
@@ -12,7 +15,7 @@
         </div>
 
         <!-- Access Code Form (initially hidden) -->
-        <div id="access-code-section" style="display: none;" nonce="{{ g.csp_nonce }}">
+        <div id="access-code-section" class="hidden">
             <h1>Enter Access Code</h1>
             <form method="POST">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"> <!-- CSRF token -->
@@ -27,8 +30,8 @@
 
     <!-- Link to external JS file -->
     <script src="{{ url_for('static', filename='js/enter_code.js') }}" 
-        integrity="sha384-cuAONuaZ9+vztYcqtQwcZc9265zq651FQWgyOxHeQQqRfX6I4Pt2QKRFM57x36Ka" 
+        integrity="sha384-kUdWo88ybckya38s8bM/j1rKFL+bUPCpOBs7C5Iqtx0Nwxkkh9J/Nks2rLTY2YL3" 
         crossorigin="anonymous"
-        nonce="{{ g.csp_nonce }}"  
+        nonce="{{ csp_nonce }}"  
         defer></script>
 {% endblock %}

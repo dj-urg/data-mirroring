@@ -42,7 +42,7 @@ def apply_security_headers(response):
         f"frame-ancestors 'none'; "  # Prevent embedding your site in an iframe
         f"base-uri 'self'; "  # Restrict the base URI to your site only
         f"form-action 'self'; "  # Restrict forms to submit only to your own domain
-        f"connect-src 'self' https://data-mirror.org https://data-mirror-72f6ffc87917.herokuapp.com;"  # Allow connections to both domains
+        f"connect-src 'self' https://data-mirror.org https://data-mirror-72f6ffc87917.herokuapp.com https://cdnjs.cloudflare.com;"  # Allow connections to both domains and CDN
     )
 
     # Rest of your headers remain the same

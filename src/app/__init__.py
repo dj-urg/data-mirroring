@@ -45,7 +45,13 @@ def create_app(config_name=None):
     @app.context_processor
     def inject_csp_nonce():
         """Make CSP nonce available in templates."""
-        return dict(csp_nonce=lambda: getattr(g, 'csp_nonce', ''))
+        return dict(csp_nonce=getattr(g, 'csp_nonce', ''))
+    
+    @app.context_processor
+    def inject_csrf_token():
+        """Make CSRF token available in templates."""
+        from flask_wtf.csrf import generate_csrf
+        return dict(csrf_token=lambda: generate_csrf())
 
     # Load configurations
     from app.utils.config import configure_app

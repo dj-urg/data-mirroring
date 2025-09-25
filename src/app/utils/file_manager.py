@@ -293,11 +293,11 @@ class TemporaryFileManager:
                     user_id = session.get('user_id')
                     if user_id:
                         cls.cleanup_user_files_immediately(user_id)
-                        session.clear()
+                        # Don't clear session here - let it expire naturally
                 
                 # Also check for session expiration based on time
+                import time
                 if session.get('user_id') and session.get('last_activity'):
-                    import time
                     current_time = time.time()
                     last_activity = session.get('last_activity', 0)
                     session_timeout = 1800  # 30 minutes
