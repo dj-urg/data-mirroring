@@ -109,7 +109,7 @@ def sanitize_file_path(file_path: str) -> str:
     directory = os.path.dirname(file_path)
     
     # Create a hash of the directory for debugging without exposing the path
-    dir_hash = hashlib.md5(directory.encode()).hexdigest()[:8]
+    dir_hash = hashlib.sha256(directory.encode()).hexdigest()[:8]
     
     return f"[DIR_{dir_hash}]/{filename}"
 
