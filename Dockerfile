@@ -9,8 +9,23 @@ WORKDIR /app
 # Copy only requirements.txt first to leverage Docker layer caching
 COPY requirements.txt /app/
 
-# Install dependencies (as root)
-RUN pip install --no-cache-dir -r requirements.txt
+# Install build dependencies, Python packages, then clean up
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        gcc \
+        g++ \
+        build-essential \
+        libfreetype6-dev \
+        libpng-dev \
+        pkg-config && \
+    pip install --no-cache-dir -r requirements.txt && \
+    apt-get purge -y --auto-remove \
+        gcc \
+        g++ \
+        build-essential \
+        pkg-config && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
 # Create writable directories and set secure permissions
 RUN mkdir -p /app/data /tmp/user_uploads /app/src && \
