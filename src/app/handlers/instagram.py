@@ -653,17 +653,11 @@ def process_instagram_file(files):
         time_heatmap_fig = generate_time_of_day_heatmap(df_with_time)
         time_heatmap_name = save_image_temp_file(time_heatmap_fig) if time_heatmap_fig is not None else None
         
-        # Generate HTML preview from DataFrame
-        raw_html = df.head(5).to_html(
-            classes="table table-striped text-right",
-            index=False,
-            escape=False,
-            render_links=True,
-            border=0
-        )
-        
-        # Generate a preview of the CSV
-        csv_preview_html = re.sub(r'style="[^"]*"', '', raw_html)
+        # Generate structured preview data for template (XSS-safe)
+        preview_data = {
+            'columns': df.columns.tolist(),
+            'rows': df.head(5).values.tolist()
+        }
 
         has_valid_data = not df.empty
         
@@ -696,7 +690,7 @@ def process_instagram_file(files):
             os.remove(temp_file_path)
 
         # Return all data including the new heatmaps
-        return df, unique_filename, insights, bump_chart_name, day_heatmap_name, month_heatmap_name, time_heatmap_name, csv_preview_html, has_valid_data
+        return df, unique_filename, insights, bump_chart_name, day_heatmap_name, month_heatmap_name, time_heatmap_name, preview_data, has_valid_data
 
     except Exception as e:
         logger.exception(f"Error processing Instagram data: {e}")
