@@ -601,20 +601,13 @@ def process_netflix_file(files):
         if os.path.exists(excel_file.name):
             os.remove(excel_file.name)
         
-        # Generate HTML preview from DataFrame with better formatting
-        raw_html = df.head(5).to_html(
-            classes="table table-striped table-sm",
-            index=False,
-            escape=False,
-            render_links=False,
-            border=0,
-            table_id="netflix-preview-table"
-        )
+        # Generate structured preview data for template (XSS-safe)
+        preview_data = {
+            'columns': df.columns.tolist(),
+            'rows': df.head(5).values.tolist()
+        }
 
-        # Remove all inline styles for cleaner CSS control
-        csv_preview_html = re.sub(r'style="[^"]*"', '', raw_html)
-
-        return df, excel_filename, unique_filename, insights, genre_treemap_name, day_heatmap_name, month_heatmap_name, time_heatmap_name, not df.empty, csv_preview_html
+        return df, excel_filename, unique_filename, insights, genre_treemap_name, day_heatmap_name, month_heatmap_name, time_heatmap_name, not df.empty, preview_data
 
     except ValueError as e:
         # Forward ValueError with its original message

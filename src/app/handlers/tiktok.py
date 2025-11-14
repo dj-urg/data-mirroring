@@ -432,20 +432,14 @@ def process_tiktok_file(files):
         if os.path.exists(temp_file_path):
             os.remove(temp_file_path)
         
-        # Generate HTML preview from DataFrame
-        raw_html = df.head(5).to_html(
-            classes="table table-striped text-right",
-            index=False,
-            escape=False,
-            render_links=True,
-            border=0
-        )
-
-        # Remove all inline styles
-        csv_preview_html = re.sub(r'style="[^"]*"', '', raw_html)
+        # Generate structured preview data for template (XSS-safe)
+        preview_data = {
+            'columns': df.columns.tolist(),
+            'rows': df.head(5).values.tolist()
+        }
 
         # Return all necessary data
-        return df, csv_file_name, excel_file_name, url_file_name, insights, day_heatmap_name, time_heatmap_name, month_heatmap_name, not df.empty, csv_preview_html
+        return df, csv_file_name, excel_file_name, url_file_name, insights, day_heatmap_name, time_heatmap_name, month_heatmap_name, not df.empty, preview_data
 
     except ValueError as e:
         # Forward ValueError with its message

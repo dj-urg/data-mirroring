@@ -97,7 +97,7 @@ def dashboard_youtube():
     try:
         current_app.logger.info("Starting file processing...")
 
-        df, excel_filename, csv_file_name, insights, plot_data, day_heatmap_data, month_heatmap_data, time_heatmap_data, has_valid_data, csv_preview_html = process_youtube_file(valid_files)
+        df, excel_filename, csv_file_name, insights, plot_data, day_heatmap_data, month_heatmap_data, time_heatmap_data, has_valid_data, preview_data = process_youtube_file(valid_files)
 
         current_app.logger.info("File processing completed successfully.")
 
@@ -111,7 +111,7 @@ def dashboard_youtube():
             month_heatmap_data=month_heatmap_data,
             time_heatmap_data=time_heatmap_data,
             has_valid_data=has_valid_data,
-            csv_preview_html=csv_preview_html
+            preview_data=preview_data
         )
 
     except ValueError as e:
@@ -159,7 +159,7 @@ def dashboard_instagram():
         valid_files.append(file)
 
     try:
-        df, csv_file_name, insights, bump_chart_name, day_heatmap_name, month_heatmap_name, time_heatmap_name, csv_preview_html, has_valid_data = process_instagram_file(valid_files)
+        df, csv_file_name, insights, bump_chart_name, day_heatmap_name, month_heatmap_name, time_heatmap_name, preview_data, has_valid_data = process_instagram_file(valid_files)
 
         return render_template(
             'dashboard_instagram.html',
@@ -170,7 +170,7 @@ def dashboard_instagram():
             month_heatmap_data=month_heatmap_name,
             time_heatmap_data=time_heatmap_name,
             has_valid_data=has_valid_data,
-            csv_preview_html=csv_preview_html
+            preview_data=preview_data
         )
     except ValueError as e:
         flash(str(e), "danger")
@@ -213,8 +213,8 @@ def dashboard_tiktok():
         valid_files.append(file)
     
     try:
-        df, csv_file_name, excel_file_name, url_file_name, insights, day_heatmap_name, time_heatmap_name, month_heatmap_name, has_valid_data, csv_preview_html = process_tiktok_file(valid_files)
-        
+        df, csv_file_name, excel_file_name, url_file_name, insights, day_heatmap_name, time_heatmap_name, month_heatmap_name, has_valid_data, preview_data = process_tiktok_file(valid_files)
+
         return render_template(
             'dashboard_tiktok.html',
             insights=insights,
@@ -225,7 +225,7 @@ def dashboard_tiktok():
             time_heatmap_name=time_heatmap_name,
             month_heatmap_name=month_heatmap_name,
             has_valid_data=has_valid_data,
-            csv_preview_html=csv_preview_html
+            preview_data=preview_data
         )
         
     except ValueError as e:
@@ -270,8 +270,8 @@ def dashboard_netflix():
         valid_files.append(file)
     
     try:
-        df, excel_filename, csv_file_name, insights, plot_data, day_heatmap_name, month_heatmap_name, time_heatmap_name, has_valid_data, csv_preview_html = process_netflix_file(valid_files)
-        
+        df, excel_filename, csv_file_name, insights, plot_data, day_heatmap_name, month_heatmap_name, time_heatmap_name, has_valid_data, preview_data = process_netflix_file(valid_files)
+
         return render_template(
             'dashboard_netflix.html',
             insights=insights,
@@ -282,7 +282,7 @@ def dashboard_netflix():
             month_heatmap_data=month_heatmap_name,
             time_heatmap_data=time_heatmap_name,
             has_valid_data=has_valid_data,
-            csv_preview_html=csv_preview_html
+            preview_data=preview_data
         )
         
     except ValueError as e:

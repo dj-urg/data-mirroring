@@ -586,19 +586,13 @@ def process_youtube_file(files):
         if os.path.exists(excel_file.name):
             os.remove(excel_file.name)
         
-        # Generate HTML preview from DataFrame
-        raw_html = df.head(5).to_html(
-            classes="table table-striped text-right",
-            index=False,
-            escape=False,
-            render_links=True,
-            border=0
-        )
+        # Generate structured preview data for template (XSS-safe)
+        preview_data = {
+            'columns': df.columns.tolist(),
+            'rows': df.head(5).values.tolist()
+        }
 
-        # Remove all inline styles
-        csv_preview_html = re.sub(r'style="[^"]*"', '', raw_html)
-
-        return df, excel_filename, unique_filename, insights, bump_chart_name, day_heatmap_name, month_heatmap_name, time_heatmap_name, not df.empty, csv_preview_html
+        return df, excel_filename, unique_filename, insights, bump_chart_name, day_heatmap_name, month_heatmap_name, time_heatmap_name, not df.empty, preview_data
 
     except ValueError as e:
         # Forward ValueError with its original message
