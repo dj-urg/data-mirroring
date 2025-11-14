@@ -1,3 +1,5 @@
+# .github/dependabot.yml
+
 # To get started with Dependabot version updates, you'll need to specify which
 # package ecosystems to update and where the package manifests are located.
 # Please see the documentation for all configuration options:
@@ -10,6 +12,30 @@ updates:
     directory: "/" # `requirements.txt` is in the root
     schedule:
       interval: "weekly"
+    
+    # === NEW GROUPING RULES ===
+    groups:
+      # Group all common security/data science dependencies together
+      python-core-dependencies:
+        patterns:
+          - "numpy"
+          - "pandas"
+          - "scipy"
+          - "requests"
+          - "django" # Add your main framework here
+          - "flask" # If applicable
+        # Only group minor and patch updates to maintain stability
+        update-types:
+          - "minor"
+          - "patch"
+
+      # Group development and testing dependencies together
+      python-dev-dependencies:
+        dependency-type: "development"
+        # Optional: You can also list specific test runner/linter packages here
+        # patterns:
+        #   - "pytest" 
+        #   - "flake8"
 
   # Docker dependencies
   - package-ecosystem: "docker"
