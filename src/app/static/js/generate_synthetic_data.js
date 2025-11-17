@@ -169,14 +169,23 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Function to show elegant notifications
     function showNotification(message, type = 'info') {
+        // Sanitize message to prevent XSS attacks
+        const sanitizedMessage = typeof DOMPurify !== 'undefined' 
+            ? DOMPurify.sanitize(message) 
+            : message.replace(/[<>]/g, ''); // Basic fallback if DOMPurify not available
+        
+        // Validate type to prevent XSS in className
+        const allowedTypes = ['info', 'error', 'success', 'warning'];
+        const safeType = allowedTypes.includes(type) ? type : 'info';
+        
         // Create notification element
         const notification = document.createElement('div');
-        notification.className = `notification notification-${type}`;
+        notification.className = `notification notification-${safeType}`;
         notification.innerHTML = `
             <div class="notification-icon">
-                <i class="fas fa-${type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+                <i class="fas fa-${safeType === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
             </div>
-            <div class="notification-message">${message}</div>
+            <div class="notification-message">${sanitizedMessage}</div>
         `;
         
         // Add to document
