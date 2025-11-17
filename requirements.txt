@@ -5,8 +5,8 @@ Flask-Session==0.8.0
 Flask-WTF==1.2.2
 gunicorn==23.0.0
 matplotlib==3.10.1
-numpy==2.3.4
-pandas==2.3.2
+numpy==2.3.5
+pandas==2.3.3
 pillow==12.0.0
 python-dateutil==2.9.0.post0
 python-dotenv==1.2.1
