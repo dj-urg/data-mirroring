@@ -31,6 +31,13 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 function showDescription(platform) {
+    // Validate platform input to prevent XSS
+    const allowedPlatforms = ["youtube", "instagram", "tiktok", "netflix"];
+    if (!allowedPlatforms.includes(platform)) {
+        console.error("Invalid platform:", platform);
+        return;
+    }
+
     const descriptions = {
         youtube: "More information on how to request your YouTube data can be found <a href='https://support.google.com/youtube/answer/9315727?hl=en' target='_blank'>here</a>.",
         instagram: "More information on how to request your Instagram data can be found <a href='https://help.instagram.com/181231772500920?helpref=faq_content' target='_blank'>here</a>.",
@@ -39,12 +46,14 @@ function showDescription(platform) {
     };
 
     const platformDescription = document.getElementById("platformDescription");
+    const descriptionText = descriptions[platform];
 
+    // Sanitize the hardcoded description (defense in depth)
     // Use Trusted Types if available, otherwise fallback to DOMPurify
     if (ttPolicy) {
-        platformDescription.innerHTML = ttPolicy.createHTML(descriptions[platform]);
+        platformDescription.innerHTML = ttPolicy.createHTML(descriptionText);
     } else {
-        platformDescription.innerHTML = DOMPurify.sanitize(descriptions[platform]);
+        platformDescription.innerHTML = DOMPurify.sanitize(descriptionText);
     }
 
     platformDescription.style.display = "block";

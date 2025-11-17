@@ -169,9 +169,22 @@ def generate_synthetic_data(persona_type, activity_level, output_filename):
     """
     logger = logging.getLogger()
     logger.info(f"Generating synthetic data: persona={persona_type}, activity={activity_level}, output={output_filename}")
+    
+    # 0. Security: Allowlist of valid filenames to prevent file inclusion attacks
+    ALLOWED_FILENAMES = {
+        'liked_posts.json',
+        'saved_posts.json',
+        'videos_watched.json'
+    }
+    
+    # Extract just the filename (not path) and validate against allowlist
+    input_filename = os.path.basename(output_filename)
+    if input_filename not in ALLOWED_FILENAMES:
+        logger.error(f"Invalid filename attempt: {input_filename}")
+        raise ValueError("Security error: Filename not in allowed list")
         
-    # 1. Sanitize the filename
-    safe_filename = secure_filename(os.path.basename(output_filename))
+    # 1. Sanitize the filename (defense in depth - already validated above)
+    safe_filename = secure_filename(input_filename)
     
     # 2. Get the proper user temp directory
     temp_dir = get_user_temp_dir()
@@ -195,6 +208,11 @@ def generate_synthetic_data(persona_type, activity_level, output_filename):
     output_filename = real_output_path
     
     # Check file permissions
+    # SECURITY: real_output_path is safe because:
+    # 1. Filename validated against allowlist (only 3 allowed values)
+    # 2. Filename sanitized with secure_filename() and os.path.basename()
+    # 3. Path validated to be within temp directory (prevents directory traversal)
+    # 4. Real path resolved to prevent symlink attacks
     try:
         # Test write permission using the secure, sanitized path
         with open(real_output_path, 'a') as test_file:
