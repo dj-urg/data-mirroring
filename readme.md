@@ -96,7 +96,7 @@ This Flask-based web application empowers social media users to:
 | **YouTube** | Watch history, search history, comments, likes | JSON |
 | **Instagram** | Posts, stories, messages, followers, likes | JSON |
 | **TikTok** | Video history, likes, comments, browsing data | JSON |
-| **Netflix** | Viewing history, watch patterns | JSON |
+| **Netflix** | Viewing history, watch patterns | CSV |
 
 > **Note**: Each platform's DDP structure may vary. The application is designed to handle the most common formats as of 2025.
 
