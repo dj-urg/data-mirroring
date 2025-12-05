@@ -60,7 +60,7 @@ Domain routing ensures all traffic is handled securely and efficiently.
 ## GDPR Compliance
 The app adheres to **GDPR regulations**, emphasizing user data protection and privacy. Key features include:
 - **No Data Retention:** The app processes user-uploaded data temporarily during a session. Once the session ends, all data is deleted immediately.
-- **Secure Data Handling:** Data is encrypted in transit using HTTPS and never stored in an unencrypted format.
+- **Secure Data Handling:** Data is encrypted in transit using HTTPS.
 - **Transparency:** Clear communication with users about data handling policies.
 - **User Control:** User data can be uploaded and processed, and is directly removed without any long-term storage.
 
