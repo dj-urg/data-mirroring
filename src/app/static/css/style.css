@@ -2,9 +2,11 @@
 /* Header Navigation         */
 /* ========================= */
 header {
-    background-color: transparent; /* Make the background transparent */
+    background-color: transparent;
+    /* Make the background transparent */
     padding: 10px 20px;
-    box-shadow: none; /* Remove shadow for a cleaner look */
+    box-shadow: none;
+    /* Remove shadow for a cleaner look */
 }
 
 /* Navigation Styles */
@@ -21,7 +23,8 @@ nav ul li {
 }
 
 nav ul li a {
-    color: #2C3E50; /* Dark text for better contrast */
+    color: #2C3E50;
+    /* Dark text for better contrast */
     text-decoration: none;
     font-weight: bold;
     font-size: larger;
@@ -35,14 +38,21 @@ nav ul li a:hover {
 /* Body Styling with Smooth Transition */
 /* ========================= */
 body {
-    min-height: 100vh; /* Ensure the body takes at least the full viewport height */
-    margin: 0; /* Remove default margin */
-    padding-bottom: 60px; /* Create space for the footer */
-    background-color: #ffffff; /* Background color for the body */
-    font-family: 'Inter', sans-serif; /* Updated font to Inter */
+    min-height: 100vh;
+    /* Ensure the body takes at least the full viewport height */
+    margin: 0;
+    /* Remove default margin */
+    padding-bottom: 60px;
+    /* Create space for the footer */
+    background-color: #ffffff;
+    /* Background color for the body */
+    font-family: 'Inter', sans-serif;
+    /* Updated font to Inter */
     font-size: small;
-    color: #2C3E50; /* Default text color */
-    opacity: 0; /* Start with hidden body */
+    color: #2C3E50;
+    /* Default text color */
+    opacity: 0;
+    /* Start with hidden body */
     animation: fadeIn 0.3s ease-in-out forwards;
 }
 
@@ -50,6 +60,7 @@ body {
     from {
         opacity: 0;
     }
+
     to {
         opacity: 1;
     }
@@ -59,22 +70,34 @@ body {
 /* Footer Styles             */
 /* ========================= */
 footer {
-    background-color: transparent; /* Ensure the background is transparent */
-    width: 100%; /* Full width */
-    padding: 10px 20px; /* Padding for spacing */
-    color: #2C3E50; /* Footer text color */
-    position: fixed; /* Fix the footer to the bottom of the viewport */
-    bottom: 0; /* Position it at the bottom */
-    left: 0; /* Ensure it spans the full width */
-    display: flex; /* Use flexbox */
-    justify-content: flex-start; /* Align text to the left */
-    align-items: center; /* Center the text vertically */
+    background-color: transparent;
+    /* Ensure the background is transparent */
+    width: 100%;
+    /* Full width */
+    padding: 10px 20px;
+    /* Padding for spacing */
+    color: #2C3E50;
+    /* Footer text color */
+    position: fixed;
+    /* Fix the footer to the bottom of the viewport */
+    bottom: 0;
+    /* Position it at the bottom */
+    left: 0;
+    /* Ensure it spans the full width */
+    display: flex;
+    /* Use flexbox */
+    justify-content: flex-start;
+    /* Align text to the left */
+    align-items: center;
+    /* Center the text vertically */
 }
 
 /* Copyright Text */
 .copyright-text {
-    margin: 0; /* Remove default margin */
-    padding-left: 5px; /* Add left padding to move text to the right */
+    margin: 0;
+    /* Remove default margin */
+    padding-left: 5px;
+    /* Add left padding to move text to the right */
 }
 
 /* ========================= */
@@ -90,8 +113,10 @@ h1 {
 }
 
 h2 {
-    font-size: 1.5rem; /* Smaller size for section headings */
-    margin: 20px 0 10px; /* Add spacing */
+    font-size: 1.5rem;
+    /* Smaller size for section headings */
+    margin: 20px 0 10px;
+    /* Add spacing */
 }
 
 /* ========================= */
@@ -129,7 +154,8 @@ h2 {
 
 /* File Input Styling */
 .file-input {
-    display: none; /* Hide the default file input */
+    display: none;
+    /* Hide the default file input */
 }
 
 .file-input-label {
@@ -155,8 +181,10 @@ h2 {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0,0,0,0.5); /* Semi-transparent black */
-    z-index: 999; /* Below the loader */
+    background-color: rgba(0, 0, 0, 0.5);
+    /* Semi-transparent black */
+    z-index: 999;
+    /* Below the loader */
     display: flex;
     justify-content: center;
     align-items: center;
@@ -179,8 +207,13 @@ h2 {
 
 /* Keyframe for the spinning animation */
 @keyframes spin {
-    0% { transform: translate(-50%, -50%) rotate(0deg); }
-    100% { transform: translate(-50%, -50%) rotate(360deg); }
+    0% {
+        transform: translate(-50%, -50%) rotate(0deg);
+    }
+
+    100% {
+        transform: translate(-50%, -50%) rotate(360deg);
+    }
 }
 
 /* Utility class to hide elements */
@@ -190,13 +223,18 @@ h2 {
 
 /* Show overlay when loading */
 body.loading {
-    overflow: hidden; /* Prevent scrolling */
+    overflow: hidden;
+    /* Prevent scrolling */
 }
+
 body.loading .loader-overlay {
-    display: block; /* Show overlay */
+    display: block;
+    /* Show overlay */
 }
+
 body.loading .loader {
-    display: block; /* Show loader */
+    display: block;
+    /* Show loader */
 }
 
 /* ========================= */
@@ -209,13 +247,20 @@ p {
     font-size: 1.2em;
     line-height: 1.7;
     margin-bottom: 30px;
-    font-weight: 400; /* Regular weight for body text */
+    font-weight: 400;
+    /* Regular weight for body text */
 }
 
 /* Update headings to use Inter with appropriate weights */
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
     font-family: 'Inter', sans-serif;
-    font-weight: 600; /* Semi-bold for headings */
+    font-weight: 600;
+    /* Semi-bold for headings */
 }
 
 /* ========================= */
@@ -226,6 +271,7 @@ a {
     text-decoration: none;
     font-weight: bold;
 }
+
 a:hover {
     text-decoration: underline;
 }
@@ -283,7 +329,8 @@ a:hover {
     background-color: #3498db;
     color: #fff;
     transition: background-color 0.3s ease;
-    margin-top: 15px; /* Add space between the button and the table */
+    margin-top: 15px;
+    /* Add space between the button and the table */
 }
 
 .btn-sm:hover {
@@ -317,9 +364,12 @@ a:hover {
     flex-direction: column;
     margin-bottom: 20px;
 }
+
 .platform-radio {
-    display: none; /* Hide radio buttons */
+    display: none;
+    /* Hide radio buttons */
 }
+
 label {
     display: flex;
     align-items: center;
@@ -331,9 +381,20 @@ label {
     background-color: #FFFFFF;
     transition: background-color 0.3s ease;
 }
+
 label:hover {
     background-color: #f0f0f0;
 }
+
+label.selected {
+    background-color: #e1f5fe;
+    /* Light blue background */
+    border-color: #3498DB;
+    /* Blue border */
+    box-shadow: 0 0 5px rgba(52, 152, 219, 0.5);
+    /* Subtle glow */
+}
+
 .platform-icon {
     font-size: 24px;
     margin-right: 10px;
@@ -343,52 +404,76 @@ label:hover {
 /* Data Table Styling        */
 /* ========================= */
 .table {
-    width: 100%; /* Make sure the table takes the full width of the container */
-    margin-top: 20px; /* Space above the table */
-    border-collapse: collapse; /* Remove space between borders */
-    word-wrap: break-word; /* Ensure long text breaks to fit within the cell */
-    table-layout: fixed; /* Fix the table layout to prevent overflow */
+    width: 100%;
+    /* Make sure the table takes the full width of the container */
+    margin-top: 20px;
+    /* Space above the table */
+    border-collapse: collapse;
+    /* Remove space between borders */
+    word-wrap: break-word;
+    /* Ensure long text breaks to fit within the cell */
+    table-layout: fixed;
+    /* Fix the table layout to prevent overflow */
 }
 
-.table th, .table td {
-    padding: 12px; /* Add padding for table cells */
-    text-align: left; /* Align text to the left */
-    border: 1px solid #ddd; /* Light border for separation */
+.table th,
+.table td {
+    padding: 12px;
+    /* Add padding for table cells */
+    text-align: left;
+    /* Align text to the left */
+    border: 1px solid #ddd;
+    /* Light border for separation */
 }
 
 .table tr:nth-child(even) {
-    background-color: #f9f9f9; /* Alternating row color */
+    background-color: #f9f9f9;
+    /* Alternating row color */
 }
 
 .table tr:hover {
-    background-color: #f1f1f1; /* Highlight row on hover */
+    background-color: #f1f1f1;
+    /* Highlight row on hover */
 }
 
 .table-responsive {
-    max-height: 400px; /* Set a max height for vertical scrolling */
-    overflow-x: auto; /* Horizontal scroll */
-    overflow-y: auto; /* Vertical scroll */
-    width: 100%; /* Ensure it takes up full width of container */
+    max-height: 400px;
+    /* Set a max height for vertical scrolling */
+    overflow-x: auto;
+    /* Horizontal scroll */
+    overflow-y: auto;
+    /* Vertical scroll */
+    width: 100%;
+    /* Ensure it takes up full width of container */
 }
 
 /* Netflix data preview table specific styling */
 #netflix-preview-table {
-    min-width: 1200px; /* Ensure table has minimum width for proper column display */
-    table-layout: auto; /* Allow columns to size naturally */
+    min-width: 1200px;
+    /* Ensure table has minimum width for proper column display */
+    table-layout: auto;
+    /* Allow columns to size naturally */
 }
 
 #netflix-preview-table th,
 #netflix-preview-table td {
-    white-space: nowrap; /* Prevent text wrapping */
-    padding: 8px 12px; /* Better padding for readability */
-    text-align: left; /* Left align for better readability */
-    border: 1px solid #dee2e6; /* Add borders for better separation */
+    white-space: nowrap;
+    /* Prevent text wrapping */
+    padding: 8px 12px;
+    /* Better padding for readability */
+    text-align: left;
+    /* Left align for better readability */
+    border: 1px solid #dee2e6;
+    /* Add borders for better separation */
 }
 
 #netflix-preview-table th {
-    background-color: #f8f9fa; /* Light background for headers */
-    font-weight: 600; /* Bold headers */
-    position: sticky; /* Sticky headers when scrolling */
+    background-color: #f8f9fa;
+    /* Light background for headers */
+    font-weight: 600;
+    /* Bold headers */
+    position: sticky;
+    /* Sticky headers when scrolling */
     top: 0;
     z-index: 10;
 }
@@ -399,6 +484,7 @@ td a {
     text-decoration: none;
     word-break: break-all;
 }
+
 td a:hover {
     text-decoration: underline;
 }
@@ -407,7 +493,8 @@ td a:hover {
 /* Cards                    */
 /* ========================= */
 .card {
-    max-width: 850px; /* Matches the container width */
+    max-width: 850px;
+    /* Matches the container width */
     margin: 20px auto;
     padding: 40px;
     background-color: #FFFFFF;
@@ -465,25 +552,36 @@ td a:hover {
 /* Platform-specific Styles   */
 /* ========================= */
 .platform-header {
-    background-color: transparent; /* Ensure it's transparent */
-    padding: 20px; /* Adjust as needed */
-    margin: 0; /* Remove margin to avoid spacing issues */
-    text-align: center; /* Center the content */
+    background-color: transparent;
+    /* Ensure it's transparent */
+    padding: 20px;
+    /* Adjust as needed */
+    margin: 0;
+    /* Remove margin to avoid spacing issues */
+    text-align: center;
+    /* Center the content */
     margin-bottom: 30px;
 }
 
 /* Platform logo styling */
 .platform-logo {
-    display: block; /* Ensures no extra space below */
-    margin: 0 auto; /* Center the logo */
-    border: none; /* Remove any border */
-    max-width: 150px; /* Make sure it scales with the container */
-    height: auto; /* Maintain aspect ratio */
+    display: block;
+    /* Ensures no extra space below */
+    margin: 0 auto;
+    /* Center the logo */
+    border: none;
+    /* Remove any border */
+    max-width: 150px;
+    /* Make sure it scales with the container */
+    height: auto;
+    /* Maintain aspect ratio */
 }
 
 /* Additional adjustments to ensure no background */
-h1.platform-title, p.platform-description {
-    background-color: transparent; /* Ensure titles and descriptions have no background */
+h1.platform-title,
+p.platform-description {
+    background-color: transparent;
+    /* Ensure titles and descriptions have no background */
 }
 
 .platform-title {
@@ -538,66 +636,101 @@ h1.platform-title, p.platform-description {
     position: absolute;
     top: 0;
     right: 0;
-    z-index: 10;  /* Make sure the toolbar stays above the graph */
+    z-index: 10;
+    /* Make sure the toolbar stays above the graph */
 }
 
 /* Ensure global font and text styles apply to the cookie banner */
 #cookie-banner {
-    font-family: 'Roboto', sans-serif; /* Use the global font */
-    font-size: 1.2em; /* Match the paragraph font size */
-    line-height: 1.7; /* Same as your paragraph spacing */
-    text-align: justify; /* Match the paragraph alignment */
-    color: #2C3E50; /* Match the global text color */
+    font-family: 'Roboto', sans-serif;
+    /* Use the global font */
+    font-size: 1.2em;
+    /* Match the paragraph font size */
+    line-height: 1.7;
+    /* Same as your paragraph spacing */
+    text-align: justify;
+    /* Match the paragraph alignment */
+    color: #2C3E50;
+    /* Match the global text color */
 }
 
 #cookie-banner h1 {
-    font-size: 2.5em; /* Adjust to match the global h1 size */
-    font-weight: bold; /* Match the bold weight of h1 */
-    color: #2C3E50; /* Ensure consistency in heading color */
-    text-align: center; /* Center the heading */
-    margin-bottom: 20px; /* Add spacing for visual balance */
+    font-size: 2.5em;
+    /* Adjust to match the global h1 size */
+    font-weight: bold;
+    /* Match the bold weight of h1 */
+    color: #2C3E50;
+    /* Ensure consistency in heading color */
+    text-align: center;
+    /* Center the heading */
+    margin-bottom: 20px;
+    /* Add spacing for visual balance */
 }
 
 #cookie-banner p {
-    font-size: 1.2em; /* Match the paragraph font size */
-    color: #2C3E50; /* Match the paragraph color */
-    line-height: 1.7; /* Ensure consistent spacing */
-    margin-bottom: 20px; /* Add spacing after paragraphs */
-    text-align: justify; /* Match the alignment used in the example */
+    font-size: 1.2em;
+    /* Match the paragraph font size */
+    color: #2C3E50;
+    /* Match the paragraph color */
+    line-height: 1.7;
+    /* Ensure consistent spacing */
+    margin-bottom: 20px;
+    /* Add spacing after paragraphs */
+    text-align: justify;
+    /* Match the alignment used in the example */
 }
 
 #cookie-banner a {
-    color: #3498DB; /* Match link color in your example */
-    font-weight: bold; /* Bold links */
-    text-decoration: none; /* Remove underline */
+    color: #3498DB;
+    /* Match link color in your example */
+    font-weight: bold;
+    /* Bold links */
+    text-decoration: none;
+    /* Remove underline */
 }
 
 #cookie-banner a:hover {
-    text-decoration: underline; /* Add underline on hover */
+    text-decoration: underline;
+    /* Add underline on hover */
 }
 
 #cookie-banner button {
-    font-family: 'Roboto', sans-serif; /* Inherit the global font */
-    font-size: 1.2em; /* Match button font size */
-    background-color: #3498DB; /* Match the global button color */
-    color: white; /* Ensure contrast */
-    padding: 10px 20px; /* Add appropriate padding */
-    border: none; /* Remove border */
-    border-radius: 4px; /* Match the button border-radius */
-    cursor: pointer; /* Use pointer cursor for better UX */
-    margin-top: 10px; /* Add spacing above the button */
-    text-align: center; /* Center the text inside the button */
+    font-family: 'Roboto', sans-serif;
+    /* Inherit the global font */
+    font-size: 1.2em;
+    /* Match button font size */
+    background-color: #3498DB;
+    /* Match the global button color */
+    color: white;
+    /* Ensure contrast */
+    padding: 10px 20px;
+    /* Add appropriate padding */
+    border: none;
+    /* Remove border */
+    border-radius: 4px;
+    /* Match the button border-radius */
+    cursor: pointer;
+    /* Use pointer cursor for better UX */
+    margin-top: 10px;
+    /* Add spacing above the button */
+    text-align: center;
+    /* Center the text inside the button */
 }
 
 #cookie-banner button:hover {
-    background-color: #2980B9; /* Match hover color for consistency */
+    background-color: #2980B9;
+    /* Match hover color for consistency */
 }
 
 .small-text {
-    font-size: 0.9em; /* Smaller size (adjust as needed) */
-    line-height: 1.5; /* Reduce line height for smaller spacing */
-    margin-bottom: 10px; /* Less margin for tighter layout */
-    color: #2C3E50; /* Consistent text color */
+    font-size: 0.9em;
+    /* Smaller size (adjust as needed) */
+    line-height: 1.5;
+    /* Reduce line height for smaller spacing */
+    margin-bottom: 10px;
+    /* Less margin for tighter layout */
+    color: #2C3E50;
+    /* Consistent text color */
 }
 
 /* Upload Form */
@@ -697,11 +830,14 @@ h1.platform-title, p.platform-description {
 /* Modern File Upload Styling */
 .file-selection-row {
     display: flex;
-    align-items: center; /* This ensures vertical alignment */
+    align-items: center;
+    /* This ensures vertical alignment */
     gap: 15px;
     margin-bottom: 20px;
-    height: 40px; /* Set a specific height */
-    padding: 6px 12px; /* Adjust padding to match button */
+    height: 40px;
+    /* Set a specific height */
+    padding: 6px 12px;
+    /* Adjust padding to match button */
 }
 
 .file-selection-row input[type="file"] {
@@ -742,8 +878,10 @@ h1.platform-title, p.platform-description {
     cursor: pointer;
     transition: background-color 0.3s;
     flex-shrink: 0;
-    height: 40px; /* Match height to file input */
-    align-self: stretch; /* Make button stretch to match input height */
+    height: 40px;
+    /* Match height to file input */
+    align-self: stretch;
+    /* Make button stretch to match input height */
     display: flex;
     align-items: center;
     justify-content: center;
@@ -895,10 +1033,12 @@ h1.platform-title, p.platform-description {
 .initially-hidden {
     display: none;
 }
+
 .visualization-image {
     max-width: 90%;
     height: auto;
 }
+
 /* Section containers */
 .section-container {
     margin-bottom: 40px;
@@ -1027,14 +1167,18 @@ h1.platform-title, p.platform-description {
     .persona-grid {
         grid-template-columns: repeat(2, 1fr);
     }
-    
-    .activity-grid, .output-grid {
+
+    .activity-grid,
+    .output-grid {
         grid-template-columns: repeat(2, 1fr);
     }
 }
 
 @media (max-width: 576px) {
-    .persona-grid, .activity-grid, .output-grid {
+
+    .persona-grid,
+    .activity-grid,
+    .output-grid {
         grid-template-columns: 1fr;
     }
 }
@@ -1050,15 +1194,18 @@ h1.platform-title, p.platform-description {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.8); /* Semi-transparent black background */
+    background-color: rgba(0, 0, 0, 0.8);
+    /* Semi-transparent black background */
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 1000; /* Ensure it's on top of everything */
+    z-index: 1000;
+    /* Ensure it's on top of everything */
     opacity: 0;
     visibility: hidden;
     transition: opacity 0.3s ease-in-out, visibility 0s linear 0.3s;
-    cursor: pointer; /* Indicate clicking to close */
+    cursor: pointer;
+    /* Indicate clicking to close */
 }
 
 .enlarged-image-overlay.active {
@@ -1068,16 +1215,20 @@ h1.platform-title, p.platform-description {
 }
 
 .enlarged-image-container {
-    max-width: 90%; /* Adjust as needed */
-    max-height: 90%; /* Adjust as needed */
-    position: relative; /* For close button positioning */
+    max-width: 90%;
+    /* Adjust as needed */
+    max-height: 90%;
+    /* Adjust as needed */
+    position: relative;
+    /* For close button positioning */
 }
 
 .enlarged-image {
     display: block;
     max-width: 100%;
     max-height: 100%;
-    object-fit: contain; /* Ensures the entire image is visible */
+    object-fit: contain;
+    /* Ensures the entire image is visible */
 }
 
 .close-enlarged-image {
@@ -1104,14 +1255,17 @@ h1.platform-title, p.platform-description {
 /* Optional enhancements for Great Vibes */
 .fancy-title {
     font-family: 'Great Vibes';
-    font-size: 4.2rem; /* Slightly larger for better readability */
+    font-size: 4.2rem;
+    /* Slightly larger for better readability */
     color: #2C3E50;
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
     margin-bottom: 1.5rem;
     text-align: center;
     font-weight: normal;
-    line-height: 1.2; /* Adjusted line height for script font */
-    letter-spacing: 0.02em; /* Slight positive tracking for script font */
+    line-height: 1.2;
+    /* Adjusted line height for script font */
+    letter-spacing: 0.02em;
+    /* Slight positive tracking for script font */
 }
 
 /* ========================= */

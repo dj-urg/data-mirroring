@@ -4,6 +4,9 @@ from datetime import timedelta
 def configure_app(app):
     FLASK_ENV = os.getenv('FLASK_ENV', 'production')
     app.logger.info("Starting app configuration for environment: %s", FLASK_ENV)
+    
+    if not os.getenv('ACCESS_CODE_HASH'):
+        app.logger.warning("ACCESS_CODE_HASH is not set in environment variables! Authentication will fail.")
 
     if FLASK_ENV == 'production':
         app.config.update(

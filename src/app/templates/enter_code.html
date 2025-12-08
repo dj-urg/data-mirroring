@@ -1,37 +1,57 @@
-{% block content %}
-    <style nonce="{{ g.csp_nonce }}">
-        .hidden { display: none; }
-    </style>
-    <div class="container">
-        <!-- Cookie Banner -->
-        <div id="cookie-banner">
-            <h1>Cookies Notice</h1>
-            <p>
-                This website uses only essential cookies required for its functionality and to provide a secure experience.
-                No tracking or third-party cookies are used. For more information, please see our
-                <a href="https://github.com/dj-urg/data-mirroring/wiki/Privacy-Policy" target="_blank">Privacy Policy</a>.
-            </p>
-            <button id="accept-cookies">Consent</button>
-        </div>
+{% block head %}
+<link href="{{ url_for('static', filename='css/enter_code.css') }}" rel="stylesheet">
+{% endblock %}
 
-        <!-- Access Code Form (initially hidden) -->
-        <div id="access-code-section" class="hidden">
-            <h1>Enter Access Code</h1>
-            <form method="POST">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"> <!-- CSRF token -->
-                <input type="text" name="code" placeholder="Enter your access code" required>
-                <button type="submit">Submit</button>
-            </form>
-            {% if error %}
-                <p class="error-message">{{ error }}</p>
-            {% endif %}
-        </div>
+{% block content %}
+<div class="login-wrapper">
+    <style nonce="{{ g.csp_nonce }}">
+        .hidden {
+            display: none !important;
+        }
+    </style>
+
+    <!-- Cookie Banner Card -->
+    <div id="cookie-banner" class="login-card">
+        <h1>Cookies Notice</h1>
+        <p>
+            This website uses only essential cookies required for its functionality and to provide a secure experience.
+            No tracking or third-party cookies are used. For more information, please see our
+            <a href="https://github.com/dj-urg/data-mirroring/wiki/Privacy-Policy" target="_blank">Privacy Policy</a>.
+        </p>
+        <button id="accept-cookies">Consent</button>
     </div>
 
-    <!-- Link to external JS file -->
-    <script src="{{ url_for('static', filename='js/enter_code.js') }}" 
-        integrity="sha384-kUdWo88ybckya38s8bM/j1rKFL+bUPCpOBs7C5Iqtx0Nwxkkh9J/Nks2rLTY2YL3" 
-        crossorigin="anonymous"
-        nonce="{{ csp_nonce }}"  
-        defer></script>
+    <!-- Access Code Form Card (initially hidden) -->
+    <div id="access-code-section" class="login-card hidden">
+        <h1 class="login-title">Enter Access Code</h1>
+        <p class="login-subtitle">Please authenticate to continue</p>
+
+        <form method="POST" class="login-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <div class="form-group">
+                <label for="code">Password</label>
+                <input type="password" id="code" name="code" placeholder="Enter your access code" required
+                    autocomplete="current-password">
+            </div>
+
+            <button type="submit" class="login-btn">
+                <span>Unlock Dashboard</span>
+                <i class="fas fa-arrow-right"></i>
+            </button>
+        </form>
+
+        {% if error %}
+        <div class="error-banner">
+            <i class="fas fa-exclamation-circle"></i>
+            <span>{{ error }}</span>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Link to external JS file -->
+<script src="{{ url_for('static', filename='js/enter_code.js') }}"
+    integrity="sha384-kUdWo88ybckya38s8bM/j1rKFL+bUPCpOBs7C5Iqtx0Nwxkkh9J/Nks2rLTY2YL3" crossorigin="anonymous"
+    nonce="{{ csp_nonce }}" defer></script>
 {% endblock %}
