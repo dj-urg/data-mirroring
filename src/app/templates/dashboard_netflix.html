@@ -1,183 +1,89 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 
-{% block title %}Netflix Dashboard{% endblock %}
+{% block title %}Netflix Local Viewing Activity{% endblock %}
 
 {% block content %}
-    <!-- Inline styles moved to a <style> block with a nonce -->
-    <style nonce="{{ g.csp_nonce }}">
-        .platform-header { text-align: center; margin-bottom: 30px; }
-        .platform-title { font-size: 24px; font-weight: bold; }
-        .upload-container { padding: 15px; background-color: #f8f9fa; border-radius: 5px; }
-        .loader { display: none; margin-top: 15px; text-align: center; }
-        .d-none { display: none; }
-        .text-center { text-align: center; }
-        .btn-sm { padding: 5px 10px; font-size: 14px; }
-    </style>
+<link href="{{ url_for('static', filename='css/netflix_dashboard.css') }}" rel="stylesheet">
 
-    <div class="platform-header text-center mb-4">
-        <img src="https://img.icons8.com/color/96/000000/netflix.png" alt="Netflix Logo" class="platform-logo">
-        <h1 class="platform-title">Netflix Dashboard</h1>
+<div class="container">
+    <div class="intro-text">
+        <h2>Netflix Viewing Activity (Local Only)</h2>
+        <p>
+            Explore your Netflix history privately.
+            <strong>Your files are processed locally in your browser. We do not upload or store your Netflix
+                data.</strong>
+            This tool runs entirely on your device.
+        </p>
     </div>
 
-    <div class="container mt-3">
-
-        <!-- Upload Form -->
-        <div class="card mb-4">
-            <div class="card-body">
-                <p class="upload-instructions">
-                    We'd love to help you gain insights from your Netflix viewing data! Please upload your downloaded Netflix CSV files using the form below. You can include files such as: <strong>IndicatedPreferences.csv</strong>, <strong>MyList.csv</strong>, <strong>Ratings.csv</strong>, <strong>SearchHistory.csv</strong>, or <strong>ViewingActivity.csv</strong>. If you are not sure where to find these files, please refer to our <a href="https://github.com/dj-urg/data-mirroring/wiki/Uploading-Data-From-Digital-Platforms" target="_blank">GitHub Wiki</a> for instructions on how to upload your data.
-                </p>
-                <p class="upload-instructions">
-                    Once you have your files ready, simply click the <strong>Choose File</strong> button to select your files (you can select multiple files at once or one after the other), then press the <strong>Add to List</strong> button to add them for analysis. To begin the analysis, press the <strong>Analyze Data</strong> button. Once your data is processed, you'll see visualizations and have the option to download your data in CSV or Excel format.
-                </p>
-
-                <div class="loader-overlay d-none"></div>
-                <div class="loader d-none"></div>
-
-                <form id="fileSelectionForm" class="form-group">
-                    <div class="file-selection-row">
-                        <input type="file" name="fileInput" id="fileInput" accept=".csv" class="form-control">
-                        <button type="button" id="addFileButton" class="btn btn-secondary">Add to List</button>
-                    </div>
-                </form>
+    <!-- Upload Section -->
+    <div class="upload-section">
+        <div class="upload-box">
+            <h3>Option 1: Netflix Export ZIP</h3>
+            <p>Select the .zip file you downloaded from Netflix.</p>
+            <div class="input-group">
+                <input type="file" id="zip-input" accept=".zip">
             </div>
         </div>
 
-        <!-- Selected Files and Process Form Section -->
-        <div class="card mb-4">
-            <div class="card-body">
-                <div id="selectedFilesContainer" class="selected-files-container">
-                    <p><strong>Files added for processing</strong></p>
-                    <ul id="selectedFilesList" class="selected-files-list">
-                        <li class="no-files-message">No files added yet</li>
-                    </ul>
-                </div>
-
-                <form id="processDataForm" action="{{ url_for('routes.dashboard_netflix') }}" method="post" enctype="multipart/form-data">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <div id="hiddenFileInputs"></div>
-                    <div class="process-button-container">
-                        <button type="submit" id="processButton" class="btn btn-primary" disabled>Analyze Data</button>
-                    </div>
-                </form>
+        <div class="upload-box">
+            <h3>Option 2: Folder Upload</h3>
+            <p>Select the unzipped folder containing <code>ViewingActivity.csv</code>.</p>
+            <div class="input-group">
+                <input type="file" id="folder-input" webkitdirectory directory>
             </div>
         </div>
-
-        </div>
-
-        <!-- Insights Section -->
-        {% if insights %}
-        <div class="uploaded-files-summary card mb-4">
-            <div class="card-body">
-                <h2>Processed Data</h2>
-                <p><strong>Number of items:</strong> {{ insights.total_items }}</p>
-                <p><strong>Date range:</strong>
-                    {{ insights.time_frame_start }} to
-                    {{ insights.time_frame_end }}
-                </p>
-            </div>
-        </div>
-        {% endif %}
-
-        <!-- CSV Data Preview Section -->
-        {% if preview_data %}
-        <div class="card mb-4">
-            <div class="card-body">
-                <h2 class="text-center mb-3">Data Preview</h2>
-                <div class="table-responsive">
-                    <table class="table table-striped table-sm">
-                        <thead>
-                            <tr>
-                                {% for column in preview_data.columns %}
-                                <th>{{ column }}</th>
-                                {% endfor %}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for row in preview_data.rows %}
-                            <tr>
-                                {% for cell in row %}
-                                <td>{{ cell }}</td>
-                                {% endfor %}
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-        {% endif %}
-
-        <!-- CSV and Excel Download -->
-        {% if has_valid_data %}
-        <div class="card mt-3">
-            <div class="card-body text-center">
-                <p>Download your processed data in <strong>CSV or Excel format</strong>.</p>
-                <div class="d-flex justify-content-center">
-                    {% if csv_file_name %}
-                    <a href="{{ url_for('routes.download_csv', filename=csv_file_name) }}" class="btn btn-primary btn-sm mx-2">Download CSV</a>
-                    {% endif %}
-                    {% if excel_filename %}
-                    <a href="{{ url_for('routes.download_excel', filename=excel_filename) }}" class="btn btn-success btn-sm mx-2">Download Excel</a>
-                    {% endif %}
-                </div>
-            </div>
-        </div>        
-        {% endif %}
-
-        <!-- Genre Treemap Visualization -->
-        {% if plot_data %}
-        <div class="card mt-3" id="visualization">
-            <div class="card-body text-center">
-                <h2>Top Titles by Count</h2>
-                <div class="d-flex justify-content-center">
-                    <img src="{{ url_for('routes.download_image', filename=plot_data) }}" alt="Top Titles" class="img-fluid">
-                </div>
-            </div>
-        </div>
-        {% endif %}
-
-        <!-- Month Heatmap -->
-        {% if month_heatmap_data %}
-        <div class="card mt-3" id="month-heatmap">
-            <div class="card-body text-center">
-                <h2>Viewing Activity by Month and Year</h2>
-                <div class="d-flex justify-content-center">
-                    <img src="{{ url_for('routes.download_image', filename=month_heatmap_data) }}" alt="Month Heatmap" class="img-fluid">
-                </div>
-            </div>
-        </div>
-        {% endif %}
-
-        <!-- Day of Week Heatmap -->
-        {% if day_heatmap_data %}
-        <div class="card mt-3" id="day-heatmap">
-            <div class="card-body text-center">
-                <h2>Viewing Activity Per Day of the Week</h2>
-                <div class="d-flex justify-content-center">
-                    <img src="{{ url_for('routes.download_image', filename=day_heatmap_data) }}" alt="Day of Week Heatmap" class="img-fluid">
-                </div>
-            </div>
-        </div>
-        {% endif %}
-        
-        <!-- Time of Day Heatmap -->
-        {% if time_heatmap_data %}
-        <div class="card mt-3" id="time-heatmap">
-            <div class="card-body text-center">
-                <h2>Viewing Activity by Time of Day</h2>
-                <div class="d-flex justify-content-center">
-                    <img src="{{ url_for('routes.download_image', filename=time_heatmap_data) }}" alt="Time of Day Heatmap" class="img-fluid">
-                </div>
-            </div>
-        </div>
-        {% endif %}
-
     </div>
 
-    <!-- Link to external JS -->
-    <script src="{{ url_for('static', filename='js/netflix_dashboard.js') }}" 
-        integrity="sha384-kmDYQHPqT3iWUXRliK3YcoyeNcP/LG7SHVNGHMTviD3UdsOpA49wZf4ThO9/pfUk" 
-        crossorigin="anonymous" 
-        defer></script>
+    <!-- Status Messages -->
+    <div id="error-message" class="error-message"></div>
+    <div id="success-message" class="success-message"></div>
+    <div id="loading-spinner" class="loading-spinner">
+        <i class="fas fa-spinner fa-spin fa-2x"></i>
+        <p>Processing files locally...</p>
+    </div>
+
+    <!-- Data Display Section (Hidden initially) -->
+    <div id="data-container" style="display: none;">
+
+        <div class="data-summary">
+            <h3>Summary</h3>
+            <p><strong>Total Rows:</strong> <span id="summary-count">0</span></p>
+            <p><strong>Date Range:</strong> <span id="summary-dates">-</span></p>
+        </div>
+
+        <div class="actions-bar">
+            <input type="text" id="search-input" class="search-box" placeholder="Search by title...">
+            <button id="download-btn" class="download-btn" disabled>
+                <i class="fas fa-download"></i> Download ViewingActivity.csv
+            </button>
+        </div>
+
+        <div class="table-container">
+            <table id="viewing-activity-table">
+                <thead>
+                    <tr>
+                        <!-- Headers will be injected here -->
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Rows will be injected here -->
+                </tbody>
+            </table>
+        </div>
+
+        <div class="pagination-controls" id="pagination-controls">
+            <button id="prev-page" class="pagination-btn">Previous</button>
+            <span id="page-info">Page 1</span>
+            <button id="next-page" class="pagination-btn">Next</button>
+        </div>
+    </div>
+</div>
+
+<!-- Libraries -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" nonce="{{ csp_nonce }}"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js" nonce="{{ csp_nonce }}"></script>
+
+<!-- Main Logic -->
+<script src="{{ url_for('static', filename='js/netflix_dashboard.js') }}" nonce="{{ csp_nonce }}"></script>
 {% endblock %}

@@ -146,6 +146,10 @@ class TemporaryFileManager:
         current_time = time.time()
         
         try:
+            # Race condition check: Ensure directory exists before listing
+            if not os.path.exists(temp_dir):
+                return
+
             for item in os.listdir(temp_dir):
                 item_path = os.path.join(temp_dir, item)
                 metadata_path = f"{item_path}.metadata"
@@ -166,13 +170,17 @@ class TemporaryFileManager:
                                 cls._secure_file_delete(item_path)
                             
                             # Remove metadata
-                            os.remove(metadata_path)
+                            if os.path.exists(metadata_path):
+                                os.remove(metadata_path)
                             
                             current_app.logger.info(f"Securely cleaned up expired file: {os.path.basename(item_path)}")
                     
                     except Exception as e:
-                        current_app.logger.error(f"Error processing {item_path}: {e}")
+                        current_app.logger.warning(f"Error processing cleanup for {item_path}: {e}")
         
+        except FileNotFoundError:
+            # Directory might have been removed by a concurrent request, which is fine
+            pass
         except Exception as e:
             current_app.logger.error(f"Secure temporary file cleanup failed: {e}")
 
