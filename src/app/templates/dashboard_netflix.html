@@ -52,7 +52,14 @@
             <p><strong>Date Range:</strong> <span id="summary-dates">-</span></p>
         </div>
 
+        <p class="filter-description" style="margin-bottom: 10px; color: #666;">
+            Select a specific profile to filter viewing activity and download history exclusively for that user.
+        </p>
+
         <div class="actions-bar">
+            <select id="profile-select" class="profile-select">
+                <option value="">All Profiles</option>
+            </select>
             <input type="text" id="search-input" class="search-box" placeholder="Search by title...">
             <button id="download-btn" class="download-btn" disabled>
                 <i class="fas fa-download"></i> Download ViewingActivity.csv
@@ -81,8 +88,12 @@
 </div>
 
 <!-- Libraries -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" nonce="{{ csp_nonce }}"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js" nonce="{{ csp_nonce }}"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"
+    integrity="sha384-+mbV2IY1Zk/X1p/nWllGySJSUN8uMs+gUAN10Or95UBH0fpj6GfKgPmgC5EXieXG" crossorigin="anonymous"
+    nonce="{{ csp_nonce }}"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"
+    integrity="sha384-D/t0ZMqQW31H3az8ktEiNb39wyKnS82iFY52QPACM+IjKW3jDUhyIgh2PApRqJZs" crossorigin="anonymous"
+    nonce="{{ csp_nonce }}"></script>
 
 <!-- Main Logic -->
 <script src="{{ url_for('static', filename='js/netflix_dashboard.js') }}" nonce="{{ csp_nonce }}"></script>

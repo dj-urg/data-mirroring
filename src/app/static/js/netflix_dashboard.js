@@ -1,5 +1,5 @@
 /**
- * netflix_local_viewing.js
+ * netflix_dashboard.js
  * 
  * Handles client-side processing of Netflix data exports.
  * 
@@ -12,8 +12,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- DOM Elements ---
     const zipInput = document.getElementById('zip-input');
     const folderInput = document.getElementById('folder-input');
+    const profileSelect = document.getElementById('profile-select');
     const searchInput = document.getElementById('search-input');
     const downloadBtn = document.getElementById('download-btn');
+    const downloadBtnText = downloadBtn.querySelector('i').nextSibling; // Text node after icon
 
     const errorMsg = document.getElementById('error-message');
     const successMsg = document.getElementById('success-message');
@@ -33,12 +35,15 @@ document.addEventListener('DOMContentLoaded', () => {
     let allRows = [];
     let filteredRows = [];
     let headers = [];
+    let currentProfile = '';
     let currentPage = 1;
     const PAGE_SIZE = 50;
+    const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 
     // --- Event Listeners ---
     zipInput.addEventListener('change', handleZipUpload);
     folderInput.addEventListener('change', handleFolderUpload);
+    profileSelect.addEventListener('change', handleProfileChange);
     searchInput.addEventListener('input', handleSearch);
     downloadBtn.addEventListener('click', handleDownload);
     prevPageBtn.addEventListener('click', () => changePage(-1));
@@ -52,6 +57,12 @@ document.addEventListener('DOMContentLoaded', () => {
     async function handleZipUpload(e) {
         const file = e.target.files[0];
         if (!file) return;
+
+        if (file.size > MAX_FILE_SIZE) {
+            showError(`File is too large. Maximum size is 50MB. (Selected: ${(file.size / 1024 / 1024).toFixed(2)}MB)`);
+            e.target.value = ''; // Clear input
+            return;
+        }
 
         resetState();
         showLoading(true);
@@ -126,14 +137,17 @@ document.addEventListener('DOMContentLoaded', () => {
             header: true,
             skipEmptyLines: true,
             complete: function (results) {
-                if (results.errors.length > 0 && results.data.length === 0) {
-                    showError("Failed to parse CSV file: " + results.errors[0].message);
-                    showLoading(false);
-                    return;
+                // Log errors if any
+                if (results.errors.length > 0) {
+                    console.warn("CSV Parsing Errors:", results.errors);
                 }
 
                 if (results.data.length === 0) {
-                    showError("The CSV file appears to be empty.");
+                    if (results.errors.length > 0) {
+                        showError("Failed to parse CSV file: " + results.errors[0].message);
+                    } else {
+                        showError("The CSV file appears to be empty.");
+                    }
                     showLoading(false);
                     return;
                 }
@@ -144,15 +158,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // Sort by Start Time descending if available
                 if (headers.includes('Start Time')) {
-                    filteredRows.sort((a, b) => new Date(b['Start Time']) - new Date(a['Start Time']));
+                    filteredRows.sort((a, b) => {
+                        const dateA = new Date(a['Start Time']);
+                        const dateB = new Date(b['Start Time']);
+
+                        // Handle invalid dates: push them to the end
+                        if (isNaN(dateA) && isNaN(dateB)) return 0;
+                        if (isNaN(dateA)) return 1;
+                        if (isNaN(dateB)) return -1;
+
+                        return dateB - dateA;
+                    });
                     allRows = [...filteredRows]; // Update master list order too
                 }
 
-                showSuccess(`Successfully loaded ${allRows.length} rows.`);
+                let successMsgText = `Successfully loaded ${allRows.length} rows.`;
+                if (results.errors.length > 0) {
+                    successMsgText += ` Warning: ${results.errors.length} rows could not be parsed and were skipped.`;
+                }
+                showSuccess(successMsgText);
                 downloadBtn.disabled = false;
 
-                updateSummary();
-                renderTable();
+                populateProfileSelect();
+                updateFilters(); // Will handle summary and render
                 showLoading(false);
                 dataContainer.style.display = 'block';
             },
@@ -170,12 +198,29 @@ document.addEventListener('DOMContentLoaded', () => {
         filteredRows = [];
         headers = [];
         currentPage = 1;
+        profileSelect.innerHTML = '<option value="">All Profiles</option>';
+        currentProfile = '';
         downloadBtn.disabled = true;
         dataContainer.style.display = 'none';
         errorMsg.style.display = 'none';
         successMsg.style.display = 'none';
         tableHead.innerHTML = '';
         tableBody.innerHTML = '';
+    }
+
+    function populateProfileSelect() {
+        if (!headers.includes('Profile Name')) return;
+
+        // Get unique profiles
+        const profiles = [...new Set(allRows.map(row => row['Profile Name']).filter(p => p))].sort();
+
+        profileSelect.innerHTML = '<option value="">All Profiles</option>';
+        profiles.forEach(profile => {
+            const option = document.createElement('option');
+            option.value = profile;
+            option.textContent = profile;
+            profileSelect.appendChild(option);
+        });
     }
 
     function showLoading(isLoading) {
@@ -198,16 +243,35 @@ document.addEventListener('DOMContentLoaded', () => {
         summaryCount.textContent = filteredRows.length;
 
         if (headers.includes('Start Time') && filteredRows.length > 0) {
-            // Find min/max dates. Assuming sorted descending already.
-            // But let's scan to be safe or use the first/last if sorted.
-            // Since we sorted by Start Time desc:
-            const newest = filteredRows[0]['Start Time'];
-            const oldest = filteredRows[filteredRows.length - 1]['Start Time'];
+            // Filter valid dates for summary
+            const validDates = filteredRows
+                .map(row => new Date(row['Start Time']))
+                .filter(d => !isNaN(d));
 
-            // Basic formatting
-            const d1 = new Date(oldest).toLocaleDateString();
-            const d2 = new Date(newest).toLocaleDateString();
-            summaryDates.textContent = `${d1} - ${d2}`;
+            if (validDates.length > 0) {
+                // Since mixed valid/invalid might be interspersed if we just blindly take first/last
+                // let's rely on finding min/max from the valid list
+                // However, if we sorted correctly, valid ones are at start?
+                // Our sort puts INVALID at end. So valid dates are 0 to N.
+                // But wait, sort is DESCENDING (newest first).
+                // So dateB - dateA.
+
+                // Newest is at index 0. Oldest valid is at index validDates.length - 1?
+                // Let's re-calculate to be safe from sort issues.
+
+                // Use reduce to avoid Maximum call stack size exceeded with spread operator on large arrays
+                const maxTimestamp = validDates.reduce((max, d) => Math.max(max, d.getTime()), 0);
+                const minTimestamp = validDates.reduce((min, d) => Math.min(min, d.getTime()), Infinity);
+
+                const maxDate = new Date(maxTimestamp);
+                const minDate = new Date(minTimestamp);
+
+                const d1 = minDate.toISOString().split('T')[0];
+                const d2 = maxDate.toISOString().split('T')[0];
+                summaryDates.textContent = `${d1} - ${d2}`;
+            } else {
+                summaryDates.textContent = 'N/A';
+            }
         } else {
             summaryDates.textContent = 'N/A';
         }
@@ -254,24 +318,56 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function handleSearch(e) {
-        const query = e.target.value.toLowerCase();
+    function handleProfileChange(e) {
+        currentProfile = e.target.value;
+        updateFilters();
+    }
 
-        if (!query) {
-            filteredRows = [...allRows];
-        } else {
-            // Simple search across all fields
-            filteredRows = allRows.filter(row => {
+    function handleSearch(e) {
+        updateFilters();
+    }
+
+    function updateFilters() {
+        const query = searchInput.value.toLowerCase();
+
+        filteredRows = allRows.filter(row => {
+            // Profile Filter
+            if (currentProfile && row['Profile Name'] !== currentProfile) {
+                return false;
+            }
+
+            // Search Filter
+            if (query) {
                 return headers.some(h => {
                     const val = row[h] ? row[h].toString().toLowerCase() : '';
                     return val.includes(query);
                 });
-            });
-        }
+            }
+
+            return true;
+        });
 
         currentPage = 1;
+        updateDownloadButtonState();
         updateSummary();
         renderTable();
+    }
+
+    function updateDownloadButtonState() {
+        if (!downloadBtnText) return;
+
+        // Safe implementation: clear content, append icon, append escaped text
+        downloadBtn.innerHTML = '';
+        const icon = document.createElement('i');
+        icon.className = 'fas fa-download';
+        downloadBtn.appendChild(icon);
+
+        let text = ' Download Full History';
+        if (currentProfile) {
+            text = ` Download ${currentProfile}'s History`;
+        }
+
+        downloadBtn.appendChild(document.createTextNode(text));
     }
 
     // --- Download Handling ---
@@ -283,18 +379,25 @@ document.addEventListener('DOMContentLoaded', () => {
     function handleDownload() {
         if (!allRows || allRows.length === 0) return;
 
-        // Convert back to CSV
-        // We use the original allRows to let user download the valid dataset they uploaded
-        // (Is it better to download filtered? User request says "download extracted... contents")
-        // "Trigger a download of the exact ViewingActivity.csv content"
-        const csvContent = Papa.unparse(allRows);
+        // User requested to download history for the specific profile.
+        // We filter based on the current profile selection, IGNORING the search query.
+        // If "All Profiles" is selected, we download everything.
+
+        let rowsToDownload = allRows;
+        if (currentProfile) {
+            rowsToDownload = allRows.filter(row => row['Profile Name'] === currentProfile);
+        }
+
+        const csvContent = Papa.unparse(rowsToDownload);
 
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
 
         const link = document.createElement('a');
         link.setAttribute('href', url);
-        link.setAttribute('download', 'ViewingActivity.csv');
+        // Add profile name to filename if selected
+        const filename = currentProfile ? `ViewingActivity_${currentProfile.replace(/[^a-z0-9]/gi, '_')}.csv` : 'ViewingActivity.csv';
+        link.setAttribute('download', filename);
         link.style.visibility = 'hidden';
         document.body.appendChild(link);
         link.click();
