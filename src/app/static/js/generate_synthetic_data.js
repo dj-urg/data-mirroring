@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     // Elements for form submission
     const generateButton = document.getElementById('generateButton');
     const personaTypeInput = document.getElementById('personaType');
@@ -8,22 +8,22 @@ document.addEventListener('DOMContentLoaded', function() {
     const statsMessage = document.getElementById('statsMessage');
     const downloadLink = document.getElementById('downloadLink');
     const loadingSpinner = document.getElementById('loadingSpinner');
-    
+
     // Ensure result card is hidden on page load
     // No inline styles - using Bootstrap classes instead
     resultCard.classList.add('d-none');
-    
+
     // Setup card selection with animation
     setupCardSelection('.persona-card', personaTypeInput);
     setupCardSelection('.activity-card', activityLevelInput);
     setupCardSelection('.output-card', outputFilenameInput);
-    
+
     // Function to handle card selection with improved animation
     function setupCardSelection(cardSelector, hiddenInput) {
         const cards = document.querySelectorAll(cardSelector);
-        
+
         cards.forEach(card => {
-            card.addEventListener('click', function() {
+            card.addEventListener('click', function () {
                 // Remove selected class from all cards in the group with animation
                 cards.forEach(c => {
                     if (c.classList.contains('selected')) {
@@ -34,21 +34,21 @@ document.addEventListener('DOMContentLoaded', function() {
                         }, 200);
                     }
                 });
-                
+
                 // Add selected class to clicked card with animation
                 this.classList.add('selecting');
                 setTimeout(() => {
                     this.classList.add('selected');
                     this.classList.remove('selecting');
                 }, 50);
-                
+
                 // Update hidden input value
                 hiddenInput.value = this.dataset.value;
             });
         });
     }
 
-    generateButton.addEventListener('click', async function() {
+    generateButton.addEventListener('click', async function () {
         // Get values from hidden inputs
         const personaType = personaTypeInput.value;
         const activityLevel = activityLevelInput.value;
@@ -71,8 +71,8 @@ document.addEventListener('DOMContentLoaded', function() {
             resultCard.classList.add('d-none'); // Ensure the result card is hidden during processing
 
             // Get CSRF token - Flask adds this to all forms
-            const csrfToken = document.querySelector('input[name="csrf_token"]') ? 
-                              document.querySelector('input[name="csrf_token"]').value : '';
+            const csrfToken = document.querySelector('input[name="csrf_token"]') ?
+                document.querySelector('input[name="csrf_token"]').value : '';
 
             // Make an AJAX call to the backend to generate data
             const response = await fetch('/generate_synthetic_data_api', {
@@ -100,7 +100,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Get labels for the message
                 const personaLabel = getPersonaLabel(personaType);
                 const activityLabel = getActivityLabel(activityLevel);
-                
+
                 // Update result card with appropriate message based on file type
                 if (outputFilename === 'liked_posts.json') {
                     statsMessage.textContent = `Generated ${result.total_likes} likes for a ${personaLabel} with ${activityLabel} activity.`;
@@ -109,17 +109,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 } else if (outputFilename === 'videos_watched.json') {
                     statsMessage.textContent = `Generated ${result.total_watches} video watches for a ${personaLabel} with ${activityLabel} activity.`;
                 }
-                
+
                 // Setup download link with the correct route
                 downloadLink.href = `/download/${result.filename}`;
-                
+
                 // Animate the result card appearance using classes
                 resultCard.classList.add('opacity-0');
                 resultCard.classList.remove('d-none');
                 setTimeout(() => {
                     resultCard.classList.remove('opacity-0');
                 }, 10);
-                
+
                 // Scroll to result card with smooth animation
                 resultCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             } else {
@@ -145,7 +145,7 @@ document.addEventListener('DOMContentLoaded', function() {
             loadingSpinner.classList.add('d-none');
         }
     });
-    
+
     // Helper functions to get human-readable labels
     function getPersonaLabel(value) {
         const labels = {
@@ -157,7 +157,7 @@ document.addEventListener('DOMContentLoaded', function() {
         };
         return labels[value] || value;
     }
-    
+
     function getActivityLabel(value) {
         const labels = {
             'low': 'low (occasional user)',
@@ -166,18 +166,18 @@ document.addEventListener('DOMContentLoaded', function() {
         };
         return labels[value] || value;
     }
-    
+
     // Function to show elegant notifications
     function showNotification(message, type = 'info') {
         // Sanitize message to prevent XSS attacks
-        const sanitizedMessage = typeof DOMPurify !== 'undefined' 
-            ? DOMPurify.sanitize(message) 
+        const sanitizedMessage = typeof DOMPurify !== 'undefined'
+            ? DOMPurify.sanitize(message)
             : message.replace(/[<>]/g, ''); // Basic fallback if DOMPurify not available
-        
+
         // Validate type to prevent XSS in className
         const allowedTypes = ['info', 'error', 'success', 'warning'];
         const safeType = allowedTypes.includes(type) ? type : 'info';
-        
+
         // Create notification element
         const notification = document.createElement('div');
         notification.className = `notification notification-${safeType}`;
@@ -187,15 +187,15 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
             <div class="notification-message">${sanitizedMessage}</div>
         `;
-        
+
         // Add to document
         document.body.appendChild(notification);
-        
+
         // Animate in
         setTimeout(() => {
             notification.classList.add('show');
         }, 10);
-        
+
         // Remove after delay
         setTimeout(() => {
             notification.classList.remove('show');
@@ -204,7 +204,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }, 300);
         }, 4000);
     }
-    
+
     // Add subtle animations to page elements
     function addPageAnimations() {
         // Fade in cards sequentially
@@ -214,19 +214,45 @@ document.addEventListener('DOMContentLoaded', function() {
                 card.classList.add('fade-in');
             }, 100 * index);
         });
-        
+
         // Subtle hover effects on cards
         const allCards = document.querySelectorAll('.persona-card, .activity-card, .output-card');
         allCards.forEach(card => {
-            card.addEventListener('mouseenter', function() {
+            card.addEventListener('mouseenter', function () {
                 this.classList.add('hover-effect');
             });
-            card.addEventListener('mouseleave', function() {
+            card.addEventListener('mouseleave', function () {
                 this.classList.remove('hover-effect');
             });
         });
     }
-    
+
     // Initialize animations
     addPageAnimations();
 });
+
+// Helper functions for testing
+function getPersonaLabel(value) {
+    const labels = {
+        'career': 'Career Professional',
+        'fitness': 'Fitness Enthusiast',
+        'traveler': 'Travel Blogger',
+        'foodie': 'Food & Cooking Lover',
+        'techie': 'Tech Enthusiast'
+    };
+    return labels[value] || value;
+}
+
+function getActivityLabel(value) {
+    const labels = {
+        'low': 'low (occasional user)',
+        'medium': 'medium (regular user)',
+        'high': 'high (power user)'
+    };
+    return labels[value] || value;
+}
+
+// Export for Jest testing
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = { getPersonaLabel, getActivityLabel };
+}

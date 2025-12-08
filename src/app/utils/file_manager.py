@@ -31,10 +31,13 @@ class TemporaryFileManager:
         return secrets.token_urlsafe(32)
 
     @classmethod
-    def get_user_temp_dir(cls):
+    def get_user_temp_dir(cls, create=True):
         """
         Create a secure, user-specific temporary directory.
         
+        Args:
+            create (bool): Whether to create the directory if it doesn't exist
+            
         Returns:
             str: Path to the user's temporary directory
         """
@@ -50,16 +53,25 @@ class TemporaryFileManager:
             f"user_{user_session_id}"
         )
         
+        if not create:
+            return user_temp_dir
+        
         try:
-            # Create directory with strict permissions
-            os.makedirs(user_temp_dir, mode=0o700, exist_ok=True)
+            # Create directory with strict permissions if it doesn't exist
+            if not os.path.exists(user_temp_dir):
+                os.makedirs(user_temp_dir, mode=0o700, exist_ok=True)
             
             # Security note: We rely on directory permissions (0o700) 
             # rather than immutable flags for security
             
             return user_temp_dir
         
-        except Exception as e:
+        except OSError as e:
+            # Handle race condition where directory was created concurrently
+            if e.errno == 17:  # File exists
+                if os.path.isdir(user_temp_dir):
+                    return user_temp_dir
+                    
             current_app.logger.error(f"Failed to create secure temp directory: {e}")
             raise RuntimeError("Unable to create secure temporary directory")
 
@@ -142,10 +154,14 @@ class TemporaryFileManager:
         Args:
             exception (Exception, optional): Exception from request processing
         """
-        temp_dir = cls.get_user_temp_dir()
+        temp_dir = cls.get_user_temp_dir(create=False)
         current_time = time.time()
         
         try:
+            # Race condition check: Ensure directory exists before listing
+            if not os.path.exists(temp_dir):
+                return
+
             for item in os.listdir(temp_dir):
                 item_path = os.path.join(temp_dir, item)
                 metadata_path = f"{item_path}.metadata"
@@ -166,13 +182,17 @@ class TemporaryFileManager:
                                 cls._secure_file_delete(item_path)
                             
                             # Remove metadata
-                            os.remove(metadata_path)
+                            if os.path.exists(metadata_path):
+                                os.remove(metadata_path)
                             
                             current_app.logger.info(f"Securely cleaned up expired file: {os.path.basename(item_path)}")
                     
                     except Exception as e:
-                        current_app.logger.error(f"Error processing {item_path}: {e}")
+                        current_app.logger.warning(f"Error processing cleanup for {item_path}: {e}")
         
+        except FileNotFoundError:
+            # Directory might have been removed by a concurrent request, which is fine
+            pass
         except Exception as e:
             current_app.logger.error(f"Secure temporary file cleanup failed: {e}")
 
@@ -274,10 +294,12 @@ class TemporaryFileManager:
                 # Perform final cleanup
                 cls.cleanup_temp_files(exception)
                 
-                # Remove temp directory if empty
-                temp_dir = cls.get_user_temp_dir()
-                if not os.listdir(temp_dir):
-                    shutil.rmtree(temp_dir, ignore_errors=True)
+                # Check for empty directory without aggressive removal to avoid race conditions
+                # Directory will be cleaned up by periodic cleanup or session expiration
+                temp_dir = cls.get_user_temp_dir(create=False)
+                if os.path.exists(temp_dir) and not os.listdir(temp_dir):
+                     # Optional: could log empty state, but avoid rmtree here
+                     pass
             
             except Exception as cleanup_error:
                 current_app.logger.error(f"Final cleanup error: {cleanup_error}")

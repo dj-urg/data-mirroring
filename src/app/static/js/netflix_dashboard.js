@@ -1,368 +1,406 @@
-// Netflix Dashboard JavaScript functionality
-document.addEventListener("DOMContentLoaded", function () {
-    // Elements
-    const fileInput = document.getElementById("fileInput");
-    const addFileButton = document.getElementById("addFileButton");
-    const selectedFilesList = document.getElementById("selectedFilesList");
-    const hiddenFileInputs = document.getElementById("hiddenFileInputs");
-    const processButton = document.getElementById("processButton");
-    const processDataForm = document.getElementById("processDataForm");
-    const loader = document.querySelector(".loader");
-    const loaderOverlay = document.querySelector(".loader-overlay");
-    const visualizationDivs = document.querySelectorAll('#visualization, #month-heatmap, #day-heatmap, #time-heatmap');
-    const body = document.body;
-    let enlargedOverlay = null;
+/**
+ * netflix_dashboard.js
+ * 
+ * Handles client-side processing of Netflix data exports.
+ * 
+ * CORE PRINCIPLE: NO DATA UPLOAD.
+ * All processing (unzipping, parsing, filtering, rendering) happens in the browser's memory.
+ * No network requests are made with the user's data.
+ */
 
-    // State management
-    let filesAdded = 0;
-    const selectedFiles = new Map(); // Map to store selected files by unique ID
-    const supportedFiles = [
-        'IndicatedPreferences.csv',
-        'MyList.csv',
-        'Ratings.csv',
-        'SearchHistory.csv',
-        'ViewingActivity.csv'
-    ];
+document.addEventListener('DOMContentLoaded', () => {
+    // --- DOM Elements ---
+    const zipInput = document.getElementById('zip-input');
+    const folderInput = document.getElementById('folder-input');
+    const profileSelect = document.getElementById('profile-select');
+    const searchInput = document.getElementById('search-input');
+    const downloadBtn = document.getElementById('download-btn');
+    const downloadBtnText = downloadBtn.querySelector('i').nextSibling; // Text node after icon
 
-    // Initialize elements
-    if (addFileButton) {
-        addFileButton.disabled = true;
-    }
+    const errorMsg = document.getElementById('error-message');
+    const successMsg = document.getElementById('success-message');
+    const loadingSpinner = document.getElementById('loading-spinner');
+    const dataContainer = document.getElementById('data-container');
 
-    // Ensure loader and overlay exist
-    if (loader) {
-        loader.classList.add("d-none"); // Hide loader initially
-    } else {
-        console.warn("Loader element not found in the DOM.");
-    }
+    const summaryCount = document.getElementById('summary-count');
+    const summaryDates = document.getElementById('summary-dates');
+    const tableHead = document.querySelector('#viewing-activity-table thead tr');
+    const tableBody = document.querySelector('#viewing-activity-table tbody');
 
-    if (loaderOverlay) {
-        loaderOverlay.classList.add("d-none"); // Hide overlay initially
-    } else {
-        console.warn("Loader overlay not found in the DOM.");
-    }
+    const prevPageBtn = document.getElementById('prev-page');
+    const nextPageBtn = document.getElementById('next-page');
+    const pageInfo = document.getElementById('page-info');
 
-    // Ensure proper elements are available
-    if (!fileInput) {
-        console.warn("File input element not found. Skipping event listeners.");
-        return;
-    }
+    // --- State ---
+    let allRows = [];
+    let filteredRows = [];
+    let headers = [];
+    let currentProfile = '';
+    let currentPage = 1;
+    const PAGE_SIZE = 50;
+    const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 
-    // Event Handlers
-    fileInput.addEventListener("change", function () {
-        if (addFileButton) {
-            addFileButton.disabled = fileInput.files.length === 0;
-        }
-    });
+    // --- Event Listeners ---
+    zipInput.addEventListener('change', handleZipUpload);
+    folderInput.addEventListener('change', handleFolderUpload);
+    profileSelect.addEventListener('change', handleProfileChange);
+    searchInput.addEventListener('input', handleSearch);
+    downloadBtn.addEventListener('click', handleDownload);
+    prevPageBtn.addEventListener('click', () => changePage(-1));
+    nextPageBtn.addEventListener('click', () => changePage(1));
 
-    if (addFileButton) {
-        addFileButton.addEventListener("click", addSelectedFile);
-    }
+    // --- File Handling Functions ---
 
-    if (processDataForm) {
-        processDataForm.addEventListener("submit", function (event) {
-            if (filesAdded === 0) {
-                event.preventDefault();
-                alert("Please add at least one file before processing data.");
-                return;
-            }
+    /**
+     * Handle ZIP file upload using JSZip.
+     */
+    async function handleZipUpload(e) {
+        const file = e.target.files[0];
+        if (!file) return;
 
-            if (loader) loader.classList.remove("d-none");
-            if (loaderOverlay) loaderOverlay.classList.remove("d-none");
-            if (processButton) processButton.disabled = true;
-        });
-    }
-
-    // Functions
-    function addSelectedFile() {
-        // Validate file selection
-        if (fileInput.files.length === 0) {
+        if (file.size > MAX_FILE_SIZE) {
+            showError(`File is too large. Maximum size is 50MB. (Selected: ${(file.size / 1024 / 1024).toFixed(2)}MB)`);
+            e.target.value = ''; // Clear input
             return;
         }
 
-        const file = fileInput.files[0];
-        const fileId = generateUniqueId();
-        const isSupported = supportedFiles.includes(file.name);
+        resetState();
+        showLoading(true);
 
-        // Add to selected files map
-        selectedFiles.set(fileId, file);
+        try {
+            const zip = new JSZip();
+            const contents = await zip.loadAsync(file);
 
-        // Remove "no files" message if present
-        const noFilesMessage = document.querySelector(".no-files-message");
-        if (noFilesMessage) {
-            noFilesMessage.remove();
+            // Find ViewingActivity.csv (case insensitive search)
+            let csvFile = null;
+            zip.forEach((relativePath, zipEntry) => {
+                if (relativePath.toLowerCase().endsWith('viewingactivity.csv')) {
+                    csvFile = zipEntry;
+                }
+            });
+
+            if (!csvFile) {
+                throw new Error("Could not find 'ViewingActivity.csv' inside the ZIP file.");
+            }
+
+            const csvText = await csvFile.async("string");
+            processCsvData(csvText);
+
+        } catch (err) {
+            showError(err.message || "Failed to process ZIP file.");
+            showLoading(false);
+        } finally {
+            // Clear input so same file can be selected again if needed
+            zipInput.value = '';
+        }
+    }
+
+    /**
+     * Handle Folder upload (webkitdirectory).
+     */
+    function handleFolderUpload(e) {
+        const files = Array.from(e.target.files);
+        if (files.length === 0) return;
+
+        resetState();
+        showLoading(true);
+
+        // Find ViewingActivity.csv
+        const csvFile = files.find(f => f.name === 'ViewingActivity.csv');
+
+        if (!csvFile) {
+            showError("Could not find 'ViewingActivity.csv' in the selected folder.");
+            showLoading(false);
+            folderInput.value = '';
+            return;
         }
 
-        // Create list item for file
-        const listItem = document.createElement("li");
-        listItem.setAttribute("data-file-id", fileId);
-        listItem.className = "file-item";
+        const reader = new FileReader();
+        reader.onload = function (event) {
+            const csvText = event.target.result;
+            processCsvData(csvText);
+        };
+        reader.onerror = function () {
+            showError("Error reading the file.");
+            showLoading(false);
+        };
+        reader.readAsText(csvFile);
 
-        // File details
-        const fileDetails = document.createElement("div");
-        fileDetails.className = "file-details";
+        folderInput.value = '';
+    }
 
-        const fileName = document.createElement("span");
-        fileName.className = "file-name" + (isSupported ? "" : " unsupported");
-        fileName.textContent = file.name;
-        if (!isSupported) {
-            fileName.title = "This file type may not be supported";
-        }
+    /**
+     * Parse CSV text using PapaParse and update state.
+     */
+    function processCsvData(csvText) {
+        Papa.parse(csvText, {
+            header: true,
+            skipEmptyLines: true,
+            complete: function (results) {
+                // Log errors if any
+                if (results.errors.length > 0) {
+                    console.warn("CSV Parsing Errors:", results.errors);
+                }
 
-        const fileSize = document.createElement("span");
-        fileSize.className = "file-size";
-        fileSize.textContent = formatFileSize(file.size);
+                if (results.data.length === 0) {
+                    if (results.errors.length > 0) {
+                        showError("Failed to parse CSV file: " + results.errors[0].message);
+                    } else {
+                        showError("The CSV file appears to be empty.");
+                    }
+                    showLoading(false);
+                    return;
+                }
 
-        fileDetails.appendChild(fileName);
-        fileDetails.appendChild(fileSize);
+                allRows = results.data;
+                headers = results.meta.fields;
+                filteredRows = [...allRows];
 
-        // Remove button
-        const removeButton = document.createElement("button");
-        removeButton.type = "button";
-        removeButton.className = "remove-file-button";
-        removeButton.textContent = "×";
-        removeButton.setAttribute("aria-label", "Remove file");
-        removeButton.addEventListener("click", function () {
-            removeFile(fileId);
+                // Sort by Start Time descending if available
+                if (headers.includes('Start Time')) {
+                    filteredRows.sort((a, b) => {
+                        const dateA = new Date(a['Start Time']);
+                        const dateB = new Date(b['Start Time']);
+
+                        // Handle invalid dates: push them to the end
+                        if (isNaN(dateA) && isNaN(dateB)) return 0;
+                        if (isNaN(dateA)) return 1;
+                        if (isNaN(dateB)) return -1;
+
+                        return dateB - dateA;
+                    });
+                    allRows = [...filteredRows]; // Update master list order too
+                }
+
+                let successMsgText = `Successfully loaded ${allRows.length} rows.`;
+                if (results.errors.length > 0) {
+                    successMsgText += ` Warning: ${results.errors.length} rows could not be parsed and were skipped.`;
+                }
+                showSuccess(successMsgText);
+                downloadBtn.disabled = false;
+
+                populateProfileSelect();
+                updateFilters(); // Will handle summary and render
+                showLoading(false);
+                dataContainer.style.display = 'block';
+            },
+            error: function (err) {
+                showError("CSV parsing error: " + err.message);
+                showLoading(false);
+            }
         });
-
-        // Add elements to list item
-        listItem.appendChild(fileDetails);
-        listItem.appendChild(removeButton);
-
-        // Add to visual list
-        if (selectedFilesList) {
-            selectedFilesList.appendChild(listItem);
-        }
-
-        // Create hidden file input for form submission
-        createHiddenFileInput(fileId, file);
-
-        // Update state
-        filesAdded++;
-        if (processButton) {
-            processButton.disabled = filesAdded === 0;
-        }
-
-        // Reset file input for next selection
-        fileInput.value = "";
-        if (addFileButton) {
-            addFileButton.disabled = true;
-        }
     }
 
-    function removeFile(fileId) {
-        // Remove from DOM
-        const listItem = document.querySelector(`li[data-file-id="${fileId}"]`);
-        if (listItem) listItem.remove();
+    // --- UI / Display Functions ---
 
-        // Remove hidden input
-        const hiddenInput = document.querySelector(`input[data-file-id="${fileId}"]`);
-        if (hiddenInput) hiddenInput.remove();
-
-        // Remove from map
-        selectedFiles.delete(fileId);
-
-        // Update state
-        filesAdded--;
-        if (processButton) {
-            processButton.disabled = filesAdded === 0;
-        }
-
-        // Show "no files" message if needed
-        if (filesAdded === 0 && selectedFilesList) {
-            const noFilesMessage = document.createElement("li");
-            noFilesMessage.className = "no-files-message";
-            noFilesMessage.textContent = "No files added yet";
-            selectedFilesList.appendChild(noFilesMessage);
-        }
+    function resetState() {
+        allRows = [];
+        filteredRows = [];
+        headers = [];
+        currentPage = 1;
+        profileSelect.innerHTML = '<option value="">All Profiles</option>';
+        currentProfile = '';
+        downloadBtn.disabled = true;
+        dataContainer.style.display = 'none';
+        errorMsg.style.display = 'none';
+        successMsg.style.display = 'none';
+        tableHead.innerHTML = '';
+        tableBody.innerHTML = '';
     }
 
-    function createHiddenFileInput(fileId, file) {
-        if (!hiddenFileInputs) return;
+    function populateProfileSelect() {
+        if (!headers.includes('Profile Name')) return;
 
-        // Create a new file list object containing just this file
-        const dataTransfer = new DataTransfer();
-        dataTransfer.items.add(file);
+        // Get unique profiles
+        const profiles = [...new Set(allRows.map(row => row['Profile Name']).filter(p => p))].sort();
 
-        // Create hidden input
-        const hiddenInput = document.createElement("input");
-        hiddenInput.type = "file";
-        hiddenInput.name = "file"; // Name must match what your server expects
-        hiddenInput.className = "d-none";
-        hiddenInput.setAttribute("data-file-id", fileId);
-
-        // Set files property with our file
-        hiddenInput.files = dataTransfer.files;
-
-        // Add to form
-        hiddenFileInputs.appendChild(hiddenInput);
+        profileSelect.innerHTML = '<option value="">All Profiles</option>';
+        profiles.forEach(profile => {
+            const option = document.createElement('option');
+            option.value = profile;
+            option.textContent = profile;
+            profileSelect.appendChild(option);
+        });
     }
 
-    function formatFileSize(bytes) {
-        if (bytes === 0) return '0 Bytes';
-
-        const k = 1024;
-        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    function showLoading(isLoading) {
+        loadingSpinner.style.display = isLoading ? 'block' : 'none';
     }
 
-    function generateUniqueId() {
-        return 'file_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    function showError(msg) {
+        errorMsg.textContent = msg;
+        errorMsg.style.display = 'block';
+        successMsg.style.display = 'none';
     }
 
-    // Toggle visibility of data table - keeping this for backward compatibility
-    window.toggleTable = function () {
-        const tableDiv = document.getElementById("dataTable");
-        if (tableDiv) {
-            // Replace 'd-none' with your chosen class name if not using Bootstrap
-            tableDiv.classList.toggle('d-none');
+    function showSuccess(msg) {
+        successMsg.textContent = msg;
+        successMsg.style.display = 'block';
+        errorMsg.style.display = 'none';
+    }
+
+    function updateSummary() {
+        summaryCount.textContent = filteredRows.length;
+
+        if (headers.includes('Start Time') && filteredRows.length > 0) {
+            // Filter valid dates for summary
+            const validDates = filteredRows
+                .map(row => new Date(row['Start Time']))
+                .filter(d => !isNaN(d));
+
+            if (validDates.length > 0) {
+                // Since mixed valid/invalid might be interspersed if we just blindly take first/last
+                // let's rely on finding min/max from the valid list
+                // However, if we sorted correctly, valid ones are at start?
+                // Our sort puts INVALID at end. So valid dates are 0 to N.
+                // But wait, sort is DESCENDING (newest first).
+                // So dateB - dateA.
+
+                // Newest is at index 0. Oldest valid is at index validDates.length - 1?
+                // Let's re-calculate to be safe from sort issues.
+
+                // Use reduce to avoid Maximum call stack size exceeded with spread operator on large arrays
+                const maxTimestamp = validDates.reduce((max, d) => Math.max(max, d.getTime()), 0);
+                const minTimestamp = validDates.reduce((min, d) => Math.min(min, d.getTime()), Infinity);
+
+                const maxDate = new Date(maxTimestamp);
+                const minDate = new Date(minTimestamp);
+
+                const d1 = minDate.toISOString().split('T')[0];
+                const d2 = maxDate.toISOString().split('T')[0];
+                summaryDates.textContent = `${d1} - ${d2}`;
+            } else {
+                summaryDates.textContent = 'N/A';
+            }
         } else {
-            console.warn("Data table element not found.");
+            summaryDates.textContent = 'N/A';
         }
-    };
+    }
 
-    // Image Enlargement Functionality
-    visualizationDivs.forEach(function (div) {
-        const img = div.querySelector('.visualization-image');
-        if (img) {
-            img.style.cursor = 'pointer'; // Indicate it's clickable
-            img.addEventListener('click', function () {
-                const imageUrl = this.src;
-                createEnlargedImageOverlay(imageUrl);
+    function renderTable() {
+        // Headers
+        if (tableHead.children.length === 0) {
+            headers.forEach(h => {
+                const th = document.createElement('th');
+                th.textContent = h;
+                tableHead.appendChild(th);
             });
         }
-    });
 
-    function createEnlargedImageOverlay(imageUrl) {
-        if (enlargedOverlay) {
-            enlargedOverlay.remove();
-        }
+        // Body
+        tableBody.innerHTML = '';
+        const start = (currentPage - 1) * PAGE_SIZE;
+        const end = start + PAGE_SIZE;
+        const pageData = filteredRows.slice(start, end);
 
-        enlargedOverlay = document.createElement('div');
-        enlargedOverlay.classList.add('enlarged-image-overlay');
-
-        const imageContainer = document.createElement('div');
-        imageContainer.classList.add('enlarged-image-container');
-
-        const enlargedImg = document.createElement('img');
-        enlargedImg.src = imageUrl;
-        enlargedImg.classList.add('enlarged-image');
-        enlargedImg.alt = 'Enlarged Visualization';
-
-        const closeButton = document.createElement('button');
-        closeButton.classList.add('close-enlarged-image');
-        closeButton.innerHTML = '&times;'; // Use an "X"
-
-        closeButton.addEventListener('click', closeEnlargedImage);
-        enlargedOverlay.addEventListener('click', function(event) {
-            if (event.target === this) { // Close if clicked outside the image
-                closeEnlargedImage();
-            }
+        pageData.forEach(row => {
+            const tr = document.createElement('tr');
+            headers.forEach(h => {
+                const td = document.createElement('td');
+                td.textContent = row[h] || '';
+                tr.appendChild(td);
+            });
+            tableBody.appendChild(tr);
         });
 
-        imageContainer.appendChild(enlargedImg);
-        imageContainer.appendChild(closeButton);
-        enlargedOverlay.appendChild(imageContainer);
-        body.appendChild(enlargedOverlay);
-
-        // Force reflow to trigger the transition
-        void enlargedOverlay.offsetWidth;
-        enlargedOverlay.classList.add('active');
-        body.style.overflow = 'hidden'; // Prevent background scrolling
+        // Pagination Controls
+        pageInfo.textContent = `Page ${currentPage} of ${Math.ceil(filteredRows.length / PAGE_SIZE) || 1}`;
+        prevPageBtn.disabled = currentPage <= 1;
+        nextPageBtn.disabled = currentPage >= Math.ceil(filteredRows.length / PAGE_SIZE);
     }
 
-    function closeEnlargedImage() {
-        if (enlargedOverlay) {
-            enlargedOverlay.classList.remove('active');
-            setTimeout(() => {
-                if (enlargedOverlay) {
-                    enlargedOverlay.remove();
-                    enlargedOverlay = null;
-                    body.style.overflow = ''; // Re-enable background scrolling
-                }
-            }, 300); // Match the CSS transition duration
+    function changePage(delta) {
+        const maxPage = Math.ceil(filteredRows.length / PAGE_SIZE);
+        const newPage = currentPage + delta;
+        if (newPage >= 1 && newPage <= maxPage) {
+            currentPage = newPage;
+            renderTable();
         }
     }
 
-    // Smooth scrolling for anchor links
-    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-        anchor.addEventListener('click', function (e) {
-            e.preventDefault();
-            const target = document.querySelector(this.getAttribute('href'));
-            if (target) {
-                target.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'start'
+    function handleProfileChange(e) {
+        currentProfile = e.target.value;
+        updateFilters();
+    }
+
+    function handleSearch(e) {
+        updateFilters();
+    }
+
+    function updateFilters() {
+        const query = searchInput.value.toLowerCase();
+
+        filteredRows = allRows.filter(row => {
+            // Profile Filter
+            if (currentProfile && row['Profile Name'] !== currentProfile) {
+                return false;
+            }
+
+            // Search Filter
+            if (query) {
+                return headers.some(h => {
+                    const val = row[h] ? row[h].toString().toLowerCase() : '';
+                    return val.includes(query);
                 });
             }
-        });
-    });
 
-    // Add animation to cards when they come into view
-    const observerOptions = {
-        threshold: 0.1,
-        rootMargin: '0px 0px -50px 0px'
-    };
-
-    const observer = new IntersectionObserver(function(entries) {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.style.opacity = '1';
-                entry.target.style.transform = 'translateY(0)';
-            }
+            return true;
         });
-    }, observerOptions);
 
-    // Observe all cards
-    document.querySelectorAll('.card').forEach(card => {
-        card.style.opacity = '0';
-        card.style.transform = 'translateY(20px)';
-        card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
-        observer.observe(card);
-    });
-
-    // Handle download links
-    document.querySelectorAll('a[href*="download"]').forEach(link => {
-        link.addEventListener('click', function() {
-            console.log('Download initiated:', this.href);
-        });
-    });
-
-    // Add hover effects to visualization images
-    document.querySelectorAll('img[alt*="Heatmap"], img[alt*="Genres"]').forEach(img => {
-        img.addEventListener('mouseenter', function() {
-            this.style.transform = 'scale(1.02)';
-            this.style.transition = 'transform 0.3s ease';
-        });
-        
-        img.addEventListener('mouseleave', function() {
-            this.style.transform = 'scale(1)';
-        });
-    });
-
-    // Initialize tooltips if Bootstrap is available
-    if (typeof bootstrap !== 'undefined' && bootstrap.Tooltip) {
-        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-        tooltipTriggerList.map(function (tooltipTriggerEl) {
-            return new bootstrap.Tooltip(tooltipTriggerEl);
-        });
+        currentPage = 1;
+        updateDownloadButtonState();
+        updateSummary();
+        renderTable();
     }
 
-    // Handle responsive behavior
-    function handleResize() {
-        const cards = document.querySelectorAll('.card');
-        cards.forEach(card => {
-            if (window.innerWidth < 768) {
-                card.classList.add('mobile-optimized');
-            } else {
-                card.classList.remove('mobile-optimized');
-            }
-        });
+    function updateDownloadButtonState() {
+        if (!downloadBtnText) return;
+
+        // Safe implementation: clear content, append icon, append escaped text
+        downloadBtn.innerHTML = '';
+        const icon = document.createElement('i');
+        icon.className = 'fas fa-download';
+        downloadBtn.appendChild(icon);
+
+        let text = ' Download Full History';
+        if (currentProfile) {
+            text = ` Download ${currentProfile}'s History`;
+        }
+
+        downloadBtn.appendChild(document.createTextNode(text));
     }
 
-    window.addEventListener('resize', handleResize);
-    handleResize(); // Initial call
+    // --- Download Handling ---
+
+    /**
+     * Download the CURRENT data as ViewingActivity.csv.
+     * Uses Blob + URL.createObjectURL.
+     */
+    function handleDownload() {
+        if (!allRows || allRows.length === 0) return;
+
+        // User requested to download history for the specific profile.
+        // We filter based on the current profile selection, IGNORING the search query.
+        // If "All Profiles" is selected, we download everything.
+
+        let rowsToDownload = allRows;
+        if (currentProfile) {
+            rowsToDownload = allRows.filter(row => row['Profile Name'] === currentProfile);
+        }
+
+        const csvContent = Papa.unparse(rowsToDownload);
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+
+        const link = document.createElement('a');
+        link.setAttribute('href', url);
+        // Add profile name to filename if selected
+        const filename = currentProfile ? `ViewingActivity_${currentProfile.replace(/[^a-z0-9]/gi, '_')}.csv` : 'ViewingActivity.csv';
+        link.setAttribute('download', filename);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
 });

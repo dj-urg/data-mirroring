@@ -23,7 +23,6 @@ error_logs.log
 
 # Main.js and package files
 main.js
-package.json
 package-lock.json
 
 # Environment variables
@@ -32,12 +31,7 @@ package-lock.json
 # Miscellaneous system files
 .DS_Store
 
-# Test environment
-test/
-tests/
-test*.py
-test*.js
-test*.html
+
 
 # Jypter Notebook
 *.ipynb_checkpoints

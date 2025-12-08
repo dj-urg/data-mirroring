@@ -6,7 +6,7 @@ from app.utils.logging_config import log_request_data_safely, log_file_operation
 from app.handlers.youtube import process_youtube_file
 from app.handlers.instagram import process_instagram_file
 from app.handlers.tiktok import process_tiktok_file
-from app.handlers.netflix import process_netflix_file
+
 from app.utils.file_validation import validate_file
 import os
 from werkzeug.utils import secure_filename
@@ -16,11 +16,9 @@ import hmac
 
 routes_bp = Blueprint('routes', __name__)
 
-# Change these lines in routes.py
-routes_bp.before_request(TemporaryFileManager.cleanup_temp_files)
+
 routes_bp.before_request(enforce_https)
-routes_bp.after_request(apply_security_headers)  # Apply security headers to responses
-routes_bp.teardown_request(TemporaryFileManager.cleanup_temp_files)  # Runs after each request
+routes_bp.after_request(apply_security_headers)
 
 @limiter.limit("10 per minute", key_func=lambda: session.get('user_id', request.remote_addr))
 
@@ -233,63 +231,12 @@ def dashboard_tiktok():
         flash(str(e), "danger")
         return redirect(url_for('routes.dashboard_tiktok'))
     
-@routes_bp.route('/dashboard/netflix', methods=['GET', 'POST'])
+@routes_bp.route('/dashboard/netflix')
 @requires_authentication
-@limiter.limit("10 per minute")
 def dashboard_netflix():
-    current_app.logger.info("Dashboard accessed for Netflix, Method: %s", request.method)
-    
-    if request.method == 'GET':
-        return render_template('dashboard_netflix.html')
-    
-    files = request.files.getlist('file')
-    if not files or files[0].filename == '':
-        flash("No file selected", "danger")
-        return redirect(url_for('routes.dashboard_netflix'))
-    
-    current_app.logger.info("Processing %d file(s) for Netflix", len(files))
-    
-    # Validate files before processing
-    from app.utils.file_validation import validate_file
-    
-    valid_files = []
-    for file in files:
-        is_valid, sanitized_name, error = validate_file(
-            file,
-            allowed_extensions=['csv'],  # Netflix only accepts CSV
-            max_size_mb=16  # 16MB max file size
-        )
-        
-        if not is_valid:
-            current_app.logger.warning(f"Invalid file: {error}")
-            flash(f"Invalid file '{file.filename}': {error}", "danger")
-            return redirect(url_for('routes.dashboard_netflix'))
-            
-        # Reset file pointer and add to valid files
-        file.seek(0)
-        valid_files.append(file)
-    
-    try:
-        df, excel_filename, csv_file_name, insights, plot_data, day_heatmap_name, month_heatmap_name, time_heatmap_name, has_valid_data, preview_data = process_netflix_file(valid_files)
+    current_app.logger.info("Dashboard accessed for Netflix (Local Mode).")
+    return render_template('dashboard_netflix.html')
 
-        return render_template(
-            'dashboard_netflix.html',
-            insights=insights,
-            csv_file_name=csv_file_name,
-            excel_filename=excel_filename,
-            plot_data=plot_data,
-            day_heatmap_data=day_heatmap_name,
-            month_heatmap_data=month_heatmap_name,
-            time_heatmap_data=time_heatmap_name,
-            has_valid_data=has_valid_data,
-            preview_data=preview_data
-        )
-        
-    except ValueError as e:
-        log_error_safely(e, "Netflix file processing", current_app.logger)
-        flash(str(e), "danger")
-        return redirect(url_for('routes.dashboard_netflix'))
-    
 @routes_bp.route('/download_image/<filename>', methods=['GET'])
 def download_image(filename):
     """Serve the requested image file for download and delete it after sending."""
