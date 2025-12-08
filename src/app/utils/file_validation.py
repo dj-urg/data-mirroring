@@ -27,6 +27,15 @@ def sanitize_filename(filename):
         logger.warning(f"Filename sanitized: '{filename}' -> '{sanitized}'")
         
     return sanitized
+    
+def sanitize_for_spreadsheet(value):
+    """
+    Sanitize a value to prevent CSV Injection (Formula Injection).
+    If a value starts with =, +, -, or @, prepend a single quote.
+    """
+    if isinstance(value, str) and value.startswith(('=', '+', '-', '@')):
+        return f"'{value}"
+    return value
 
 def validate_file_size(file, max_size_mb=16):
     """

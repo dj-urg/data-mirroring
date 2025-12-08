@@ -13,7 +13,7 @@ import seaborn as sns
 from matplotlib.lines import Line2D
 from app.utils.file_manager import get_user_temp_dir
 import squarify
-from app.utils.file_validation import parse_json_file, safe_save_file
+from app.utils.file_validation import parse_json_file, safe_save_file, sanitize_for_spreadsheet
 from werkzeug.datastructures import FileStorage
 import openpyxl
 import numpy as np
@@ -661,6 +661,10 @@ def process_instagram_file(files):
 
         has_valid_data = not df.empty
         
+        # Sanitize data to prevent formula injection
+        for col in df.select_dtypes(include=['object']):
+            df[col] = df[col].apply(sanitize_for_spreadsheet)
+
         # Create CSV content
         csv_content = df.to_csv(index=False)
         

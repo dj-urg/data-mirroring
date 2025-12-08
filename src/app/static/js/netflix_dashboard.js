@@ -189,7 +189,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 populateProfileSelect();
                 updateFilters(); // Will handle summary and render
                 showLoading(false);
-                dataContainer.style.display = 'block';
+                dataContainer.classList.remove('hidden');
             },
             error: function (err) {
                 showError("CSV parsing error: " + err.message);
@@ -208,9 +208,10 @@ document.addEventListener('DOMContentLoaded', () => {
         profileSelect.innerHTML = '<option value="">All Profiles</option>';
         currentProfile = '';
         downloadBtn.disabled = true;
-        dataContainer.style.display = 'none';
-        errorMsg.style.display = 'none';
-        successMsg.style.display = 'none';
+        downloadBtn.disabled = true;
+        dataContainer.classList.add('hidden');
+        errorMsg.classList.remove('visible');
+        successMsg.classList.remove('visible');
         tableHead.innerHTML = '';
         tableBody.innerHTML = '';
     }
@@ -231,19 +232,23 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function showLoading(isLoading) {
-        loadingSpinner.style.display = isLoading ? 'block' : 'none';
+        if (isLoading) {
+            loadingSpinner.classList.add('visible');
+        } else {
+            loadingSpinner.classList.remove('visible');
+        }
     }
 
     function showError(msg) {
         errorMsg.textContent = msg;
-        errorMsg.style.display = 'block';
-        successMsg.style.display = 'none';
+        errorMsg.classList.add('visible');
+        successMsg.classList.remove('visible');
     }
 
     function showSuccess(msg) {
         successMsg.textContent = msg;
-        successMsg.style.display = 'block';
-        errorMsg.style.display = 'none';
+        successMsg.classList.add('visible');
+        errorMsg.classList.remove('visible');
     }
 
     function updateSummary() {
@@ -403,9 +408,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const link = document.createElement('a');
         link.setAttribute('href', url);
         // Add profile name to filename if selected
+        // Add profile name to filename if selected
         const filename = currentProfile ? `ViewingActivity_${currentProfile.replace(/[^a-z0-9]/gi, '_')}.csv` : 'ViewingActivity.csv';
         link.setAttribute('download', filename);
-        link.style.visibility = 'hidden';
+        link.classList.add('hidden');
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);

@@ -10,7 +10,7 @@ import seaborn as sns
 import traceback
 import re
 from app.utils.file_manager import get_user_temp_dir
-from app.utils.file_validation import parse_json_file, safe_save_file
+from app.utils.file_validation import parse_json_file, safe_save_file, sanitize_for_spreadsheet
 from app.utils.file_validation import safe_save_file
 from werkzeug.datastructures import FileStorage
 import tempfile
@@ -51,6 +51,11 @@ def save_csv_temp_file(df):
     
     # Replace all newline characters in the DataFrame (avoid breaking CSV format when opening in Excel)
     df.replace(r'\n', ' ', regex=True, inplace=True)
+
+    # Sanitize data to prevent formula injection
+    for col in df.select_dtypes(include=['object']):
+        df[col] = df[col].apply(sanitize_for_spreadsheet)
+
     df.to_csv(temp_file_path, index=False, quoting=csv.QUOTE_ALL, encoding='utf-8')
     os.chmod(temp_file_path, 0o600)  # Secure file permissions
     logger.debug(f"CSV saved at {temp_file_path}")
@@ -71,6 +76,10 @@ def save_excel_temp_file(df):
     
     # Replace newline characters to ensure proper formatting in Excel
     excel_df.replace(r'\n', ' ', regex=True, inplace=True)
+
+    # Sanitize data to prevent formula injection
+    for col in excel_df.select_dtypes(include=['object']):
+        excel_df[col] = excel_df[col].apply(sanitize_for_spreadsheet)
 
     # Save the DataFrame as an Excel file
     excel_df.to_excel(temp_file_path, index=False, engine='openpyxl')

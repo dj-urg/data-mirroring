@@ -238,6 +238,7 @@ def dashboard_netflix():
     return render_template('dashboard_netflix.html')
 
 @routes_bp.route('/download_image/<filename>', methods=['GET'])
+@requires_authentication
 def download_image(filename):
     """Serve the requested image file for download and delete it after sending."""
     
@@ -298,6 +299,7 @@ def download_image(filename):
         abort(404, "File not found")
 
 @routes_bp.route('/download_csv/<filename>', methods=['GET'])
+@requires_authentication
 def download_csv(filename):
     """Serve the requested CSV file for download and delete it immediately after."""
 
@@ -375,7 +377,7 @@ def enter_code():
         if ACCESS_CODE_HASH and check_password_hash(ACCESS_CODE_HASH, code):
             session.clear() # Clear any existing session data to prevent fixation
             session['authenticated'] = True  # Set authenticated status in session
-            current_app.logger.info(f"Successful login from {request.remote_addr}")
+            log_security_event_safely("LOGIN_SUCCESS", f"User logged in from {request.remote_addr}", current_app.logger)
             return redirect(url_for('routes.landing_page'))
         else:
             current_app.logger.warning(f"Failed login attempt from {request.remote_addr}")
@@ -428,6 +430,7 @@ def cleanup_session():
         return jsonify({"status": "error", "message": "Cleanup failed"}), 500
 
 @routes_bp.route('/download_excel/<filename>', methods=['GET'])
+@requires_authentication
 def download_excel(filename):
     """Serve the requested Excel file for download and delete it immediately after."""
 
@@ -488,6 +491,7 @@ def download_excel(filename):
         abort(404, "File not found")
 
 @routes_bp.route('/download_txt/<filename>', methods=['GET'])
+@requires_authentication
 def download_txt(filename):
     """Serve the requested text file for download and delete it immediately after."""
 
