@@ -1,1 +1,1 @@
-web: PYTHONPATH=src gunicorn 'app:create_app()'
+web: PYTHONPATH=src gunicorn --access-logfile - --error-logfile - 'app:create_app()'
