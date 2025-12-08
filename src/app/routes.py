@@ -13,6 +13,7 @@ from werkzeug.utils import secure_filename
 import re
 from flask import flash
 import hmac
+from werkzeug.security import check_password_hash
 
 routes_bp = Blueprint('routes', __name__)
 
@@ -21,7 +22,6 @@ routes_bp.before_request(enforce_https)
 routes_bp.after_request(apply_security_headers)
 
 @limiter.limit("10 per minute", key_func=lambda: session.get('user_id', request.remote_addr))
-
 @routes_bp.route('/')
 @requires_authentication
 def landing_page():
@@ -352,27 +352,33 @@ def download_csv(filename):
     
 def is_valid_code(code):
     """
-    Ensure the code is alphanumeric and has a reasonable length.
-    Returns True if the code format is valid, False otherwise.
+    Ensure the code has a reasonable length and valid characters.
     """
-    # Ensure the code is alphanumeric and has a reasonable length
-    return bool(re.match(r'^[a-zA-Z0-9]{1,20}$', code))  # Adjust length as needed
+    # Allow alphanumeric and common special characters, min length 1 (flexible for user preference)
+    # Ideally should be 8+ for security, but we allow 'test' as requested.
+    return bool(re.match(r'^[a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};:\'",.<>/?]{1,50}$', code))
 
 @routes_bp.route('/enter-code', methods=['GET', 'POST'])
+@limiter.limit("5 per minute") 
 def enter_code():
-    ACCESS_CODE = os.getenv('ACCESS_CODE')
+    ACCESS_CODE_HASH = os.getenv('ACCESS_CODE_HASH')
+    
     if request.method == 'POST':
         code = request.form.get('code')
 
         # Validate the input code format before comparing
-        if not is_valid_code(code):
+        if not code or not is_valid_code(code):
+            current_app.logger.warning(f"Invalid password format attempt from {request.remote_addr}")
             return render_template('enter_code.html', error="Invalid access code format.")
         
-        # Use constant-time comparison to prevent timing attacks
-        if ACCESS_CODE and hmac.compare_digest(code, ACCESS_CODE):
+        # Verify the password hash
+        if ACCESS_CODE_HASH and check_password_hash(ACCESS_CODE_HASH, code):
+            session.clear() # Clear any existing session data to prevent fixation
             session['authenticated'] = True  # Set authenticated status in session
+            current_app.logger.info(f"Successful login from {request.remote_addr}")
             return redirect(url_for('routes.landing_page'))
         else:
+            current_app.logger.warning(f"Failed login attempt from {request.remote_addr}")
             return render_template('enter_code.html', error="Invalid access code.")
     
     return render_template('enter_code.html')
@@ -381,19 +387,18 @@ def enter_code():
 def logout():
     """Explicitly clear all session data and user files."""
     try:
+        # Get user ID before clearing session
+        user_id = session.get('user_id')
+        
+        if user_id:
+            # Clean up user's temporary files immediately
+            from app.utils.file_manager import TemporaryFileManager
+            TemporaryFileManager.cleanup_user_files_immediately(user_id)
+            
         # Clear all session data
         session.clear()
         
-        # Clean up user's temporary files immediately
-        from app.utils.file_manager import TemporaryFileManager
-        TemporaryFileManager.cleanup_temp_files()
-        
-        # Remove user's temp directory completely
-        temp_dir = TemporaryFileManager.get_user_temp_dir()
-        if os.path.exists(temp_dir):
-            import shutil
-            shutil.rmtree(temp_dir, ignore_errors=True)
-            current_app.logger.info(f"User logout: completely removed temp directory {temp_dir}")
+        current_app.logger.info(f"User logout: session cleared for user {user_id}")
         
         current_app.logger.info("User logged out and all data cleared")
         return redirect(url_for('routes.enter_code'))

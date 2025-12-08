@@ -1,170 +1,183 @@
 /* ========================= */
-/* Basic Layout for the Page  */
+/* Modern Login Page Styling */
 /* ========================= */
-body {
-    font-family: 'Helvetica, Arial, sans-serif';
-    background-color: #f4f4f4; /* Light background */
+
+/* Wrapper to center content and provide backdrop */
+.login-wrapper {
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100vh; /* Full height */
-    margin: 0;
-}
-
-.container {
-    background-color: white; /* White background for form */
+    min-height: 80vh; /* Takes up most of the screen */
+    width: 100%;
     padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* Subtle shadow */
-    text-align: center;
-    max-width: 400px;
-    width: 100%;
+    box-sizing: border-box;
 }
 
-h1 {
-    color: #2C3E50;
-    margin-bottom: 20px;
-}
-
-input[type="text"] {
-    width: 100%;
-    padding: 10px;
-    margin: 10px 0;
-    border: 1px solid #BDC3C7;
-    border-radius: 4px;
-}
-
-button {
-    background-color: #3498DB;
-    color: white;
-    padding: 10px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    width: 100%;
-}
-
-button:hover {
-    background-color: #2980B9;
-}
-
-.error-message {
-    color: red;
-    margin-top: 10px;
-}
-
-/* Modern Cookie Banner Styling */
-#cookie-banner {
-    font-family: 'Roboto', sans-serif;
-    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+/* Common Card Styling (used for Cookie Banner and Login) */
+.login-card {
+    background: #ffffff;
+    padding: 40px;
     border-radius: 16px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    padding: 32px;
-    max-width: 480px;
-    margin: 0 auto;
-    position: relative;
-    overflow: hidden;
-}
-
-#cookie-banner::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, #3498DB, #2980B9);
-    border-radius: 16px 16px 0 0;
-}
-
-#cookie-banner h1 {
-    font-size: 1.75rem;
-    font-weight: 600;
-    color: #2C3E50;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+    width: 100%;
+    max-width: 440px;
     text-align: center;
-    margin: 0 0 20px 0;
-    letter-spacing: -0.02em;
-    line-height: 1.3;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    animation: slideUp 0.5s ease-out;
+}
+
+.login-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 50px rgba(0, 0, 0, 0.12);
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Typography */
+.login-title {
+    font-family: 'Inter', sans-serif;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin-bottom: 8px;
+    margin-top: 0;
+}
+
+.login-subtitle {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.95rem;
+    color: #666;
+    margin-bottom: 32px;
+}
+
+/* Form Elements */
+.login-form {
+    text-align: left;
+}
+
+.form-group {
+    margin-bottom: 24px;
+}
+
+label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #333;
+    border: none; /* Reset base style */
+    padding: 0; /* Reset base style */
+    background: none; /* Reset base style */
+}
+
+input[type="password"] {
+    width: 100%;
+    padding: 12px 16px;
+    font-size: 1rem;
+    border: 2px solid #e1e4e8;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    background-color: #f8f9fa;
+    box-sizing: border-box; /* Ensure padding doesn't break width */
+}
+
+input[type="password"]:focus {
+    outline: none;
+    border-color: #3498DB;
+    background-color: #fff;
+    box-shadow: 0 0 0 4px rgba(52, 152, 219, 0.1);
+}
+
+/* Button Styling */
+.login-btn {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #3498DB 0%, #2980B9 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+}
+
+.login-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+    background: linear-gradient(135deg, #2980B9 0%, #2573a7 100%);
+}
+
+.login-btn:active {
+    transform: translateY(0);
+}
+
+/* Error Banner */
+.error-banner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background-color: #fef2f2;
+    color: #dc2626;
+    padding: 12px;
+    border-radius: 8px;
+    margin-top: 24px;
+    font-size: 0.9rem;
+    border: 1px solid #fee2e2;
+    animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+@keyframes shake {
+    10%, 90% { transform: translate3d(-1px, 0, 0); }
+    20%, 80% { transform: translate3d(2px, 0, 0); }
+    30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+    40%, 60% { transform: translate3d(4px, 0, 0); }
+}
+
+/* Cookie Banner Styles within the Card */
+#cookie-banner h1 {
+    font-size: 1.5rem;
+    margin-bottom: 16px;
+    color: #2c3e50;
 }
 
 #cookie-banner p {
-    font-size: 1rem;
-    color: #5a6c7d;
+    font-size: 0.95rem;
+    color: #555;
     line-height: 1.6;
-    margin: 0 0 24px 0;
-    text-align: left;
-    font-weight: 400;
+    margin-bottom: 24px;
 }
 
-#cookie-banner a {
-    color: #3498DB;
-    font-weight: 500;
-    text-decoration: none;
-    transition: all 0.2s ease;
-    position: relative;
-}
-
-#cookie-banner a:hover {
-    color: #2980B9;
-    text-decoration: none;
-}
-
-#cookie-banner a::after {
-    content: '';
-    position: absolute;
-    bottom: -2px;
-    left: 0;
-    width: 0;
-    height: 2px;
-    background: #3498DB;
-    transition: width 0.2s ease;
-}
-
-#cookie-banner a:hover::after {
+#accept-cookies {
     width: 100%;
-}
-
-#cookie-banner button {
-    font-family: 'Roboto', sans-serif;
-    font-size: 1rem;
-    font-weight: 500;
-    background: linear-gradient(135deg, #3498DB 0%, #2980B9 100%);
+    padding: 12px;
+    background-color: #2ecc71;
     color: white;
-    padding: 14px 32px;
     border: none;
-    border-radius: 8px;
+    border-radius: 6px;
+    font-weight: 600;
     cursor: pointer;
-    width: 100%;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
-    position: relative;
-    overflow: hidden;
+    transition: background-color 0.2s;
 }
 
-#cookie-banner button::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-    transition: left 0.5s ease;
+#accept-cookies:hover {
+    background-color: #27ae60;
 }
 
-#cookie-banner button:hover {
-    background: linear-gradient(135deg, #2980B9 0%, #1f5f8b 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
-}
-
-#cookie-banner button:hover::before {
-    left: 100%;
-}
-
-#cookie-banner button:active {
-    transform: translateY(0);
-    box-shadow: 0 2px 8px rgba(52, 152, 219, 0.3);
+.hidden {
+    display: none !important;
 }

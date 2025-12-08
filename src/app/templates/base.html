@@ -1,55 +1,42 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Data Mirroring Dashboard - A tool for analyzing and visualizing social media data.">
-    
+    <meta name="description"
+        content="Data Mirroring Dashboard - A tool for analyzing and visualizing social media data.">
+
     <title>{% block title %}Data Mirroring Dashboard{% endblock %}</title>
 
     <!-- Link to local Roboto stylesheet -->
-    <link
-        href="{{ url_for('static', filename='fonts/roboto.css') }}"
-        rel="stylesheet">
+    <link href="{{ url_for('static', filename='fonts/roboto.css') }}" rel="stylesheet">
 
     <!-- Updated Font Awesome with SRI -->
-    <link
-        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
-        rel="stylesheet"
-        integrity="sha384-5e2ESR8Ycmos6g3gAKr1Jvwye8sW4U1u/cAKulfVJnkakCcMqhOudbtPnvJ+nbv7"
-        crossorigin="anonymous">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet"
+        integrity="sha384-5e2ESR8Ycmos6g3gAKr1Jvwye8sW4U1u/cAKulfVJnkakCcMqhOudbtPnvJ+nbv7" crossorigin="anonymous">
 
     <!-- Add Google Fonts for fancy cursive title -->
-    <link 
-        href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" 
-        rel="stylesheet"
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet"
         nonce="{{ csp_nonce }}">
 
     <!-- Link to the main local style.css -->
-    <link
-        href="{{ url_for('static', filename='css/style.css') }}"
-        rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
 
     <!-- Include DOMPurify from a trusted CDN -->
-    <script
-    src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/2.4.0/purify.min.js"
-    integrity="sha384-Tsl3d5pUAO7a13enIvSsL3O0/95nsthPJiPto5NtLuY8w3+LbZOpr3Fl2MNmrh1E"
-    crossorigin="anonymous"
-    defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/2.4.0/purify.min.js"
+        integrity="sha384-Tsl3d5pUAO7a13enIvSsL3O0/95nsthPJiPto5NtLuY8w3+LbZOpr3Fl2MNmrh1E" crossorigin="anonymous"
+        defer></script>
 
     <!-- End Session Button Handler -->
-    <script 
-        src="{{ url_for('static', filename='js/end_session.js') }}" 
-        nonce="{{ csp_nonce }}" 
-        defer></script>
-    
-    <!-- Session Cleanup Handler -->
-    <script 
-        src="{{ url_for('static', filename='js/session_cleanup.js') }}" 
-        nonce="{{ csp_nonce }}" 
-        defer></script>
+    <script src="{{ url_for('static', filename='js/end_session.js') }}" nonce="{{ csp_nonce }}" defer></script>
 
+    <!-- Session Cleanup Handler -->
+    <script src="{{ url_for('static', filename='js/session_cleanup.js') }}" nonce="{{ csp_nonce }}" defer></script>
+
+    {% block head %}{% endblock %}
 </head>
+
 <body>
 
     <!-- Header with Navigation -->
@@ -75,7 +62,8 @@
     <!-- Footer Section -->
     <footer>
         <p class="copyright-text">&copy; 2024 Data Mirroring Project</p>
-    </footer>    
+    </footer>
 
 </body>
+
 </html>
