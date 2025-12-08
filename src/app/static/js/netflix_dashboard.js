@@ -115,13 +115,6 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        if (csvFile.size > MAX_FILE_SIZE) {
-            showError(`File is too large. Maximum size is 50MB. (Selected: ${(csvFile.size / 1024 / 1024).toFixed(2)}MB)`);
-            folderInput.value = '';
-            showLoading(false);
-            return;
-        }
-
         const reader = new FileReader();
         reader.onload = function (event) {
             const csvText = event.target.result;
@@ -409,10 +402,5 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-
-        // Revoke the Object URL to avoid memory leaks
-        setTimeout(() => {
-            URL.revokeObjectURL(url);
-        }, 100);
     }
 });
