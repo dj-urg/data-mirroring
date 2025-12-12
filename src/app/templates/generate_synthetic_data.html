@@ -1,200 +1,136 @@
 {% extends 'base.html' %}
 
-{% block title %}Generate Test Data{% endblock %}
+{% block title %}Generate Settings{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-    <h2 class="text-center mb-4">Instagram Test Data Generator</h2>
-    <div class="text-center mb-4">
-        <img src="https://img.icons8.com/?size=100&id=JDUrz7Vsww3q&format=png&color=000000" class="img-fluid" alt="Instagram logo">
-    </div>
+<div class="container">
+    <h2 class="center">Generate Synthetic Data</h2>
+    <p class="center">Create realistic mock data for your analytics testing</p>
 
-    <div class="card mb-4">
-        <div class="card-body">
-            <form id="personaForm">
-                <!-- Add CSRF token -->
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                
-                <!-- Hidden inputs for form data -->
-                <input type="hidden" id="personaType" name="personaType" value="traveler">
-                <input type="hidden" id="activityLevel" name="activityLevel" value="medium">
-                <input type="hidden" id="outputFilename" name="outputFilename" value="liked_posts.json">
-                
-                <!-- Section 1: Instagram Persona -->
-                <div class="card mb-4">
-                    <div class="card-header persona-header">
-                        <h3 class="card-title">Instagram Persona</h3>
-                        <p class="text-muted mb-0">Choose a profile type for synthetic data generation</p>
-                    </div>
-                    <div class="card-body">
-                        <div class="persona-cards">
-                            <div class="persona-card" data-value="career">
-                                <div class="persona-card-inner">
-                                    <div class="persona-icon">
-                                        <i class="fas fa-briefcase"></i>
-                                    </div>
-                                    <div class="persona-label">Career Professional</div>
-                                </div>
-                            </div>
-                            
-                            <div class="persona-card" data-value="fitness">
-                                <div class="persona-card-inner">
-                                    <div class="persona-icon">
-                                        <i class="fas fa-dumbbell"></i>
-                                    </div>
-                                    <div class="persona-label">Fitness Enthusiast</div>
-                                </div>
-                            </div>
-                            
-                            <div class="persona-card selected" data-value="traveler">
-                                <div class="persona-card-inner">
-                                    <div class="persona-icon">
-                                        <i class="fas fa-plane"></i>
-                                    </div>
-                                    <div class="persona-label">Travel Blogger</div>
-                                </div>
-                            </div>
-                            
-                            <div class="persona-card" data-value="foodie">
-                                <div class="persona-card-inner">
-                                    <div class="persona-icon">
-                                        <i class="fas fa-utensils"></i>
-                                    </div>
-                                    <div class="persona-label">Food & Cooking Lover</div>
-                                </div>
-                            </div>
-                            
-                            <div class="persona-card" data-value="techie">
-                                <div class="persona-card-inner">
-                                    <div class="persona-icon">
-                                        <i class="fas fa-laptop-code"></i>
-                                    </div>
-                                    <div class="persona-label">Tech Enthusiast</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+    <form id="personaForm" class="center">
+        <!-- Add CSRF token -->
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-                <!-- Activity Level Section -->
-                <div class="card mb-4">
-                    <div class="card-header activity-header">
-                        <h3 class="card-title">Activity Level</h3>
-                        <p class="text-muted mb-0">Choose how active the synthetic user profile should be</p>
-                    </div>
-                    <div class="card-body">
-                        <div class="activity-cards">
-                            <div class="activity-card" data-value="low">
-                                <div class="activity-card-inner">
-                                    <div class="activity-icon">
-                                        <i class="fas fa-battery-quarter"></i>
-                                    </div>
-                                    <div class="activity-content">
-                                        <div class="activity-label">Low</div>
-                                        <div class="activity-description">Occasional User</div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="activity-card selected" data-value="medium">
-                                <div class="activity-card-inner">
-                                    <div class="activity-icon">
-                                        <i class="fas fa-battery-half"></i>
-                                    </div>
-                                    <div class="activity-content">
-                                        <div class="activity-label">Medium</div>
-                                        <div class="activity-description">Regular User</div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="activity-card" data-value="high">
-                                <div class="activity-card-inner">
-                                    <div class="activity-icon">
-                                        <i class="fas fa-battery-full"></i>
-                                    </div>
-                                    <div class="activity-content">
-                                        <div class="activity-label">High</div>
-                                        <div class="activity-description">Power User</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Output Filename Section -->
-                <div class="card mb-4">
-                    <div class="card-header output-header">
-                        <h3 class="card-title">Output Filename</h3>
-                        <p class="text-muted mb-0">Select the name for the generated JSON file</p>
-                    </div>
-                    <div class="card-body">
-                        <div class="output-cards">
-                            <div class="output-card selected" data-value="liked_posts.json">
-                                <div class="output-card-inner">
-                                    <div class="output-icon">
-                                        <i class="fas fa-heart"></i>
-                                    </div>
-                                    <div class="output-label">Liked Posts</div>
-                                </div>
-                            </div>
-                            
-                            <div class="output-card" data-value="saved_posts.json">
-                                <div class="output-card-inner">
-                                    <div class="output-icon">
-                                        <i class="fas fa-bookmark"></i>
-                                    </div>
-                                    <div class="output-label">Saved Posts</div>
-                                </div>
-                            </div>
-                            
-                            <div class="output-card" data-value="videos_watched.json">
-                                <div class="output-card-inner">
-                                    <div class="output-icon">
-                                        <i class="fas fa-play-circle"></i>
-                                    </div>
-                                    <div class="output-label">Videos Watched</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Generate Data Section -->
-                <div class="card">
-                    <div class="card-body text-center">
-                        <button type="button" id="generateButton" class="btn btn-primary btn-lg">
-                            <i class="fas fa-cog me-2"></i> Generate Data
-                        </button>
-                        <div id="loadingSpinner" class="spinner-border text-primary d-none mt-3 mx-auto" role="status">
-                            <span class="sr-only">Loading...</span>
-                        </div>
-                    </div>
-                </div>
-            </form>
+        <!-- Platform Selection -->
+        <h3 class="center">Select Platform</h3>
+        <div class="platform-options responsive-grid">
+            <label class="selection-label selected">
+                <input type="radio" name="platform" value="instagram" checked class="platform-radio">
+                <i class="fab fa-instagram platform-icon"></i> Instagram
+            </label>
+            <label class="selection-label">
+                <input type="radio" name="platform" value="youtube" class="platform-radio">
+                <i class="fab fa-youtube platform-icon"></i> YouTube
+            </label>
+            <label class="selection-label">
+                <input type="radio" name="platform" value="tiktok" class="platform-radio">
+                <i class="fab fa-tiktok platform-icon"></i> TikTok
+            </label>
+        </div>
+
+        <!-- User Persona -->
+        <h3 class="center">User Persona</h3>
+        <div class="platform-options responsive-grid">
+            <label class="selection-label">
+                <input type="radio" name="persona" value="career" class="platform-radio">
+                <i class="fas fa-briefcase platform-icon"></i> Career Pro
+            </label>
+            <label class="selection-label">
+                <input type="radio" name="persona" value="fitness" class="platform-radio">
+                <i class="fas fa-dumbbell platform-icon"></i> Fitness
+            </label>
+            <label class="selection-label selected">
+                <input type="radio" name="persona" value="traveler" checked class="platform-radio">
+                <i class="fas fa-plane platform-icon"></i> Traveler
+            </label>
+            <label class="selection-label">
+                <input type="radio" name="persona" value="foodie" class="platform-radio">
+                <i class="fas fa-utensils platform-icon"></i> Foodie
+            </label>
+            <label class="selection-label">
+                <input type="radio" name="persona" value="techie" class="platform-radio">
+                <i class="fas fa-laptop-code platform-icon"></i> Techie
+            </label>
+        </div>
+
+        <!-- Activity Level -->
+        <h3 class="center">Activity Level</h3>
+        <div class="platform-options responsive-grid">
+            <label class="selection-label">
+                <input type="radio" name="activity" value="low" class="platform-radio">
+                <span>Low</span>
+            </label>
+            <label class="selection-label selected">
+                <input type="radio" name="activity" value="medium" checked class="platform-radio">
+                <span>Medium</span>
+            </label>
+            <label class="selection-label">
+                <input type="radio" name="activity" value="high" class="platform-radio">
+                <span>High</span>
+            </label>
+        </div>
+
+        <!-- Data Type -->
+        <h3 class="center">Data Type</h3>
+        <div class="platform-options responsive-grid" id="outputOptions">
+            <!-- Instagram Options -->
+            <label class="selection-label platform-specific instagram selected">
+                <input type="radio" name="output_filename" value="liked_posts.json" checked class="platform-radio">
+                <i class="fas fa-heart platform-icon"></i> Liked Posts (liked_posts.json)
+            </label>
+            <label class="selection-label platform-specific instagram">
+                <input type="radio" name="output_filename" value="saved_posts.json" class="platform-radio">
+                <i class="fas fa-bookmark platform-icon"></i> Saved Posts (saved_posts.json)
+            </label>
+            <label class="selection-label platform-specific instagram">
+                <input type="radio" name="output_filename" value="videos_watched.json" class="platform-radio">
+                <i class="fas fa-play-circle platform-icon"></i> Watch History (videos_watched.json)
+            </label>
+
+            <!-- YouTube Options -->
+            <label class="selection-label platform-specific youtube d-none">
+                <input type="radio" name="output_filename" value="watch-history.json" class="platform-radio">
+                <i class="fas fa-history platform-icon"></i> Watch History (watch-history.json)
+            </label>
+
+            <!-- TikTok Options -->
+            <label class="selection-label platform-specific tiktok d-none">
+                <input type="radio" name="output_filename" value="user_data.json" class="platform-radio">
+                <i class="fas fa-user-circle platform-icon"></i> User Data (user_data.json)
+            </label>
+        </div>
+
+        <!-- Generate Button -->
+        <div class="center">
+            <button type="button" id="generateButton" class="button-link btn-clean">
+                Generate Synthetic Data
+            </button>
+        </div>
+
+        <!-- Loading Spinner -->
+        <div id="loadingSpinner" class="center d-none">
+            <div class="loader-overlay loader-container">
+                <div class="loader loader-element"></div>
+            </div>
+            <p>Generating data...</p>
+        </div>
+
+    </form>
+
+    <!-- Result Overlay -->
+    <div id="resultCard" class="loader-overlay result-card-overlay d-none">
+        <div class="loader-overlay-content">
+            <i class="fas fa-times close-overlay-icon" id="closeOverlayBtn"></i>
+            <i class="fas fa-check-circle success-icon-large"></i>
+            <h2 class="result-title">Data Generated!</h2>
+            <p id="statsMessage" class="result-message"></p>
+            <a id="downloadLink" href="#" class="button-link btn-download">Download File</a>
         </div>
     </div>
+</div>
 
-    <div id="resultCard" class="card mt-4 d-none">
-        <div class="card-body text-center">
-            <h2 class="mb-3">Your Data is Ready!</h2>
-            <div class="alert alert-success">
-                <p id="statsMessage" class="mb-0"></p>
-            </div>
-            <div class="text-center mt-4">
-                <a id="downloadLink" href="#" class="btn btn-success btn-lg">
-                    <i class="fas fa-download me-2"></i> Download Generated File
-                </a>
-            </div>
-        </div>
-    </div>
-
-<link rel="stylesheet" href="{{ url_for('static', filename='css/persona_selection.css') }}">
-
-<!-- Link your external JS with integrity hash -->
+<!-- Scripts -->
 <script src="{{ url_for('static', filename='js/generate_synthetic_data.js') }}"
-    integrity="sha384-lbTXN1rsEFELm9ujpJR8GAgK4Ff1RZ0nY5KVl+n8fZMDwaj8NGupTolsMvZ77h5R"
-    crossorigin="anonymous"
+    integrity="sha384-FgyZDT426KC1ApCk3YDn8QT7WHnrb5HbL3UD7UpGIVtPo3igIY4MXxrosPNNMYhe" crossorigin="anonymous"
     defer></script>
 {% endblock %}

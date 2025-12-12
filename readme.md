@@ -8,6 +8,8 @@
 [![imec-SMIT](https://img.shields.io/badge/Research-imec--SMIT-red)](https://smit.research.vub.be/en)
 
 > A privacy-first web application for transforming social media Data Download Packages (DDPs) into human-readable formats with visualizations and insights.
+>
+> This project is continiously being developped, always critically asses the outcomes.
 
 <p align="center">
   <img width="32%" alt="YouTube Dashboard" src="https://github.com/user-attachments/assets/0aec8e38-c616-447d-a58c-1e19f1c8d745" />
@@ -100,7 +102,7 @@ This Flask-based web application empowers social media users to:
 | **YouTube**   | Watch history, search history, comments, likes | JSON        |
 | **Instagram** | Posts, stories, messages, followers, likes     | JSON        |
 | **TikTok**    | Video history, likes, comments, browsing data  | JSON        |
-| **Netflix**   | Viewing history, watch patterns                | CSV        |
+| **Netflix**   | Viewing history, watch patterns                | CSV         |
 
 > **Note**: Each platform's DDP structure may vary. The application is designed to handle the most common formats as of 2025.
 
@@ -316,7 +318,6 @@ git push heroku master
 ```
 
 ---
-
 
 ## 🔒 Security & Privacy
 

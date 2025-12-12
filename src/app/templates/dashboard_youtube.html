@@ -151,7 +151,7 @@
         <h2>Top 5 Most Watched Channels Per Year</h2>
         <div class="d-flex justify-content-center">
             <img src="{{ url_for('routes.download_image', filename=plot_data) }}" alt="Top 5 Channels Per Year"
-                class="img-fluid">
+                class="img-fluid visualization-image">
         </div>
     </div>
 </div>
@@ -164,7 +164,7 @@
         <h2>Video Consumption by Month and Year</h2>
         <div class="d-flex justify-content-center">
             <img src="{{ url_for('routes.download_image', filename=month_heatmap_data) }}" alt="Month Heatmap"
-                class="img-fluid">
+                class="img-fluid visualization-image">
         </div>
     </div>
 </div>
@@ -177,7 +177,7 @@
         <h2>Video Consumption Per Day of the Week</h2>
         <div class="d-flex justify-content-center">
             <img src="{{ url_for('routes.download_image', filename=day_heatmap_data) }}" alt="Day of Week Heatmap"
-                class="img-fluid">
+                class="img-fluid visualization-image">
         </div>
     </div>
 </div>
@@ -190,7 +190,7 @@
         <h2>Video Consumption by Time of Day</h2>
         <div class="d-flex justify-content-center">
             <img src="{{ url_for('routes.download_image', filename=time_heatmap_data) }}" alt="Time of Day Heatmap"
-                class="img-fluid">
+                class="img-fluid visualization-image">
         </div>
     </div>
 </div>
@@ -200,6 +200,6 @@
 
 <!-- Link to external JS -->
 <script src="{{ url_for('static', filename='js/youtube_dashboard.js') }}"
-    integrity="sha384-InM2Ag0sbl9h92eKasEkqf+YZU7KcH3Z8E30P4OfTLZozw30f72loVIEYLYs4jkQ" crossorigin="anonymous"
+    integrity="sha384-TZ+GoegLbh7cN/hdH3rGfMIxVFGrOtKwsAw0xrPjirumP6Rm9RPmcYXw34UZeEhi" crossorigin="anonymous"
     defer></script>
 {% endblock %}

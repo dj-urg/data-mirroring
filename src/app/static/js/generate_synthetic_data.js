@@ -1,258 +1,169 @@
+// generate_synthetic_data.js
+
+// Trusted Types policy (if supported)
+let ttPolicy = null;
+if (window.trustedTypes) {
+    ttPolicy = window.trustedTypes.createPolicy('default', {
+        createHTML: (input) => DOMPurify.sanitize(input)
+    });
+} else {
+    // console.warn("Trusted Types not supported...");
+}
+
 document.addEventListener('DOMContentLoaded', function () {
-    // Elements for form submission
     const generateButton = document.getElementById('generateButton');
-    const personaTypeInput = document.getElementById('personaType');
-    const activityLevelInput = document.getElementById('activityLevel');
-    const outputFilenameInput = document.getElementById('outputFilename');
+    const loadingSpinner = document.getElementById('loadingSpinner');
     const resultCard = document.getElementById('resultCard');
     const statsMessage = document.getElementById('statsMessage');
     const downloadLink = document.getElementById('downloadLink');
-    const loadingSpinner = document.getElementById('loadingSpinner');
+    const closeOverlayBtn = document.getElementById('closeOverlayBtn');
 
-    // Ensure result card is hidden on page load
-    // No inline styles - using Bootstrap classes instead
-    resultCard.classList.add('d-none');
+    // --- Event Listeners for Platform Switching ---
+    document.querySelectorAll('input[name="platform"]').forEach(input => {
+        input.addEventListener('change', function () {
+            updateSelectionState();
+            updatePlatformVisibility(this.value);
+        });
+    });
 
-    // Setup card selection with animation
-    setupCardSelection('.persona-card', personaTypeInput);
-    setupCardSelection('.activity-card', activityLevelInput);
-    setupCardSelection('.output-card', outputFilenameInput);
-
-    // Function to handle card selection with improved animation
-    function setupCardSelection(cardSelector, hiddenInput) {
-        const cards = document.querySelectorAll(cardSelector);
-
-        cards.forEach(card => {
-            card.addEventListener('click', function () {
-                // Remove selected class from all cards in the group with animation
-                cards.forEach(c => {
-                    if (c.classList.contains('selected')) {
-                        c.classList.add('unselecting');
-                        setTimeout(() => {
-                            c.classList.remove('selected');
-                            c.classList.remove('unselecting');
-                        }, 200);
-                    }
-                });
-
-                // Add selected class to clicked card with animation
-                this.classList.add('selecting');
-                setTimeout(() => {
-                    this.classList.add('selected');
-                    this.classList.remove('selecting');
-                }, 50);
-
-                // Update hidden input value
-                hiddenInput.value = this.dataset.value;
-            });
+    // --- Close Overlay Listener ---
+    if (closeOverlayBtn) {
+        closeOverlayBtn.addEventListener('click', function () {
+            resultCard.classList.add('d-none');
         });
     }
 
-    generateButton.addEventListener('click', async function () {
-        // Get values from hidden inputs
-        const personaType = personaTypeInput.value;
-        const activityLevel = activityLevelInput.value;
-        const outputFilename = outputFilenameInput.value;
+    // --- Event Listeners for Styling Selected States ---
+    const selectorGroups = ['persona', 'activity', 'output_filename'];
+    selectorGroups.forEach(group => {
+        document.querySelectorAll(`input[name="${group}"]`).forEach(input => {
+            input.addEventListener('change', updateSelectionState);
+        });
+    });
 
-        // Validate that selections have been made
-        if (!personaType || !activityLevel || !outputFilename) {
-            // Show a more elegant error notification
-            showNotification('Please make all selections', 'error');
+    // --- Generate Button Listener ---
+    if (generateButton) {
+        generateButton.addEventListener('click', handleGenerate);
+    }
+
+    // Initialize View
+    const checkedPlatform = document.querySelector('input[name="platform"]:checked');
+    if (checkedPlatform) {
+        updatePlatformVisibility(checkedPlatform.value);
+    }
+    updateSelectionState();
+
+    // --- Functions ---
+
+    function updateSelectionState() {
+        // Clear all selected classes
+        document.querySelectorAll('label.selection-label').forEach(lbl => {
+            lbl.classList.remove('selected');
+        });
+
+        // Add selected class to checked inputs' parents
+        document.querySelectorAll('input[type="radio"]:checked').forEach(input => {
+            const label = input.closest('label');
+            if (label) {
+                label.classList.add('selected');
+            }
+        });
+    }
+
+    function updatePlatformVisibility(platform) {
+        // Hide all platform specific output options
+        document.querySelectorAll('.platform-specific').forEach(el => {
+            el.classList.add('d-none');
+            // Check if hidden input was checked, if so, uncheck it to ensure we don't submit wrong file
+            const radio = el.querySelector('input[type="radio"]');
+            if (radio && radio.checked) {
+                radio.checked = false;
+                el.classList.remove('selected');
+            }
+        });
+
+        // Show options for the selected platform
+        const visibleOptions = document.querySelectorAll(`.platform-specific.${platform}`);
+        visibleOptions.forEach(el => {
+            el.classList.remove('d-none');
+        });
+
+        // Select the first available option for this platform by default if none selected
+        const currentOutput = document.querySelector('input[name="output_filename"]:checked');
+        if (!currentOutput && visibleOptions.length > 0) {
+            const firstOption = visibleOptions[0];
+            const radio = firstOption.querySelector('input[type="radio"]');
+            if (radio) {
+                radio.checked = true;
+                updateSelectionState();
+            }
+        }
+    }
+
+    async function handleGenerate() {
+        // Collect Data directly from form
+        const form = document.getElementById('personaForm');
+        const formData = new FormData(form);
+
+        const platform = formData.get('platform');
+        const persona = formData.get('persona');
+        const activity = formData.get('activity');
+        const outputFilename = formData.get('output_filename');
+
+        if (!platform || !persona || !activity || !outputFilename) {
+            alert("Please select all options.");
             return;
         }
 
+        // UI Loading
+        generateButton.disabled = true;
+        loadingSpinner.classList.remove('d-none');
+        resultCard.classList.add('d-none');
+
         try {
-            // Add loading class to button for better UX
-            generateButton.classList.add('loading');
-            // Disable generate button and show loading spinner
-            generateButton.disabled = true;
-            generateButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Generating...';
-            loadingSpinner.classList.remove('d-none');
-            resultCard.classList.add('d-none'); // Ensure the result card is hidden during processing
+            // Map form data to API expectation
+            const payload = {
+                platform: platform,
+                persona_type: persona,
+                activity_level: activity,
+                output_filename: outputFilename
+            };
 
-            // Get CSRF token - Flask adds this to all forms
-            const csrfToken = document.querySelector('input[name="csrf_token"]') ?
-                document.querySelector('input[name="csrf_token"]').value : '';
-
-            // Make an AJAX call to the backend to generate data
             const response = await fetch('/generate_synthetic_data_api', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRFToken': csrfToken
+                    'X-CSRFToken': document.querySelector('input[name="csrf_token"]').value
                 },
-                body: JSON.stringify({
-                    persona_type: personaType,
-                    activity_level: activityLevel,
-                    output_filename: outputFilename
-                })
+                body: JSON.stringify(payload)
             });
 
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Data generation failed');
-            }
+            const data = await response.json();
 
-            const result = await response.json();
-
-            // Only show the result card if data generation was successful
-            if (result && result.status === 'success') {
-                // Get labels for the message
-                const personaLabel = getPersonaLabel(personaType);
-                const activityLabel = getActivityLabel(activityLevel);
-
-                // Update result card with appropriate message based on file type
-                if (outputFilename === 'liked_posts.json') {
-                    statsMessage.textContent = `Generated ${result.total_likes} likes for a ${personaLabel} with ${activityLabel} activity.`;
-                } else if (outputFilename === 'saved_posts.json') {
-                    statsMessage.textContent = `Generated ${result.total_saves} saves for a ${personaLabel} with ${activityLabel} activity.`;
-                } else if (outputFilename === 'videos_watched.json') {
-                    statsMessage.textContent = `Generated ${result.total_watches} video watches for a ${personaLabel} with ${activityLabel} activity.`;
+            if (response.ok) {
+                let successMsg = `Successfully generated ${data.total_items} items for ${platform}.`;
+                if (ttPolicy) {
+                    statsMessage.innerHTML = ttPolicy.createHTML(successMsg);
+                } else {
+                    statsMessage.innerHTML = DOMPurify.sanitize(successMsg);
                 }
 
-                // Setup download link with the correct route
-                downloadLink.href = `/download/${result.filename}`;
+                downloadLink.href = `/download/${data.filename}`;
+                downloadLink.download = data.filename;
 
-                // Animate the result card appearance using classes
-                resultCard.classList.add('opacity-0');
                 resultCard.classList.remove('d-none');
-                setTimeout(() => {
-                    resultCard.classList.remove('opacity-0');
-                }, 10);
 
-                // Scroll to result card with smooth animation
+                // Scroll to result
                 resultCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             } else {
-                throw new Error('Data generation returned an invalid response');
+                alert(data.error || "Generation failed.");
             }
-
         } catch (error) {
-            console.error('Error:', error);
-            // Show error in result card with animation
-            statsMessage.textContent = 'Failed to generate data: ' + error.message;
-            resultCard.classList.add('opacity-0');
-            resultCard.classList.remove('d-none');
-            resultCard.querySelector('.alert').className = 'alert alert-danger'; // Change to error styling
-            setTimeout(() => {
-                resultCard.classList.remove('opacity-0');
-            }, 10);
+            console.error("Error:", error);
+            alert("An error occurred during generation.");
         } finally {
-            // Remove loading class from button
-            generateButton.classList.remove('loading');
-            // Re-enable generate button and hide loading spinner
             generateButton.disabled = false;
-            generateButton.innerHTML = '<i class="fas fa-cog me-2"></i> Generate Data';
             loadingSpinner.classList.add('d-none');
         }
-    });
-
-    // Helper functions to get human-readable labels
-    function getPersonaLabel(value) {
-        const labels = {
-            'career': 'Career Professional',
-            'fitness': 'Fitness Enthusiast',
-            'traveler': 'Travel Blogger',
-            'foodie': 'Food & Cooking Lover',
-            'techie': 'Tech Enthusiast'
-        };
-        return labels[value] || value;
     }
-
-    function getActivityLabel(value) {
-        const labels = {
-            'low': 'low (occasional user)',
-            'medium': 'medium (regular user)',
-            'high': 'high (power user)'
-        };
-        return labels[value] || value;
-    }
-
-    // Function to show elegant notifications
-    function showNotification(message, type = 'info') {
-        // Sanitize message to prevent XSS attacks
-        const sanitizedMessage = typeof DOMPurify !== 'undefined'
-            ? DOMPurify.sanitize(message)
-            : message.replace(/[<>]/g, ''); // Basic fallback if DOMPurify not available
-
-        // Validate type to prevent XSS in className
-        const allowedTypes = ['info', 'error', 'success', 'warning'];
-        const safeType = allowedTypes.includes(type) ? type : 'info';
-
-        // Create notification element
-        const notification = document.createElement('div');
-        notification.className = `notification notification-${safeType}`;
-        notification.innerHTML = `
-            <div class="notification-icon">
-                <i class="fas fa-${safeType === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
-            </div>
-            <div class="notification-message">${sanitizedMessage}</div>
-        `;
-
-        // Add to document
-        document.body.appendChild(notification);
-
-        // Animate in
-        setTimeout(() => {
-            notification.classList.add('show');
-        }, 10);
-
-        // Remove after delay
-        setTimeout(() => {
-            notification.classList.remove('show');
-            setTimeout(() => {
-                document.body.removeChild(notification);
-            }, 300);
-        }, 4000);
-    }
-
-    // Add subtle animations to page elements
-    function addPageAnimations() {
-        // Fade in cards sequentially
-        const cards = document.querySelectorAll('.card');
-        cards.forEach((card, index) => {
-            setTimeout(() => {
-                card.classList.add('fade-in');
-            }, 100 * index);
-        });
-
-        // Subtle hover effects on cards
-        const allCards = document.querySelectorAll('.persona-card, .activity-card, .output-card');
-        allCards.forEach(card => {
-            card.addEventListener('mouseenter', function () {
-                this.classList.add('hover-effect');
-            });
-            card.addEventListener('mouseleave', function () {
-                this.classList.remove('hover-effect');
-            });
-        });
-    }
-
-    // Initialize animations
-    addPageAnimations();
 });
-
-// Helper functions for testing
-function getPersonaLabel(value) {
-    const labels = {
-        'career': 'Career Professional',
-        'fitness': 'Fitness Enthusiast',
-        'traveler': 'Travel Blogger',
-        'foodie': 'Food & Cooking Lover',
-        'techie': 'Tech Enthusiast'
-    };
-    return labels[value] || value;
-}
-
-function getActivityLabel(value) {
-    const labels = {
-        'low': 'low (occasional user)',
-        'medium': 'medium (regular user)',
-        'high': 'high (power user)'
-    };
-    return labels[value] || value;
-}
-
-// Export for Jest testing
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { getPersonaLabel, getActivityLabel };
-}
