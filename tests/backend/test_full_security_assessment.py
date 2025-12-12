@@ -71,6 +71,10 @@ def test_apply_security_headers(client):
         # Referrer-Policy
         assert headers["Referrer-Policy"] == "strict-origin-when-cross-origin"
 
+        # Deprecated Headers Check
+        # Ensure we are NOT sending deprecated Report-To header
+        assert "Report-To" not in headers, "Deprecated Report-To header detected!"
+
 
 def test_hsts_header_on_secure_request(client):
     """Assess if HSTS is applied only on secure requests."""
