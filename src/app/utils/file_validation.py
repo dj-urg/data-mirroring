@@ -255,7 +255,7 @@ def safe_save_file(file, filename=None, directory=None):
     
     return real_file_path
 
-def parse_json_file(file, max_depth=20, max_keys=1000):
+def parse_json_file(file, max_depth=20, max_keys=100000):
     """
     Safely parse a JSON file with security validations.
     

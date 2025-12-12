@@ -370,6 +370,10 @@ def process_tiktok_file(files):
         month_heatmap_name = save_image_temp_file(generate_month_heatmap(df))
         
         # Save CSV data securely
+        # Sanitize data to prevent formula injection
+        for col in df.select_dtypes(include=['object']):
+            df[col] = df[col].apply(sanitize_for_spreadsheet)
+            
         csv_content = df.to_csv(index=False, quoting=csv.QUOTE_ALL, encoding='utf-8')
         with tempfile.NamedTemporaryFile(suffix='.csv', delete=False) as temp_file:
             temp_file.write(csv_content.encode('utf-8'))
@@ -401,6 +405,10 @@ def process_tiktok_file(files):
         
         # Replace newlines to avoid breaking Excel format
         excel_df.replace(r'\n', ' ', regex=True, inplace=True)
+
+        # Sanitize data to prevent formula injection
+        for col in excel_df.select_dtypes(include=['object']):
+            excel_df[col] = excel_df[col].apply(sanitize_for_spreadsheet)
         
         # Save using openpyxl
         excel_df.to_excel(excel_file.name, index=False, engine='openpyxl')

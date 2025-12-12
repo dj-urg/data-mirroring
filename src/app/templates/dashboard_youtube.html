@@ -3,161 +3,203 @@
 {% block title %}YouTube Dashboard{% endblock %}
 
 {% block content %}
-    <!-- Inline styles moved to a <style> block with a nonce -->
-    <style nonce="{{ g.csp_nonce }}">
-        .platform-header { text-align: center; margin-bottom: 30px; }
-        .platform-title { font-size: 24px; font-weight: bold; }
-        .upload-container { padding: 15px; background-color: #f8f9fa; border-radius: 5px; }
-        .loader { display: none; margin-top: 15px; text-align: center; }
-        .d-none { display: none; }
-        .text-center { text-align: center; }
-        .btn-sm { padding: 5px 10px; font-size: 14px; }
-    </style>
+<!-- Inline styles moved to a <style> block with a nonce -->
+<style nonce="{{ g.csp_nonce }}">
+    .platform-header {
+        text-align: center;
+        margin-bottom: 30px;
+    }
 
-    <div class="platform-header text-center mb-4">
-        <img src="https://img.icons8.com/color/96/000000/youtube-play.png" alt="YouTube Logo" class="platform-logo">
-        <h1 class="platform-title">YouTube Dashboard</h1>
+    .platform-title {
+        font-size: 24px;
+        font-weight: bold;
+    }
+
+    .upload-container {
+        padding: 15px;
+        background-color: #f8f9fa;
+        border-radius: 5px;
+    }
+
+    .loader {
+        display: none;
+        margin-top: 15px;
+        text-align: center;
+    }
+
+    .d-none {
+        display: none;
+    }
+
+    .text-center {
+        text-align: center;
+    }
+
+    .btn-sm {
+        padding: 5px 10px;
+        font-size: 14px;
+    }
+</style>
+
+<div class="platform-header text-center mb-4">
+    <img src="https://img.icons8.com/color/96/000000/youtube-play.png" alt="YouTube Logo" class="platform-logo">
+    <h1 class="platform-title">YouTube Dashboard</h1>
+</div>
+
+<div class="container mt-3">
+
+    <!-- Upload Form -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <p class="upload-instructions">
+                We'd love to help you gain insights from your YouTube data! Please upload your downloaded YouTube JSON
+                files using the form below. You can include only include the following file:
+                <strong>youtube_history.json</strong>. If you are not sure where to find these files, please refer to
+                our <a href="https://github.com/dj-urg/data-mirroring/wiki/Uploading-Data-From-Digital-Platforms"
+                    target="_blank" rel="noopener noreferrer">GitHub Wiki</a> for instructions on how to upload your
+                data.
+            </p>
+            <p class="upload-instructions">
+                Once you have your files ready, simply click the <strong>Choose File</strong> button to select your
+                files (you can select multiple files at once or one after the other), then press the <strong>Add to
+                    List</strong> button to add them for analysis. To begin the analysis, press the <strong>Analyze
+                    Data</strong> button. Once your data is processed, you'll see visualizations and have the option to
+                download your data in CSV format.
+            </p>
+
+            <div class="loader-overlay d-none"></div>
+            <div class="loader d-none"></div>
+
+            <form id="uploadForm" action="{{ url_for('routes.dashboard_youtube') }}" method="post"
+                enctype="multipart/form-data">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="file" name="file" id="fileInput" accept=".json" multiple required class="form-control">
+                <button type="submit" id="uploadButton" class="btn btn-primary">Analyze Data</button>
+            </form>
+        </div>
     </div>
 
-    <div class="container mt-3">
+</div>
 
-        <!-- Upload Form -->
-        <div class="card mb-4">
-            <div class="card-body">
-                <p class="upload-instructions">
-                    We'd love to help you gain insights from your YouTube data! Please upload your downloaded YouTube JSON files using the form below. You can include only include the following file: <strong>youtube_history.json</strong>. If you are not sure where to find these files, please refer to our <a href="https://github.com/dj-urg/data-mirroring/wiki/Uploading-Data-From-Digital-Platforms" target="_blank">GitHub Wiki</a> for instructions on how to upload your data.
-                </p>
-                <p class="upload-instructions">
-                    Once you have your files ready, simply click the <strong>Choose File</strong> button to select your files (you can select multiple files at once or one after the other), then press the <strong>Add to List</strong> button to add them for analysis. To begin the analysis, press the <strong>Analyze Data</strong> button. Once your data is processed, you'll see visualizations and have the option to download your data in CSV format.
-                </p>
-                
-                <div class="loader-overlay d-none"></div>
-                <div class="loader d-none"></div>
-                
-                <form id="uploadForm" action="{{ url_for('routes.dashboard_youtube') }}" method="post" enctype="multipart/form-data">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <input type="file" name="file" id="fileInput" accept=".json" multiple required class="form-control">
-                    <button type="submit" id="uploadButton" class="btn btn-primary">Analyze Data</button>
-                </form>                       
-            </div>
-        </div>
-
-        </div>
-
-        <!-- Insights Section -->
-        {% if insights %}
-        <div class="card mt-3" id="insights">
-            <div class="card-body">
-                    <h2>Overview</h2>
-                    <p class="small-text">Total Videos Watched: <strong>{{ insights.total_videos }}</strong></p>
-                    <p class="small-text">Time Range: 
-                        <strong>{{ insights.time_frame_start }}</strong> to 
-                        <strong>{{ insights.time_frame_end }}</strong>
-                    </p>
-                </div>
-            </div>
-        </div>
-        {% endif %}
-
-        <!-- CSV Data Preview Section -->
-        {% if preview_data %}
-        <div class="card mt-3">
-            <div class="card-body">
-                <h2>CSV Data Preview (including additional variables)</h2>
-                <div class="table-responsive">
-                    <table class="table table-striped table-sm">
-                        <thead>
-                            <tr>
-                                {% for column in preview_data.columns %}
-                                <th>{{ column }}</th>
-                                {% endfor %}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for row in preview_data.rows %}
-                            <tr>
-                                {% for cell in row %}
-                                <td>{{ cell }}</td>
-                                {% endfor %}
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-        {% endif %}
-
-        <!-- CSV and Excel Download -->
-        {% if has_valid_data %}
-        <div class="card mt-3">
-            <div class="card-body text-center">
-                <p>Download your processed data in <strong>CSV or Excel format</strong>.</p>
-                <div class="d-flex justify-content-center">
-                    {% if csv_file_name %}
-                    <a href="{{ url_for('routes.download_csv', filename=csv_file_name) }}" class="btn btn-primary btn-sm mx-2">Download CSV</a>
-                    {% endif %}
-                    {% if excel_filename %}
-                    <a href="{{ url_for('routes.download_excel', filename=excel_filename) }}" class="btn btn-success btn-sm mx-2">Download Excel</a>
-                    {% endif %}
-                </div>
-            </div>
-        </div>        
-        {% endif %}
-
-        <!-- Visualization -->
-        {% if plot_data %}
-        <div class="card mt-3" id="visualization">
-            <div class="card-body text-center">
-                <h2>Top 5 Most Watched Channels Per Year</h2>
-                <div class="d-flex justify-content-center">
-                    <img src="{{ url_for('routes.download_image', filename=plot_data) }}" alt="Top 5 Channels Per Year" class="img-fluid">
-                </div>
-            </div>
-        </div>
-        {% endif %}
-
-        <!-- Month Heatmap -->
-        {% if month_heatmap_data %}
-        <div class="card mt-3" id="month-heatmap">
-            <div class="card-body text-center">
-                <h2>Video Consumption by Month and Year</h2>
-                <div class="d-flex justify-content-center">
-                    <img src="{{ url_for('routes.download_image', filename=month_heatmap_data) }}" alt="Month Heatmap" class="img-fluid">
-                </div>
-            </div>
-        </div>
-        {% endif %}
-
-        <!-- Day of Week Heatmap -->
-        {% if day_heatmap_data %}
-        <div class="card mt-3" id="day-heatmap">
-            <div class="card-body text-center">
-                <h2>Video Consumption Per Day of the Week</h2>
-                <div class="d-flex justify-content-center">
-                    <img src="{{ url_for('routes.download_image', filename=day_heatmap_data) }}" alt="Day of Week Heatmap" class="img-fluid">
-                </div>
-            </div>
-        </div>
-        {% endif %}
-        
-        <!-- Time of Day Heatmap -->
-        {% if time_heatmap_data %}
-        <div class="card mt-3" id="time-heatmap">
-            <div class="card-body text-center">
-                <h2>Video Consumption by Time of Day</h2>
-                <div class="d-flex justify-content-center">
-                    <img src="{{ url_for('routes.download_image', filename=time_heatmap_data) }}" alt="Time of Day Heatmap" class="img-fluid">
-                </div>
-            </div>
-        </div>
-        {% endif %}
-
+<!-- Insights Section -->
+{% if insights %}
+<div class="card mt-3" id="insights">
+    <div class="card-body">
+        <h2>Overview</h2>
+        <p class="small-text">Total Videos Watched: <strong>{{ insights.total_videos }}</strong></p>
+        <p class="small-text">Time Range:
+            <strong>{{ insights.time_frame_start }}</strong> to
+            <strong>{{ insights.time_frame_end }}</strong>
+        </p>
     </div>
+</div>
+</div>
+{% endif %}
 
-    <!-- Link to external JS -->
-    <script src="{{ url_for('static', filename='js/youtube_dashboard.js') }}" 
-        integrity="sha384-InM2Ag0sbl9h92eKasEkqf+YZU7KcH3Z8E30P4OfTLZozw30f72loVIEYLYs4jkQ" 
-        crossorigin="anonymous" 
-        defer></script>
+<!-- CSV Data Preview Section -->
+{% if preview_data %}
+<div class="card mt-3">
+    <div class="card-body">
+        <h2>CSV Data Preview (including additional variables)</h2>
+        <div class="table-responsive">
+            <table class="table table-striped table-sm">
+                <thead>
+                    <tr>
+                        {% for column in preview_data.columns %}
+                        <th>{{ column }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in preview_data.rows %}
+                    <tr>
+                        {% for cell in row %}
+                        <td>{{ cell }}</td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- CSV and Excel Download -->
+{% if has_valid_data %}
+<div class="card mt-3">
+    <div class="card-body text-center">
+        <p>Download your processed data in <strong>CSV or Excel format</strong>.</p>
+        <div class="d-flex justify-content-center">
+            {% if csv_file_name %}
+            <a href="{{ url_for('routes.download_csv', filename=csv_file_name) }}"
+                class="btn btn-primary btn-sm mx-2">Download CSV</a>
+            {% endif %}
+            {% if excel_filename %}
+            <a href="{{ url_for('routes.download_excel', filename=excel_filename) }}"
+                class="btn btn-success btn-sm mx-2">Download Excel</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Visualization -->
+{% if plot_data %}
+<div class="card mt-3" id="visualization">
+    <div class="card-body text-center">
+        <h2>Top 5 Most Watched Channels Per Year</h2>
+        <div class="d-flex justify-content-center">
+            <img src="{{ url_for('routes.download_image', filename=plot_data) }}" alt="Top 5 Channels Per Year"
+                class="img-fluid">
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Month Heatmap -->
+{% if month_heatmap_data %}
+<div class="card mt-3" id="month-heatmap">
+    <div class="card-body text-center">
+        <h2>Video Consumption by Month and Year</h2>
+        <div class="d-flex justify-content-center">
+            <img src="{{ url_for('routes.download_image', filename=month_heatmap_data) }}" alt="Month Heatmap"
+                class="img-fluid">
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Day of Week Heatmap -->
+{% if day_heatmap_data %}
+<div class="card mt-3" id="day-heatmap">
+    <div class="card-body text-center">
+        <h2>Video Consumption Per Day of the Week</h2>
+        <div class="d-flex justify-content-center">
+            <img src="{{ url_for('routes.download_image', filename=day_heatmap_data) }}" alt="Day of Week Heatmap"
+                class="img-fluid">
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Time of Day Heatmap -->
+{% if time_heatmap_data %}
+<div class="card mt-3" id="time-heatmap">
+    <div class="card-body text-center">
+        <h2>Video Consumption by Time of Day</h2>
+        <div class="d-flex justify-content-center">
+            <img src="{{ url_for('routes.download_image', filename=time_heatmap_data) }}" alt="Time of Day Heatmap"
+                class="img-fluid">
+        </div>
+    </div>
+</div>
+{% endif %}
+
+</div>
+
+<!-- Link to external JS -->
+<script src="{{ url_for('static', filename='js/youtube_dashboard.js') }}"
+    integrity="sha384-InM2Ag0sbl9h92eKasEkqf+YZU7KcH3Z8E30P4OfTLZozw30f72loVIEYLYs4jkQ" crossorigin="anonymous"
+    defer></script>
 {% endblock %}

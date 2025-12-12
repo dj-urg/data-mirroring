@@ -3,44 +3,46 @@
 {% block title %}Platform Selection{% endblock %}
 
 {% block content %}
-    <div class="container">
-        <h2 class="center">Select a Platform</h2>
-        <p class="center">        
-            Select the platform from which you want to visualize and convert your data. Once you've made a selection, 
-            a link to the data request page will appear. The application will process your Data Download Package (DDP), 
-            transforming it into a more user-friendly format. Please note that this application expects your data to be downloaded as JSON.
-            For more information on how to request your data, 
-            please click <a href="https://docs.google.com/document/d/1EQH0vSKQAIReHbdhfv-6OmnA3Oeh-qnvZg9CDvWhOA4/edit?tab=t.0" target="_blank">here</a>.
-        </p>        
-        <form id="platformForm" class="center">
-            <div class="platform-options">
-                <label id="youtubeLabel">
-                    <input type="radio" name="platform" value="youtube" class="platform-radio">
-                    <i class="fab fa-youtube platform-icon"></i> YouTube
-                </label>
-                <label id="instagramLabel">
-                    <input type="radio" name="platform" value="instagram" class="platform-radio">
-                    <i class="fab fa-instagram platform-icon"></i> Instagram
-                </label>
-                <label id="tiktokLabel">
-                    <input type="radio" name="platform" value="tiktok" class="platform-radio">
-                    <i class="fab fa-tiktok platform-icon"></i> TikTok
-                </label>
-                <label id="netflixLabel">
-                    <input type="radio" name="platform" value="netflix" class="platform-radio">
-                    <i class="fas fa-play-circle platform-icon netflix-red"></i> Netflix
-                </label>
-            </div>
-            <div class="center">
-                <input type="button" value="Continue" id="continueButton" class="button-link">
-            </div>
-            <p id="platformDescription" class="description"></p>
-        </form>
-    </div>
+<div class="container">
+    <h2 class="center">Select a Platform</h2>
+    <p class="center">
+        Select the platform from which you want to visualize and convert your data. Once you've made a selection,
+        a link to the data request page will appear. The application will process your Data Download Package (DDP),
+        transforming it into a more user-friendly format. Please note that this application expects your data to be
+        downloaded as JSON.
+        For more information on how to request your data,
+        please click <a
+            href="https://docs.google.com/document/d/1EQH0vSKQAIReHbdhfv-6OmnA3Oeh-qnvZg9CDvWhOA4/edit?tab=t.0"
+            target="_blank" rel="noopener noreferrer">here</a>.
+    </p>
+    <form id="platformForm" class="center">
+        <div class="platform-options">
+            <label id="youtubeLabel">
+                <input type="radio" name="platform" value="youtube" class="platform-radio">
+                <i class="fab fa-youtube platform-icon"></i> YouTube
+            </label>
+            <label id="instagramLabel">
+                <input type="radio" name="platform" value="instagram" class="platform-radio">
+                <i class="fab fa-instagram platform-icon"></i> Instagram
+            </label>
+            <label id="tiktokLabel">
+                <input type="radio" name="platform" value="tiktok" class="platform-radio">
+                <i class="fab fa-tiktok platform-icon"></i> TikTok
+            </label>
+            <label id="netflixLabel">
+                <input type="radio" name="platform" value="netflix" class="platform-radio">
+                <i class="fas fa-play-circle platform-icon netflix-red"></i> Netflix
+            </label>
+        </div>
+        <div class="center">
+            <input type="button" value="Continue" id="continueButton" class="button-link">
+        </div>
+        <p id="platformDescription" class="description"></p>
+    </form>
+</div>
 
-    <!-- Link to external JS file -->
-    <script src="{{ url_for('static', filename='js/platform-selection.js') }}" 
-        integrity="sha384-wJ3Y96cWYb2MHDVdoRZzGA1NhMZaexAjSoyNtp4nIeYnLhfowVIxLufY66VgLSbK"
-        crossorigin="anonymous"
-        defer></script>
+<!-- Link to external JS file -->
+<script src="{{ url_for('static', filename='js/platform-selection.js') }}"
+    integrity="sha384-wJ3Y96cWYb2MHDVdoRZzGA1NhMZaexAjSoyNtp4nIeYnLhfowVIxLufY66VgLSbK" crossorigin="anonymous"
+    defer></script>
 {% endblock %}

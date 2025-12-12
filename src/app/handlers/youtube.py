@@ -279,7 +279,7 @@ def generate_heatmap(day_counts):
     sns.heatmap(
         day_count_df.T, 
         annot=True, 
-        fmt="d", 
+        fmt=".0f", 
         cmap="Blues", 
         ax=ax, 
         cbar=False,
@@ -341,7 +341,7 @@ def generate_month_heatmap(df):
     sns.heatmap(
         month_counts, 
         annot=True,          # Show numbers in cells
-        fmt="d",             # Format as integers
+        fmt=".0f",             # Format as integers (even if float)
         cmap="Blues",        # Blue color map
         ax=ax,               # Use the created axis
         cbar=False,          # No color bar
@@ -407,7 +407,7 @@ def generate_time_of_day_heatmap(df):
     sns.heatmap(
         hour_count_df.T, 
         annot=True, 
-        fmt="d", 
+        fmt=".0f", 
         cmap="Blues", 
         ax=ax, 
         cbar=False,
@@ -547,6 +547,10 @@ def process_youtube_file(files):
         time_heatmap_name = save_image_temp_file(generate_time_of_day_heatmap(df))
 
         # Save CSV data securely
+        # Sanitize data to prevent formula injection
+        for col in df.select_dtypes(include=['object']):
+            df[col] = df[col].apply(sanitize_for_spreadsheet)
+
         csv_content = df.to_csv(index=False, quoting=csv.QUOTE_ALL, encoding='utf-8')
         with tempfile.NamedTemporaryFile(suffix='.csv', delete=False) as temp_file:
             temp_file.write(csv_content.encode('utf-8'))
@@ -578,6 +582,10 @@ def process_youtube_file(files):
         
         # Replace newlines to avoid breaking Excel format
         excel_df.replace(r'\n', ' ', regex=True, inplace=True)
+
+        # Sanitize data to prevent formula injection
+        for col in excel_df.select_dtypes(include=['object']):
+            excel_df[col] = excel_df[col].apply(sanitize_for_spreadsheet)
         
         # Save using openpyxl
         excel_df.to_excel(excel_file.name, index=False, engine='openpyxl')
