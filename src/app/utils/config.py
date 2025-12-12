@@ -20,7 +20,7 @@ def configure_app(app):
             MAX_CONTENT_LENGTH=16 * 1024 * 1024,
             MAX_FORM_MEMORY_SIZE=500 * 1024,  # 500KB
             MAX_FORM_PARTS=1000,
-            TRUSTED_HOSTS=['data-mirror.org', 'data-mirror-72f6ffc87917.herokuapp.com'],
+            TRUSTED_HOSTS=os.getenv('TRUSTED_HOSTS', 'data-mirror.org,data-mirror-72f6ffc87917.herokuapp.com').split(','),
         )
         app.logger.info(
             "Production configuration applied: "

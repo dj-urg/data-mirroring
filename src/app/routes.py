@@ -238,6 +238,8 @@ def dashboard_netflix():
     return render_template('dashboard_netflix.html')
 
 @routes_bp.route('/download_image/<filename>', methods=['GET'])
+@requires_authentication
+@limiter.exempt
 def download_image(filename):
     """Serve the requested image file for download and delete it after sending."""
     
@@ -298,6 +300,8 @@ def download_image(filename):
         abort(404, "File not found")
 
 @routes_bp.route('/download_csv/<filename>', methods=['GET'])
+@requires_authentication
+@limiter.exempt
 def download_csv(filename):
     """Serve the requested CSV file for download and delete it immediately after."""
 
@@ -375,7 +379,7 @@ def enter_code():
         if ACCESS_CODE_HASH and check_password_hash(ACCESS_CODE_HASH, code):
             session.clear() # Clear any existing session data to prevent fixation
             session['authenticated'] = True  # Set authenticated status in session
-            current_app.logger.info(f"Successful login from {request.remote_addr}")
+            log_security_event_safely("LOGIN_SUCCESS", f"User logged in from {request.remote_addr}", current_app.logger)
             return redirect(url_for('routes.landing_page'))
         else:
             current_app.logger.warning(f"Failed login attempt from {request.remote_addr}")
@@ -428,6 +432,8 @@ def cleanup_session():
         return jsonify({"status": "error", "message": "Cleanup failed"}), 500
 
 @routes_bp.route('/download_excel/<filename>', methods=['GET'])
+@requires_authentication
+@limiter.exempt
 def download_excel(filename):
     """Serve the requested Excel file for download and delete it immediately after."""
 
@@ -488,6 +494,8 @@ def download_excel(filename):
         abort(404, "File not found")
 
 @routes_bp.route('/download_txt/<filename>', methods=['GET'])
+@requires_authentication
+@limiter.exempt
 def download_txt(filename):
     """Serve the requested text file for download and delete it immediately after."""
 
@@ -564,69 +572,41 @@ def generate_synthetic_data_api():
         log_request_data_safely(data, current_app.logger)
         
         if not data:
-            current_app.logger.error("No JSON data received")
-            return jsonify({"error": "Invalid request data"}), 400
+            return jsonify({"error": "No data provided"}), 400
             
         persona_type = data.get('persona_type')
         activity_level = data.get('activity_level')
         output_filename = data.get('output_filename')
+        platform = data.get('platform', 'instagram') # Default to instagram
         
-        # Validate inputs
         if not all([persona_type, activity_level, output_filename]):
-            missing = []
-            if not persona_type: missing.append("persona_type")
-            if not activity_level: missing.append("activity_level")
-            if not output_filename: missing.append("output_filename")
+            return jsonify({"error": "Missing required fields"}), 400
             
-            current_app.logger.error(f"Missing parameters: {', '.join(missing)}")
-            return jsonify({"error": f"Missing required parameters: {', '.join(missing)}"}), 400
-            
-        # Get user temp directory to save the file
-        from app.utils.file_manager import get_user_temp_dir
-        temp_dir = get_user_temp_dir()
-        log_file_operation_safely("temp_dir_access", temp_dir, current_app.logger)
+        # Security: Allowlist check is done inside generate_synthetic_data
+        # We just pass the simple filename, the handler will secure it and put it in temp dir
         
-        # Ensure temp directory exists
-        os.makedirs(temp_dir, exist_ok=True)
-        
-        output_path = os.path.join(temp_dir, output_filename)
-        log_file_operation_safely("output_path_created", output_path, current_app.logger)
+        current_app.logger.info(f"Generating data for {persona_type} ({activity_level}) - {output_filename} on {platform}")
         
         # Generate the data
-        current_app.logger.info("Calling data generation function")
-        result = generate_synthetic_data(persona_type, activity_level, output_path)
+        # output_filename here is just the name like 'liked_posts.json'. 
+        # The function will return the full path if successful.
+        result = generate_synthetic_data(persona_type, activity_level, output_filename, platform=platform)
         
         if not result:
-            current_app.logger.error("Data generation function returned None")
-            return jsonify({"error": "Failed to generate data"}), 500
+            return jsonify({"error": "Failed to generate data. Security check failed or invalid parameters."}), 500
             
-        # Log success
-        current_app.logger.info("Data generation successful")
+        # The result contains stats and the data itself
+        # We need to extract the filename for the download link
+        final_filename = output_filename
+            
+        stats = result.get('stats', {})
         
-        # Count items in the result
-        if isinstance(result, dict) and "data" in result:
-            data = result["data"]
-            stats = result["stats"]
-            return jsonify({
-                "status": "success",
-                "filename": output_filename,
-                "total_saves": stats["total_saves"],
-                "total_likes": stats["total_likes"],
-                "total_watches": stats["total_watches"]
-            })
-        else:
-            # Handle legacy format
-            total_saves = len(result.get('saved_saved_media', []))
-            total_likes = len(result.get('likes_media_likes', []))
-            total_watches = len(result.get('impressions_history_videos_watched', []))
-            
-            return jsonify({
-                "status": "success",
-                "filename": output_filename,
-                "total_saves": total_saves,
-                "total_likes": total_likes,
-                "total_watches": total_watches
-            })
+        return jsonify({
+            "status": "success",
+            "filename": final_filename,
+            "total_items": stats.get('total_items', 0),
+            "stats": stats
+        })
         
     except Exception as e:
         # Log the error safely based on environment
@@ -638,6 +618,7 @@ def generate_synthetic_data_api():
 
 @routes_bp.route('/download/<filename>', methods=['GET'])
 @requires_authentication
+@limiter.exempt
 def download_generated_file(filename):
     """Serve the generated file for download."""
     # Sanitize filename to prevent directory traversal attacks

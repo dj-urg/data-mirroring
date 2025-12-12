@@ -158,23 +158,26 @@ def weighted_timestamp(base_timestamp, day_of_week):
     
     return int(dt.timestamp())
 
-def generate_synthetic_data(persona_type, activity_level, output_filename):
+def generate_synthetic_data(persona_type, activity_level, output_filename, platform='instagram'):
     """
-    Generate synthetic Instagram data based on user inputs.
+    Generate synthetic data for Instagram or YouTube based on user inputs.
     
     :param persona_type: Type of persona (career, fitness, traveler, foodie, techie)
     :param activity_level: User's activity level (low, medium, high)
     :param output_filename: Filename to save the JSON data
+    :param platform: 'instagram' or 'youtube' (default: 'instagram')
     :return: Dictionary with generated data
     """
     logger = logging.getLogger()
-    logger.info(f"Generating synthetic data: persona={persona_type}, activity={activity_level}, output={output_filename}")
+    logger.info(f"Generating synthetic data: platform={platform}, persona={persona_type}, activity={activity_level}, output={output_filename}")
     
     # 0. Security: Allowlist of valid filenames to prevent file inclusion attacks
     ALLOWED_FILENAMES = {
         'liked_posts.json',
         'saved_posts.json',
-        'videos_watched.json'
+        'videos_watched.json',
+        'watch-history.json',
+        'user_data.json'
     }
     
     # Extract just the filename (not path) and validate against allowlist
@@ -207,12 +210,6 @@ def generate_synthetic_data(persona_type, activity_level, output_filename):
     # Reassign output_filename to the secure path
     output_filename = real_output_path
     
-    # Check file permissions
-    # SECURITY: real_output_path is safe because:
-    # 1. Filename validated against allowlist (only 3 allowed values)
-    # 2. Filename sanitized with secure_filename() and os.path.basename()
-    # 3. Path validated to be within temp directory (prevents directory traversal)
-    # 4. Real path resolved to prevent symlink attacks
     try:
         # Test write permission using the secure, sanitized path
         with open(real_output_path, 'a') as test_file:
@@ -252,14 +249,12 @@ def generate_synthetic_data(persona_type, activity_level, output_filename):
         
         # Add some content from secondary interests
         for interest in secondary_interests:
-            # Add a subset of authors from secondary interest
             secondary_authors = random.sample(
                 PERSONA_CONTENT[interest]['authors'],
                 k=min(5, len(PERSONA_CONTENT[interest]['authors']))
             )
             mixed_authors.extend(secondary_authors)
             
-            # Add a subset of titles from secondary interest
             secondary_titles = random.sample(
                 PERSONA_CONTENT[interest]['titles'],
                 k=min(3, len(PERSONA_CONTENT[interest]['titles']))
@@ -276,6 +271,8 @@ def generate_synthetic_data(persona_type, activity_level, output_filename):
         saved_media = []
         media_likes = []
         videos_watched = []
+        youtube_watch_history = []
+        tiktok_videos = []
 
         start_date = datetime.datetime(START_YEAR, START_MONTH, 1, tzinfo=datetime.timezone.utc)
         current_date = start_date
@@ -340,91 +337,141 @@ def generate_synthetic_data(persona_type, activity_level, output_filename):
                         if weighted_ts:
                             timestamps.append(weighted_ts)
                 
-                # Shuffle and take what we need
                 random.shuffle(timestamps)
                 
-                # Determine which content to generate based on output filename
-                # SECURITY FIX: Use safe_filename for pattern checking
-                if 'saved_posts.json' in safe_filename:
-                    # Generate Saves
-                    for _ in range(min(num_saves, len(timestamps))):
-                        ts = timestamps.pop() if timestamps else month_start_ts
-                        title = random.choice(mixed_titles)
-                        href = random_url()
-                        saved_media.append({
-                            "title": title,
-                            "string_map_data": {
-                                "Saved on": {
-                                    "href": href,
-                                    "timestamp": ts
+                if platform == 'instagram':
+                    # Determine which content to generate based on output filename
+                    if 'saved_posts.json' in safe_filename:
+                        # Generate Saves
+                        for _ in range(min(num_saves, len(timestamps))):
+                            ts = timestamps.pop() if timestamps else month_start_ts
+                            title = random.choice(mixed_titles)
+                            href = random_url()
+                            saved_media.append({
+                                "title": title,
+                                "string_map_data": {
+                                    "Saved on": {
+                                        "href": href,
+                                        "timestamp": ts
+                                    }
                                 }
-                            }
-                        })
+                            })
+                        
+                    elif 'liked_posts.json' in safe_filename:
+                        # Generate Likes with higher probability for favorite authors
+                        for _ in range(min(num_likes, len(timestamps))):
+                            ts = timestamps.pop() if timestamps else random.randint(month_start_ts, month_end_ts - 1)
+                            
+                            if random.random() < 0.4 and favorite_authors:
+                                title = random.choice(favorite_authors)
+                            else:
+                                title = random.choice(mixed_authors)
+                                
+                            href = random_url()
+                            media_likes.append({
+                                "title": title,
+                                "string_list_data": [
+                                    {
+                                        "href": href,
+                                        "value": "Like", 
+                                        "timestamp": ts
+                                    }
+                                ]
+                            })
                     
-                elif 'liked_posts.json' in safe_filename:
-                    # Generate Likes with higher probability for favorite authors
-                    for _ in range(min(num_likes, len(timestamps))):
-                        ts = timestamps.pop() if timestamps else random.randint(month_start_ts, month_end_ts - 1)
-                        
-                        # 40% chance to like content from a favorite author
-                        if random.random() < 0.4 and favorite_authors:
-                            title = random.choice(favorite_authors)
-                        else:
-                            title = random.choice(mixed_authors)
+                    elif 'videos_watched.json' in safe_filename:
+                        # Generate Watches
+                        for _ in range(min(num_watches, len(timestamps))):
+                            ts = timestamps.pop() if timestamps else random.randint(month_start_ts, month_end_ts - 1)
                             
-                        href = random_url()
-                        media_likes.append({
-                            "title": title,
-                            "string_list_data": [
-                                {
-                                    "href": href,
-                                    "value": "Like", # Changed from emoji to text
-                                    "timestamp": ts
+                            if random.random() < 0.4 and favorite_authors:
+                                author = random.choice(favorite_authors)
+                            else:
+                                author = random.choice(mixed_authors)
+                                
+                            videos_watched.append({
+                                "string_map_data": {
+                                    "Time": {
+                                        "timestamp": ts
+                                    },
+                                    "Author": {
+                                        "value": author
+                                    }
                                 }
-                            ]
-                        })
+                            })
                 
-                elif 'videos_watched.json' in safe_filename:
-                    # Generate Watches
-                    for _ in range(min(num_watches, len(timestamps))):
-                        ts = timestamps.pop() if timestamps else random.randint(month_start_ts, month_end_ts - 1)
-                        
-                        # 40% chance to watch content from a favorite author
-                        if random.random() < 0.4 and favorite_authors:
-                            author = random.choice(favorite_authors)
-                        else:
-                            author = random.choice(mixed_authors)
+                elif platform == 'val_youtube' and 'youtube' in platform: # Handle potential flexible matching, simpler logic for exact check
+                    pass # Handled below - just using 'youtube' check in elif 
+                elif platform == 'youtube':
+                     if 'watch-history.json' in safe_filename:
+                         for _ in range(min(num_watches, len(timestamps))):
+                            ts = timestamps.pop() if timestamps else random.randint(month_start_ts, month_end_ts - 1)
                             
-                        videos_watched.append({
-                            "string_map_data": {
-                                "Time": {
-                                    "timestamp": ts
-                                },
-                                "Author": {
-                                    "value": author
-                                }
-                            }
-                        })
+                            if random.random() < 0.4 and favorite_authors:
+                                author = random.choice(favorite_authors)
+                            else:
+                                author = random.choice(mixed_authors)
+                                
+                            title = random.choice(mixed_titles)
+                            ts_iso = datetime.datetime.fromtimestamp(ts, tz=datetime.timezone.utc).isoformat()
+
+                            youtube_watch_history.append({
+                                "header": "YouTube",
+                                "title": f"Watched {title}",
+                                "titleUrl": f"https://www.youtube.com/watch?v={random_string()}",
+                                "subtitles": [{
+                                    "name": author,
+                                    "url": f"https://www.youtube.com/channel/{random_string()}"
+                                }],
+                                "time": ts_iso,
+                                "products": ["YouTube"],
+                                "activityControls": ["YouTube watch history"]
+                            })
+
+                elif platform == 'tiktok':
+                     if 'user_data.json' in safe_filename:
+                         for _ in range(min(num_watches, len(timestamps))):
+                            ts = timestamps.pop() if timestamps else random.randint(month_start_ts, month_end_ts - 1)
+                            
+                            # TikTok format: YYYY-MM-DD HH:MM:SS
+                            ts_str = datetime.datetime.fromtimestamp(ts, tz=datetime.timezone.utc).strftime('%Y-%m-%d %H:%M:%S')
+                            
+                            tiktok_videos.append({
+                                "Date": ts_str,
+                                "Link": f"https://www.tiktok.com/@user/video/{random_string(19)}"
+                            })
 
             # Move to the next month for the loop
             current_date = next_month_start_dt
 
-        # Shuffle lists to distribute entries non-chronologically (as in real data)
-        random.shuffle(saved_media)
-        random.shuffle(media_likes)
-        random.shuffle(videos_watched)
-
         # Combine into the final structure
-        # Only include relevant data based on the output filename
         final_data = {}
         
-        # SECURITY FIX: Use safe_filename for pattern checking
-        if 'saved_posts.json' in safe_filename:
-            final_data["saved_saved_media"] = saved_media
-        elif 'liked_posts.json' in safe_filename:
-            final_data["likes_media_likes"] = media_likes
-        elif 'videos_watched.json' in safe_filename:
-            final_data["impressions_history_videos_watched"] = videos_watched
+        if platform == 'instagram':
+            random.shuffle(saved_media)
+            random.shuffle(media_likes)
+            random.shuffle(videos_watched)
+            
+            if 'saved_posts.json' in safe_filename:
+                final_data["saved_saved_media"] = saved_media
+            elif 'liked_posts.json' in safe_filename:
+                final_data["likes_media_likes"] = media_likes
+            elif 'videos_watched.json' in safe_filename:
+                final_data["impressions_history_videos_watched"] = videos_watched
+                
+        elif platform == 'youtube':
+            random.shuffle(youtube_watch_history)
+            final_data = youtube_watch_history
+            
+        elif platform == 'tiktok':
+            random.shuffle(tiktok_videos)
+            final_data = {
+                "Activity": {
+                    "Favorite Videos": {
+                        "FavoriteVideoList": tiktok_videos
+                    }
+                }
+            }
 
         # Save to file - use ensure_ascii=True to handle encoding issues
         output_json = json.dumps(final_data, indent=None, ensure_ascii=True)
@@ -439,12 +486,18 @@ def generate_synthetic_data(persona_type, activity_level, output_filename):
             raise
         
         # Return statistics with the data
+        total_items = 0
+        if platform == 'instagram':
+            total_items = len(saved_media) or len(media_likes) or len(videos_watched)
+        elif platform == 'youtube':
+            total_items = len(youtube_watch_history)
+        elif platform == 'tiktok':
+            total_items = len(tiktok_videos)
+
         return {
             "data": final_data,
             "stats": {
-                "total_saves": len(saved_media),
-                "total_likes": len(media_likes),
-                "total_watches": len(videos_watched),
+                "total_items": total_items,
                 "persona_type": persona_type,
                 "activity_level": activity_level,
                 "secondary_interests": secondary_interests,

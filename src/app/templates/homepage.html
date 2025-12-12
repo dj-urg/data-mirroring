@@ -3,30 +3,39 @@
 {% block title %}Welcome to Data Mirroring{% endblock %}
 
 {% block content %}
-    <h1 class="fancy-title">Data Mirroring</h1>
+<h1 class="fancy-title">Data Mirroring</h1>
 
-    <div class="container" id="project-description">
-        <p>
-            Welcome to the Data Mirroring research project, developed by Daniel Jurg, Sarah Vis, and Ike Picone at the Vrije Universiteit Brussel as part of the 
-            <a href="https://smit.research.vub.be/en/research-areas/news-uses-strategies-engagements" target="_blank">NUSE-Unit</a>. 
-            This project aims to facilitate user reflection on social media usage through data conversion and visualization. The application transforms specific files in Data Download Packages (DDPs) provided by social media platforms like TikTok, Instagram, YouTube, and Netflix into a more human-readable format. 
-            By processing a subset of the DDPs, the application offers social media users insights into their data while also ensuring the removal of parts of the data that might contain sensitive information before possible data donation. 
-            Uploaded data, CSVs, and generated visualization are processed in-memory or saved as temporary files during your session and deleted after use of the app. 
-            While the Data Mirroring application provides initial insights into data, it is designed to export social media data in tabular format for further processing in other tools. 
-            For more information about the project, please visit our 
-            <a href="https://github.com/dj-urg/data-mirroring" target="_blank">GitHub repository</a>.
-        </p>
-        
-        <p class="privacy-notice">
-            <strong>Your data is automatically removed from our servers within 30 minutes.</strong> You can also manually remove all your data instantly using the "End Session" button in the top navigation. 
-            <a href="{{ url_for('routes.data_processing_info') }}">Learn more about our data processing</a>
-        </p>
-    </div>
+<div class="container" id="project-description">
+    <p>
+        Welcome to the Data Mirroring research project, developed by Daniel Jurg, Sarah Vis, and Ike Picone at the Vrije
+        Universiteit Brussel as part of the
+        <a href="https://smit.research.vub.be/en/research-areas/news-uses-strategies-engagements" target="_blank"
+            rel="noopener noreferrer">NUSE-Unit</a>.
+        This project aims to facilitate user reflection on social media usage through data conversion and visualization.
+        The application transforms specific files in Data Download Packages (DDPs) provided by social media platforms
+        like TikTok, Instagram, YouTube, and Netflix into a more human-readable format.
+        By processing a subset of the DDPs, the application offers social media users insights into their data while
+        also ensuring the removal of parts of the data that might contain sensitive information before possible data
+        donation.
+        Uploaded data, CSVs, and generated visualization are processed in-memory or saved as temporary files during your
+        session and deleted after use of the app.
+        While the Data Mirroring application provides initial insights into data, it is designed to export social media
+        data in tabular format for further processing in other tools.
+        For more information about the project, please visit our
+        <a href="https://github.com/dj-urg/data-mirroring" target="_blank" rel="noopener noreferrer">GitHub
+            repository</a>.
+    </p>
 
-    <div class="center">
-        <a href="{{ url_for('routes.platform_selection') }}" class="button-link">
-            Let's get started!
-        </a>
-    </div>       
+    <p class="privacy-notice">
+        <strong>Your data is automatically removed from our servers within 30 minutes.</strong> You can also manually
+        remove all your data instantly using the "End Session" button in the top navigation.
+        <a href="{{ url_for('routes.data_processing_info') }}">Learn more about our data processing</a>
+    </p>
+</div>
+
+<div class="center">
+    <a href="{{ url_for('routes.platform_selection') }}" class="button-link">
+        Let's get started!
+    </a>
+</div>
 {% endblock %}
-

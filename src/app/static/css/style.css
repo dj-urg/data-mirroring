@@ -1311,3 +1311,116 @@ p.platform-description {
     color: #0c5460;
     text-decoration: underline;
 }
+
+
+/* ========================= */
+/* Result Overlay Styles     */
+/* ========================= */
+.loader-overlay-content {
+    background: white;
+    padding: 40px;
+    border-radius: 12px;
+    text-align: center;
+    color: #2C3E50;
+    max-width: 500px;
+    position: relative;
+    /* Ensure absolute children are relative to this */
+}
+
+.close-overlay-icon {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    font-size: 1.5rem;
+    color: #95a5a6;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.close-overlay-icon:hover {
+    color: #2c3e50;
+}
+
+.success-icon-large {
+    font-size: 4rem;
+    color: #2ecc71;
+    margin-bottom: 20px;
+}
+
+.result-title {
+    margin-top: 0;
+}
+
+.result-message {
+    margin-bottom: 30px;
+}
+
+.btn-download {
+    background-color: #2ecc71;
+    color: white;
+    display: inline-block;
+    padding: 15px 30px;
+    border-radius: 5px;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.btn-download:hover {
+    background-color: #27ae60;
+}
+
+.loader-container {
+    position: relative;
+    background: none;
+    height: 50px;
+}
+
+.loader-element {
+    position: relative;
+    top: auto;
+    left: auto;
+    transform: none;
+    width: 30px;
+    height: 30px;
+    margin: 0 auto;
+    /* Center it */
+}
+
+/* Fix for CSP blocked inline styles */
+.result-card-overlay {
+    flex-direction: column !important;
+    color: white !important;
+}
+
+/* Helper for clean buttons */
+.btn-clean {
+    border: none !important;
+    cursor: pointer !important;
+}
+
+/* ========================= */
+/* Responsive Utils          */
+/* ========================= */
+@media (min-width: 768px) {
+    .responsive-grid {
+        display: flex;
+        flex-direction: row !important;
+        flex-wrap: wrap;
+        gap: 15px;
+        justify-content: center;
+    }
+
+    .responsive-grid label {
+        flex: 1 1 calc(33.333% - 20px);
+        margin: 0 !important;
+        /* Override default margin */
+        justify-content: center;
+        text-align: center;
+        min-width: 150px;
+    }
+
+    .responsive-grid label i {
+        margin-right: 8px;
+        /* Correct icon spacing */
+    }
+}

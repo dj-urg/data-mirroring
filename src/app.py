@@ -1,7 +1,6 @@
 from app import create_app
 from app.utils.logging_config import setup_logging  # Import the logging function
 import os
-print(f"Current Working Directory: {os.getcwd()}")
 
 app = create_app()
 

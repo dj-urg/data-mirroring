@@ -45,6 +45,11 @@ def apply_security_headers(response):
         f"connect-src 'self' https://data-mirror.org https://data-mirror-72f6ffc87917.herokuapp.com https://cdnjs.cloudflare.com;"  # Allow connections to both domains and CDN
     )
 
+    # Cache-Control: Prevent caching of sensitive pages
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+
     # Rest of your headers remain the same
     # ...
 
