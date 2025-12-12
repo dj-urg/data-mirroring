@@ -379,6 +379,10 @@ def enter_code():
         if ACCESS_CODE_HASH and check_password_hash(ACCESS_CODE_HASH, code):
             session.clear() # Clear any existing session data to prevent fixation
             session['authenticated'] = True  # Set authenticated status in session
+            
+            # Explicitly generate a secure session ID for the user
+            # This ensures consistent identification for rate limiting and file management
+            session['user_id'] = TemporaryFileManager.generate_secure_session_id()
             log_security_event_safely("LOGIN_SUCCESS", f"User logged in from {request.remote_addr}", current_app.logger)
             return redirect(url_for('routes.landing_page'))
         else:
