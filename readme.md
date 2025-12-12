@@ -9,7 +9,7 @@
 
 > A privacy-first web application for transforming social media Data Download Packages (DDPs) into human-readable formats with visualizations and insights.
 >
-> This project is continiously being developped, always critically asses the outcomes.
+> This project is under active development. Users are encouraged to critically assess all outcomes and results.
 
 <p align="center">
   <img width="32%" alt="YouTube Dashboard" src="https://github.com/user-attachments/assets/0aec8e38-c616-447d-a58c-1e19f1c8d745" />
