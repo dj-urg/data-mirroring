@@ -76,6 +76,11 @@
                 {{ insights.time_frame_start }} to
                 {{ insights.time_frame_end }}
             </p>
+
+            <div class="alert alert-warning mt-3" role="alert">
+                <strong>Note:</strong> Data is processed in <strong>UTC</strong>. Adjust for your local timezone if
+                needed.
+            </div>
         </div>
     </div>
     {% endif %}
@@ -170,6 +175,13 @@
     <div class="card mb-4">
         <div class="card-body text-center">
             <h2 class="mb-3">Download Your Data</h2>
+
+            <div class="alert alert-warning" role="alert">
+                <strong>Note:</strong> All timestamp data in the export is in <strong>UTC (Coordinated Universal
+                    Time)</strong>.
+                Please adjust for your local timezone if necessary.
+            </div>
+
             <div class="d-flex justify-content-center"></div>
             <a href="{{ url_for('routes.download_csv', filename=csv_file_name) }}" class="btn btn-success">
                 <i class="fas fa-download"></i> Download CSV

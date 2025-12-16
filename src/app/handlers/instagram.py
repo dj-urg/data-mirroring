@@ -461,10 +461,15 @@ def process_instagram_file(files: List[FileStorage]) -> Tuple[pd.DataFrame, str,
         
         # Keep copy with datetime objects for time-of-day analysis
         df_with_time = df.copy()
-        
-        # Convert timestamp to date for main analysis
-        df['timestamp'] = pd.to_datetime(df['timestamp']).dt.date
-        df = df.dropna(subset=['timestamp'])
+
+        # Preserve the original unix timestamp for export
+        # We assume the 'timestamp' column currently holds datetime objects (from parse_instagram_item)
+        # We convert it back to int for the 'unix_timestamp' column to be explicit
+        df['unix_timestamp'] = df['timestamp'].astype('int64') // 10**9
+
+        # Convert timestamp to date for main analysis (was overwriting 'timestamp' before)
+        df['analysis_date'] = pd.to_datetime(df['timestamp']).dt.date
+        df = df.dropna(subset=['analysis_date'])
 
         if df.empty:
              return pd.DataFrame(), "", {}, "", "", "", None, {}, False
@@ -472,15 +477,16 @@ def process_instagram_file(files: List[FileStorage]) -> Tuple[pd.DataFrame, str,
         # Insights
         insights = {
             'total_entries': len(df),
-            'time_frame_start': df['timestamp'].min(),
-            'time_frame_end': df['timestamp'].max(),
+            'time_frame_start': df['analysis_date'].min(),
+            'time_frame_end': df['analysis_date'].max(),
             'videos_watched': len(df[df['category'] == 'Videos Watched']),
             'unique_authors': df['author'].nunique()
         }
 
         # Visualize
         # Bump Chart preparation
-        df['year'] = pd.to_datetime(df['timestamp']).dt.year
+        # Use 'analysis_date' for year extraction instead of 'timestamp'
+        df['year'] = pd.to_datetime(df['analysis_date']).dt.year
         authors_df = df[df['author'] != 'Unknown']
         
         if authors_df.empty:
