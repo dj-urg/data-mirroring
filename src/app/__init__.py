@@ -65,7 +65,8 @@ def create_app(config_name=None):
     csrf.init_app(app)
 
     # Enable CORS
-    allowed_origins = os.getenv("CORS_ALLOWED_ORIGINS", "https://data-mirror-72f6ffc87917.herokuapp.com").split(",")
+    # Enable CORS
+    allowed_origins = os.getenv("CORS_ALLOWED_ORIGINS", "").split(",")
     CORS(app, resources={r"/*": {"origins": allowed_origins}})
 
     # Clean up any orphaned files from previous server sessions

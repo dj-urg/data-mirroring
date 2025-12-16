@@ -6,7 +6,8 @@ def configure_app(app):
     app.logger.info("Starting app configuration for environment: %s", FLASK_ENV)
     
     if not os.getenv('ACCESS_CODE_HASH'):
-        app.logger.warning("ACCESS_CODE_HASH is not set in environment variables! Authentication will fail.")
+        app.logger.error("ACCESS_CODE_HASH is not set in environment variables! App cannot start safely.")
+        raise ValueError("ACCESS_CODE_HASH is not set. Authentication will fail.")
 
     if FLASK_ENV == 'production':
         app.config.update(
@@ -20,7 +21,7 @@ def configure_app(app):
             MAX_CONTENT_LENGTH=16 * 1024 * 1024,
             MAX_FORM_MEMORY_SIZE=500 * 1024,  # 500KB
             MAX_FORM_PARTS=1000,
-            TRUSTED_HOSTS=os.getenv('TRUSTED_HOSTS', 'data-mirror.org,data-mirror-72f6ffc87917.herokuapp.com').split(','),
+            TRUSTED_HOSTS=os.getenv('TRUSTED_HOSTS', '').split(','),
         )
         app.logger.info(
             "Production configuration applied: "
