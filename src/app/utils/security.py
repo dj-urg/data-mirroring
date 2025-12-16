@@ -10,7 +10,8 @@ def enforce_https():
     is_production = os.getenv("FLASK_ENV") == "production" or os.getenv("DYNO")  # Heroku check
 
     # Allowed domains for secure redirection
-    ALLOWED_HOSTS = {"data-mirror.org", "data-mirror-72f6ffc87917.herokuapp.com"}
+    # Allowed domains for secure redirection
+    ALLOWED_HOSTS = set(os.getenv('TRUSTED_HOSTS', '').split(','))
 
     if is_production and request.headers.get("X-Forwarded-Proto", "http") == "http":
         parsed_url = urlparse(request.url)
@@ -31,18 +32,22 @@ def apply_security_headers(response):
     nonce = g.csp_nonce
 
     # Content-Security-Policy
+    allowed_origins = os.getenv('CORS_ALLOWED_ORIGINS', '').split(',')
+    trusted_origins_str = " ".join(allowed_origins)
+
+    # Content-Security-Policy
     response.headers["Content-Security-Policy"] = (
         f"default-src 'none'; "  # Deny all by default
         f"script-src 'self' 'nonce-{nonce}' https://cdnjs.cloudflare.com; "  # Allow scripts with nonce and from trusted CDN
         f"style-src 'self' 'nonce-{nonce}' https://cdnjs.cloudflare.com https://fonts.googleapis.com; " 
-        f"style-src-elem 'self' 'nonce-{nonce}' https://cdnjs.cloudflare.com https://data-mirror.org https://data-mirror-72f6ffc87917.herokuapp.com; "  # Add nonce here too!
+        f"style-src-elem 'self' 'nonce-{nonce}' https://cdnjs.cloudflare.com {trusted_origins_str}; "  # Add nonce here too!
         f"img-src 'self' https://img.icons8.com https://upload.wikimedia.org data:; "  # Allow trusted image sources
         f"font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com; "  # Allow trusted font sources
         f"object-src 'none'; "  # Disallow plugins like Flash or Java applets
         f"frame-ancestors 'none'; "  # Prevent embedding your site in an iframe
         f"base-uri 'self'; "  # Restrict the base URI to your site only
         f"form-action 'self'; "  # Restrict forms to submit only to your own domain
-        f"connect-src 'self' https://data-mirror.org https://data-mirror-72f6ffc87917.herokuapp.com https://cdnjs.cloudflare.com;"  # Allow connections to both domains and CDN
+        f"connect-src 'self' {trusted_origins_str} https://cdnjs.cloudflare.com;"  # Allow connections to both domains and CDN
     )
 
     # Cache-Control: Prevent caching of sensitive pages
@@ -76,7 +81,7 @@ def apply_security_headers(response):
     response.headers["Cross-Origin-Resource-Policy"] = "same-origin"
 
     # Add CORS Header to Allow Specific Origins
-    allowed_origins = ["https://data-mirror.org", "https://data-mirror-72f6ffc87917.herokuapp.com"]
+    # allowed_origins is already defined above
     origin = request.headers.get("Origin")
     if origin in allowed_origins:
         response.headers["Access-Control-Allow-Origin"] = origin
