@@ -18,8 +18,13 @@ from werkzeug.security import check_password_hash
 routes_bp = Blueprint('routes', __name__)
 
 
+
 routes_bp.before_request(enforce_https)
 routes_bp.after_request(apply_security_headers)
+
+@routes_bp.route('/robots.txt')
+def robots():
+    return current_app.send_static_file('robots.txt')
 
 @limiter.limit("10 per minute", key_func=lambda: session.get('user_id', request.remote_addr))
 @routes_bp.route('/')
