@@ -65,7 +65,9 @@ def apply_security_headers(response):
     response.headers["X-Frame-Options"] = "DENY"
 
     # Strict-Transport-Security
-    if request.is_secure:  # Apply HSTS only for HTTPS
+    # Check if request is secure OR if it's coming from a secure proxy
+    is_https = request.is_secure or request.headers.get('X-Forwarded-Proto', 'http') == 'https'
+    if is_https:  # Apply HSTS for HTTPS requests
         response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains; preload"
 
     # Referrer-Policy

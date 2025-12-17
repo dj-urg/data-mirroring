@@ -9,11 +9,19 @@ def configure_app(app):
         app.logger.error("ACCESS_CODE_HASH is not set in environment variables! App cannot start safely.")
         raise ValueError("ACCESS_CODE_HASH is not set. Authentication will fail.")
 
+    # Default to Safe Security Headers (Lax) to prevent None
+    app.config.update(
+        SESSION_COOKIE_SAMESITE='Lax',
+        REMEMBER_COOKIE_SAMESITE='Lax',
+        SESSION_COOKIE_HTTPONLY=True,
+    )
+
     if FLASK_ENV == 'production':
         app.config.update(
             SESSION_COOKIE_SECURE=True,
             SESSION_COOKIE_HTTPONLY=True,
             SESSION_COOKIE_SAMESITE='Strict',
+            REMEMBER_COOKIE_SAMESITE='Strict',
             SESSION_PERMANENT=False,
             PERMANENT_SESSION_LIFETIME=timedelta(minutes=30),
             WTF_CSRF_CHECK_REFERRER=True,
