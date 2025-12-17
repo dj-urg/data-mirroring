@@ -462,11 +462,6 @@ def process_instagram_file(files: List[FileStorage]) -> Tuple[pd.DataFrame, str,
         # Keep copy with datetime objects for time-of-day analysis
         df_with_time = df.copy()
 
-        # Preserve the original unix timestamp for export
-        # We assume the 'timestamp' column currently holds datetime objects (from parse_instagram_item)
-        # We convert it back to int for the 'unix_timestamp' column to be explicit
-        df['unix_timestamp'] = df['timestamp'].astype('int64') // 10**9
-
         # Convert timestamp to date for main analysis (was overwriting 'timestamp' before)
         df['analysis_date'] = pd.to_datetime(df['timestamp']).dt.date
         df = df.dropna(subset=['analysis_date'])
@@ -519,11 +514,17 @@ def process_instagram_file(files: List[FileStorage]) -> Tuple[pd.DataFrame, str,
         }
 
         # CSV Export
-        for col in df.select_dtypes(include=['object']):
-            df[col] = df[col].apply(sanitize_for_spreadsheet)
+        df_csv = df.copy()
+        
+        # Add Unix timestamp ONLY for export
+        if 'timestamp' in df_csv.columns:
+             df_csv['unix_timestamp'] = df_csv['timestamp'].astype('int64') // 10**9
+             
+        for col in df_csv.select_dtypes(include=['object']):
+            df_csv[col] = df_csv[col].apply(sanitize_for_spreadsheet)
             
         with tempfile.NamedTemporaryFile(suffix='.csv', delete=False) as temp_file:
-            temp_file.write(df.to_csv(index=False).encode('utf-8'))
+            temp_file.write(df_csv.to_csv(index=False).encode('utf-8'))
             temp_file_path = temp_file.name
             os.chmod(temp_file_path, 0o600)
             
