@@ -88,8 +88,7 @@ def apply_security_headers(response: Response) -> Response:
     # X-Frame-Options
     response.headers["X-Frame-Options"] = "DENY"
 
-    # Strict-Transport-Security
-    # Check if the request is secure OR if it's coming from a secure proxy
+    # Check if request is secure OR if it's coming from a secure proxy
     is_https = request.is_secure or request.headers.get('X-Forwarded-Proto', 'http') == 'https'
     if is_https:  # Apply HSTS for HTTPS requests
         response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains; preload"
