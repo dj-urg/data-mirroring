@@ -19,10 +19,10 @@ def setup_logging(app):
         datefmt="%Y-%m-%d %H:%M:%S"
     )
 
-    # Ensure logs directory exists
+    # Ensure the logs in the directory exists
     if not os.path.exists("logs"):
         try:
-            os.makedirs("logs", exist_ok=True)  # Add exist_ok=True to prevent error if directory exists
+            os.makedirs("logs", exist_ok=True)  # Add exist_ok=True to prevent error if the directory exists
         except Exception as e:
             app.logger.warning(f"Could not create logs directory: {e}")
 
@@ -159,7 +159,7 @@ def log_file_operation_safely(operation: str, file_path: str, logger=None) -> No
 
 def log_security_event_safely(event_type: str, details: str = "", logger=None) -> None:
     """
-    Log security events with appropriate detail level.
+    Log security events with an appropriate detail level.
     
     Args:
         event_type: Type of security event
@@ -174,7 +174,7 @@ def log_security_event_safely(event_type: str, details: str = "", logger=None) -
 def log_error_safely(error: Exception, context: str = "", logger=None) -> None:
     """
     Log errors safely without exposing sensitive information.
-    In production, only logs error type and sanitized message.
+    In production, only logs the error type and sanitized message.
     In development, logs full details for debugging.
     
     Args:

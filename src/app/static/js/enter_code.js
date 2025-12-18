@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", function () {
-    // Apply styles to body
+    // Apply styles to the body
     document.body.style.fontFamily = "'Helvetica', Arial, sans-serif";
     document.body.style.backgroundColor = "#f4f4f4"; // Light background
     document.body.style.display = "flex";
@@ -8,7 +8,7 @@ document.addEventListener("DOMContentLoaded", function () {
     document.body.style.height = "100vh"; // Full height
     document.body.style.margin = "0";
 
-    // Apply styles to container
+    // Apply styles to the container
     const container = document.querySelector(".container");
     if (container) {
         container.style.backgroundColor = "white"; // White background for form
@@ -20,14 +20,14 @@ document.addEventListener("DOMContentLoaded", function () {
         container.style.width = "100%";
     }
 
-    // Apply styles to h1
+    // Apply styles to the h1
     const h1s = document.querySelectorAll("h1");
     h1s.forEach((h1) => {
         h1.style.color = "#2C3E50";
         h1.style.marginBottom = "20px";
     });
 
-    // Apply styles to input[type="text"]
+    // Apply styles to the input[type="text"]
     const inputText = document.querySelector('input[type="text"]');
     if (inputText) {
         inputText.style.width = "100%";
@@ -58,7 +58,7 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
 
-    // Apply styles to error message
+    // Apply styles to the error message
     const errorMessage = document.querySelector(".error-message");
     if (errorMessage) {
         errorMessage.style.color = "red";
@@ -73,16 +73,16 @@ document.addEventListener("DOMContentLoaded", function () {
     // Check if cookies have already been accepted
     if (localStorage.getItem("cookiesAccepted")) {
         cookieBanner.classList.add("hidden"); // Hide cookie banner
-        accessCodeSection.classList.remove("hidden"); // Show access code section
+        accessCodeSection.classList.remove("hidden"); // Show access to the code section
     } else {
         cookieBanner.classList.remove("hidden"); // Show cookie banner
-        accessCodeSection.classList.add("hidden"); // Hide access code section
+        accessCodeSection.classList.add("hidden"); // Hide access to the code section
     }
 
     // When "Accept" is clicked, save consent and show the access code section
     acceptCookiesButton.addEventListener("click", function () {
         localStorage.setItem("cookiesAccepted", "true");
         cookieBanner.classList.add("hidden"); // Hide cookie banner
-        accessCodeSection.classList.remove("hidden"); // Show access code section
+        accessCodeSection.classList.remove("hidden"); // Show access to the code section
     });
 });

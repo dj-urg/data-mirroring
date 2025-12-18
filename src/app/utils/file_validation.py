@@ -8,15 +8,6 @@ import magic  # python-magic package for MIME type detection
 logger = logging.getLogger(__name__)
 
 def sanitize_filename(filename):
-    """
-    Sanitize a filename to prevent path traversal and other security issues.
-    
-    Args:
-        filename (str): The original filename
-        
-    Returns:
-        str: A sanitized filename
-    """
     if not filename:
         return None
         
@@ -29,25 +20,12 @@ def sanitize_filename(filename):
     return sanitized
     
 def sanitize_for_spreadsheet(value):
-    """
-    Sanitize a value to prevent CSV Injection (Formula Injection).
-    If a value starts with =, +, -, or @, prepend a single quote.
-    """
     if isinstance(value, str) and value.startswith(('=', '+', '-', '@')):
         return f"'{value}"
     return value
 
 def validate_file_size(file, max_size_mb=16):
-    """
-    Check if a file exceeds the maximum allowed size.
-    
-    Args:
-        file: File-like object
-        max_size_mb (int): Maximum file size in megabytes
-        
-    Returns:
-        bool: True if file is valid, False otherwise
-    """
+
     max_size_bytes = max_size_mb * 1024 * 1024
     
     # Get file size
@@ -62,16 +40,7 @@ def validate_file_size(file, max_size_mb=16):
     return True
 
 def validate_file_extension(filename, allowed_extensions=None):
-    """
-    Check if a file has an allowed extension.
-    
-    Args:
-        filename (str): The filename to check
-        allowed_extensions (list): List of allowed extensions (without dot)
-        
-    Returns:
-        bool: True if extension is allowed or no restrictions specified
-    """
+
     if not allowed_extensions:
         return True
         
@@ -87,16 +56,7 @@ def validate_file_extension(filename, allowed_extensions=None):
     return True
 
 def detect_content_type(file, max_check_size=8192):
-    """
-    Detect the MIME content type of a file.
-    
-    Args:
-        file: File-like object
-        max_check_size (int): Maximum number of bytes to read for detection
-        
-    Returns:
-        str: Detected MIME type
-    """
+
     # Save current position
     current_pos = file.tell()
     
@@ -113,16 +73,7 @@ def detect_content_type(file, max_check_size=8192):
     return content_type
 
 def validate_content_type(file, expected_types):
-    """
-    Validate that a file's actual content matches expected types.
-    
-    Args:
-        file: File-like object
-        expected_types (list): List of allowed MIME types
-        
-    Returns:
-        bool: True if content type is valid
-    """
+
     detected_type = detect_content_type(file)
     
     if detected_type not in expected_types:
@@ -132,15 +83,7 @@ def validate_content_type(file, expected_types):
     return True
 
 def get_mime_types_for_extension(ext):
-    """
-    Get expected MIME types for a given file extension.
-    
-    Args:
-        ext (str): File extension without dot
-        
-    Returns:
-        list: List of expected MIME types
-    """
+
     mime_map = {
         # Data formats
         'json': ['application/json', 'text/plain'],
@@ -166,18 +109,7 @@ def get_mime_types_for_extension(ext):
     return mime_map.get(ext.lower(), [])
 
 def validate_file(file, allowed_extensions=None, max_size_mb=16, validate_mime=True):
-    """
-    Comprehensive file validation.
-    
-    Args:
-        file: File-like object with filename attribute
-        allowed_extensions (list): List of allowed extensions
-        max_size_mb (int): Maximum file size in megabytes
-        validate_mime (bool): Whether to validate MIME type
-        
-    Returns:
-        tuple: (is_valid, sanitized_filename, error_message)
-    """
+
     if not file or not hasattr(file, 'filename') or file.filename == '':
         return False, None, "No file provided"
     
@@ -208,17 +140,7 @@ def validate_file(file, allowed_extensions=None, max_size_mb=16, validate_mime=T
     return True, sanitized_filename, None
 
 def safe_save_file(file, filename=None, directory=None):
-    """
-    Safely save a file to the specified directory with proper security checks.
-    
-    Args:
-        file: File-like object
-        filename (str): Optional sanitized filename (if not provided, will sanitize file.filename)
-        directory (str): Target directory (if not provided, will use user temp dir)
-        
-    Returns:
-        str: Full path to the saved file
-    """
+
     from app.utils.file_manager import get_user_temp_dir
     
     # Use sanitized filename or sanitize the original
@@ -256,17 +178,7 @@ def safe_save_file(file, filename=None, directory=None):
     return real_file_path
 
 def parse_json_file(file, max_depth=20, max_keys=100000):
-    """
-    Safely parse a JSON file with security validations.
-    
-    Args:
-        file: File-like object
-        max_depth (int): Maximum nesting depth to prevent stack overflow attacks
-        max_keys (int): Maximum number of keys to prevent DoS attacks
-        
-    Returns:
-        tuple: (parsed_data, error_message)
-    """
+
     # Reset file pointer
     file.seek(0)
     
@@ -309,20 +221,7 @@ def parse_json_file(file, max_depth=20, max_keys=100000):
         return None, "Error processing JSON file"
 
 def process_uploaded_file(file, allowed_extensions=None, max_size_mb=16):
-    """
-    Process an uploaded file with validation and sanitization.
-    
-    Args:
-        file: File-like object from request.files
-        allowed_extensions (list): List of allowed file extensions
-        max_size_mb (int): Maximum file size in megabytes
-        
-    Returns:
-        tuple: (success, data_or_path, error_message)
-            - success: Boolean indicating success
-            - data_or_path: Parsed data (for JSON) or file path (for other types)
-            - error_message: Error message if not successful
-    """
+
     # Validate the file
     is_valid, sanitized_filename, error = validate_file(file, allowed_extensions, max_size_mb)
     

@@ -210,7 +210,7 @@ $env:FLASK_ENV="development"
 #### Local Development
 
 ```bash
-python src/app.py
+python src/run.py
 ```
 
 The application will start on `http://localhost:5001` by default.
@@ -224,7 +224,7 @@ gunicorn --bind 0.0.0.0:5001 'src.app:create_app()'
 #### Custom Port
 
 ```bash
-PORT=8080 python src/app.py
+PORT=8080 python src/run.py
 ```
 
 ---
@@ -383,7 +383,7 @@ We welcome contributions from the community! Here's how you can help:
 
    ```bash
    python -m pytest  # If tests are available
-   python src/app.py  # Manual testing
+   python src/run.py  # Manual testing
    ```
 5. **Commit your changes**
 
