@@ -15,12 +15,6 @@
         font-weight: bold;
     }
 
-    .upload-container {
-        padding: 15px;
-        background-color: #f8f9fa;
-        border-radius: 5px;
-    }
-
     .loader {
         display: none;
         margin-top: 15px;
@@ -92,7 +86,6 @@
             <strong>{{ insights.time_frame_end }}</strong>
         </p>
     </div>
-</div>
 </div>
 {% endif %}
 
@@ -196,9 +189,7 @@
 </div>
 {% endif %}
 
-</div>
-
-<!-- Link to external JS -->
+    <!-- Link to external JS -->
 <script src="{{ url_for('static', filename='js/youtube_dashboard.js') }}"
     integrity="sha384-TZ+GoegLbh7cN/hdH3rGfMIxVFGrOtKwsAw0xrPjirumP6Rm9RPmcYXw34UZeEhi" crossorigin="anonymous"
     defer></script>

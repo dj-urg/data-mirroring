@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Show confirmation dialog
             const confirmed = confirm('This will immediately delete all your data and end your session. Continue?');
             
-            // If user cancels, prevent navigation
+            // If the user cancels, prevent navigation
             if (!confirmed) {
                 e.preventDefault();
             }

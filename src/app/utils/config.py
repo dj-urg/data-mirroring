@@ -17,6 +17,19 @@ def configure_app(app):
     )
 
     if FLASK_ENV == 'production':
+        # Normalize TRUSTED_HOSTS (lowercase, strip, strip trailing dot, IDNA)
+        raw_hosts = [h for h in os.getenv('TRUSTED_HOSTS', '').split(',') if h.strip()]
+        normalized_hosts = []
+        for h in raw_hosts:
+            hh = h.strip().lower()
+            if hh.endswith('.'):
+                hh = hh[:-1]
+            try:
+                hh = hh.encode('idna').decode('ascii')
+            except UnicodeError:
+                pass
+            normalized_hosts.append(hh)
+
         app.config.update(
             SESSION_COOKIE_SECURE=True,
             SESSION_COOKIE_HTTPONLY=True,
@@ -29,7 +42,7 @@ def configure_app(app):
             MAX_CONTENT_LENGTH=16 * 1024 * 1024,
             MAX_FORM_MEMORY_SIZE=500 * 1024,  # 500KB
             MAX_FORM_PARTS=1000,
-            TRUSTED_HOSTS=os.getenv('TRUSTED_HOSTS', '').split(','),
+            TRUSTED_HOSTS=normalized_hosts,
         )
         app.logger.info(
             "Production configuration applied: "

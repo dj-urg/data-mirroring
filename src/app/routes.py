@@ -12,12 +12,9 @@ import os
 from werkzeug.utils import secure_filename
 import re
 from flask import flash
-import hmac
 from werkzeug.security import check_password_hash
 
 routes_bp = Blueprint('routes', __name__)
-
-
 
 routes_bp.before_request(enforce_https)
 routes_bp.after_request(apply_security_headers)
@@ -289,7 +286,7 @@ def download_image(filename):
 
             return response
         except Exception as e:
-            # Try to cleanup on error too
+            # Try to clean up on error too
             try:
                 if os.path.exists(temp_file_path):
                     os.remove(temp_file_path)
@@ -346,7 +343,7 @@ def download_csv(filename):
 
             return response
         except Exception as e:
-            # Try to cleanup on error too
+            # Try to clean up on error too
             try:
                 if os.path.exists(temp_file_path):
                     TemporaryFileManager.mark_file_for_cleanup(temp_file_path)
@@ -569,8 +566,6 @@ def download_txt(filename):
 @limiter.limit("10 per minute")
 def generate_synthetic_data_api():
     from app.handlers.generate_synthetic_data import generate_synthetic_data
-    import json
-    import traceback
     from flask import jsonify, request, current_app
     
     try:

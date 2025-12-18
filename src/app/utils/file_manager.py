@@ -2,10 +2,8 @@ import os
 import time
 import tempfile
 import shutil
-import uuid
 import json
-import logging
-from flask import session, current_app, g
+from flask import session, current_app
 import secrets
 
 class TemporaryFileManager:
@@ -147,12 +145,12 @@ class TemporaryFileManager:
             return None
 
     @classmethod
-    def cleanup_temp_files(cls, exception=None):
+    def cleanup_temp_files(cls, _exception=None):
         """
         Enhanced cleanup with additional security checks.
         
         Args:
-            exception (Exception, optional): Exception from request processing
+            _exception (Exception, optional): Exception from request processing (unused; required by teardown signature)
         """
         temp_dir = cls.get_user_temp_dir(create=False)
         current_time = time.time()
@@ -219,6 +217,42 @@ class TemporaryFileManager:
             current_app.logger.error(f"Secure file deletion failed: {e}")
 
     @classmethod
+    def _secure_purge_directory(cls, dir_path: str, *, on_error=None, remove_self: bool = True) -> None:
+        """
+        Securely purge all contents of a directory and optionally remove the directory itself.
+
+        Args:
+            dir_path (str): Target directory to purge.
+            on_error (Callable[[str], None] | None): Optional callback for error reporting.
+                If provided, called with a human-readable message on any per-file error.
+            remove_self (bool): When True, remove the directory after purging contents.
+        """
+        try:
+            if not os.path.isdir(dir_path):
+                return
+
+            for entry in os.listdir(dir_path):
+                file_path = os.path.join(dir_path, entry)
+                try:
+                    if os.path.isfile(file_path):
+                        cls._secure_file_delete(file_path)
+                    elif os.path.isdir(file_path):
+                        shutil.rmtree(file_path, ignore_errors=True)
+                except Exception as e:
+                    if on_error:
+                        on_error(f"Error deleting {file_path}: {e}")
+
+            if remove_self:
+                shutil.rmtree(dir_path, ignore_errors=True)
+        except Exception as e:
+            # Fallback reporting if a broader failure occurs and no callback supplied
+            if on_error:
+                on_error(f"Error purging directory {dir_path}: {e}")
+            else:
+                # Avoid relying on Flask logger here; this helper is used outside app context too
+                print(f"Error purging directory {dir_path}: {e}")
+
+    @classmethod
     def cleanup_all_temp_files(cls):
         """
         Clean up ALL temporary files on server startup.
@@ -236,19 +270,12 @@ class TemporaryFileManager:
                     
                     try:
                         if os.path.isdir(user_temp_dir):
-                            # Securely delete all files in the directory
-                            for file_item in os.listdir(user_temp_dir):
-                                file_path = os.path.join(user_temp_dir, file_item)
-                                try:
-                                    if os.path.isfile(file_path):
-                                        cls._secure_file_delete(file_path)
-                                    elif os.path.isdir(file_path):
-                                        shutil.rmtree(file_path, ignore_errors=True)
-                                except Exception as e:
-                                    print(f"Error deleting {file_path}: {e}")
-                            
-                            # Remove the user directory itself
-                            shutil.rmtree(user_temp_dir, ignore_errors=True)
+                            # Securely purge the directory and remove it
+                            cls._secure_purge_directory(
+                                user_temp_dir,
+                                on_error=lambda msg: print(msg),
+                                remove_self=True,
+                            )
                             cleaned_count += 1
                             print(f"Cleaned up orphaned user directory: {item}")
                     
@@ -409,20 +436,12 @@ class TemporaryFileManager:
                             # Check if directory is older than 30 minutes (orphaned)
                             dir_age = current_time - os.path.getctime(user_temp_dir)
                             if dir_age > 1800:  # 30 minutes
-                                # Securely delete all files in the directory
-                                for file_item in os.listdir(user_temp_dir):
-                                    file_path = os.path.join(user_temp_dir, file_item)
-                                    try:
-                                        if os.path.isfile(file_path):
-                                            cls._secure_file_delete(file_path)
-                                        elif os.path.isdir(file_path):
-                                            shutil.rmtree(file_path, ignore_errors=True)
-                                    except Exception as e:
-                                        # Use print for logging when outside app context
-                                        print(f"Error deleting {file_path}: {e}")
-                                
-                                # Remove the user directory itself
-                                shutil.rmtree(user_temp_dir, ignore_errors=True)
+                                # Securely purge the directory and remove it
+                                cls._secure_purge_directory(
+                                    user_temp_dir,
+                                    on_error=lambda msg: print(msg),
+                                    remove_self=True,
+                                )
                                 cleaned_count += 1
                                 print(f"Cleaned up orphaned directory: {item}")
                     

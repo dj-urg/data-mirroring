@@ -1,31 +1,56 @@
-from flask import session, redirect, url_for, request, current_app, make_response, g
+from flask import session, redirect, url_for, request, make_response, g, Response, current_app
 from functools import wraps
 import os
-import base64
-import secrets
 from urllib.parse import urlparse, urlunparse
+
+def _normalize_host(host: str) -> str:
+    """Normalize hostnames for safe comparison.
+    - Trim whitespace
+    - Lowercase (DNS is case-insensitive)
+    - Strip trailing dot (canonical form)
+    - Convert to IDNA (punycode) for any IDNs
+    """
+    if not host:
+        return ""
+    h = host.strip().lower()
+    if h.endswith('.'):
+        h = h[:-1]
+    try:
+        # Convert Unicode domains to punycode ascii representation
+        h = h.encode('idna').decode('ascii')
+    except UnicodeError:
+        # If IDNA conversion fails, keep the best-effort normalized host
+        pass
+    return h
+
 
 def enforce_https():
     """Redirects HTTP to HTTPS only in production."""
     is_production = os.getenv("FLASK_ENV") == "production" or os.getenv("DYNO")  # Heroku check
 
-    # Allowed domains for secure redirection
-    # Allowed domains for secure redirection
-    ALLOWED_HOSTS = set(os.getenv('TRUSTED_HOSTS', '').split(','))
+    # Allowed domains are normalized centrally in config.py; reuse them here
+    configured_hosts = current_app.config.get('TRUSTED_HOSTS')
+    # Be defensive: config value may be missing or set to None
+    ALLOWED_HOSTS = set(configured_hosts or [])
 
     if is_production and request.headers.get("X-Forwarded-Proto", "http") == "http":
         parsed_url = urlparse(request.url)
 
-        # Ensure the hostname is in the allowed list
-        if parsed_url.hostname in ALLOWED_HOSTS:
+        # Ensure the hostname is in the allowed list (normalized)
+        if _normalize_host(parsed_url.hostname) in ALLOWED_HOSTS:
+            # Build a secure https URL for redirection
+            # Remove explicit annotation to avoid strict checkers complaining about an expected type
             secure_url = urlunparse(parsed_url._replace(scheme="https"))
-            response = make_response(redirect(secure_url, code=301))
+            response: Response = make_response(redirect(secure_url, code=301))
             return apply_security_headers(response)
 
         # Block redirects to untrusted domains
         return "Invalid redirect", 400
 
-def apply_security_headers(response):
+    # No redirection needed; explicitly return None to satisfy linters/type checkers
+    return None
+
+def apply_security_headers(response: Response) -> Response:
     """Adds essential security headers to every response, ensuring security best practices are applied."""
 
     # Generate a CSP nonce dynamically per request
@@ -48,6 +73,8 @@ def apply_security_headers(response):
         f"base-uri 'self'; "  # Restrict the base URI to your site only
         f"form-action 'self'; "  # Restrict forms to submit only to your own domain
         f"connect-src 'self' {trusted_origins_str} https://cdnjs.cloudflare.com;"  # Allow connections to both domains and CDN
+        # Enable Trusted Types globally and whitelist the policy used in JS
+        f" trusted-types appGeneratePolicy; require-trusted-types-for 'script';"
     )
 
     # Cache-Control: Prevent caching of sensitive pages
@@ -55,16 +82,12 @@ def apply_security_headers(response):
     response.headers["Pragma"] = "no-cache"
     response.headers["Expires"] = "0"
 
-    # Rest of your headers remain the same
-    # ...
-
     # X-Content-Type-Options
     response.headers["X-Content-Type-Options"] = "nosniff"
 
     # X-Frame-Options
     response.headers["X-Frame-Options"] = "DENY"
 
-    # Strict-Transport-Security
     # Check if request is secure OR if it's coming from a secure proxy
     is_https = request.is_secure or request.headers.get('X-Forwarded-Proto', 'http') == 'https'
     if is_https:  # Apply HSTS for HTTPS requests

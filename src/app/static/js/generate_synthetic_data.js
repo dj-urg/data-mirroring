@@ -2,13 +2,27 @@
 
 // Trusted Types policy (if supported)
 let ttPolicy = null;
-if (window.trustedTypes) {
-    ttPolicy = window.trustedTypes.createPolicy('default', {
-        createHTML: (input) => DOMPurify.sanitize(input)
-    });
-} else {
-    // console.warn("Trusted Types not supported...");
-}
+(() => {
+    const TT_POLICY_NAME = 'appGeneratePolicy'; // Must be unique and allowed by CSP trusted-types
+    try {
+        if (window.trustedTypes) {
+            // Create a unique policy; if it already exists or is disallowed by CSP, catch and fallback
+            ttPolicy = window.trustedTypes.createPolicy(TT_POLICY_NAME, {
+                createHTML: (input) => {
+                    // Ensure DOMPurify is available; if not, just return an empty safe string
+                    if (typeof DOMPurify !== 'undefined' && DOMPurify.sanitize) {
+                        return DOMPurify.sanitize(input);
+                    }
+                    return String(input);
+                }
+            });
+        }
+    } catch (e) {
+        // If policy creation fails (name collision or CSP restriction), fall back to manual sanitization
+        console.warn('Trusted Types policy creation failed:', e);
+        ttPolicy = null;
+    }
+})();
 
 document.addEventListener('DOMContentLoaded', function () {
     const generateButton = document.getElementById('generateButton');
