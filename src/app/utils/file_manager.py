@@ -135,6 +135,14 @@ class TemporaryFileManager:
         import hashlib
         
         try:
+            # Security Check: Ensure file is inside the temp directory
+            temp_dir = os.path.realpath(tempfile.gettempdir())
+            real_file_path = os.path.realpath(file_path)
+            
+            if not real_file_path.startswith(temp_dir):
+                current_app.logger.warning(f"Blocked attempt to read file outside temp dir: {file_path}")
+                return None
+
             hash_obj = hashlib.new(algorithm)
             with open(file_path, 'rb') as f:
                 for chunk in iter(lambda: f.read(4096), b''):
