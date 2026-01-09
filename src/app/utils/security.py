@@ -74,7 +74,7 @@ def apply_security_headers(response: Response) -> Response:
         f"form-action 'self'; "  # Restrict forms to submit only to your own domain
         f"connect-src 'self' {trusted_origins_str} https://cdnjs.cloudflare.com;"  # Allow connections to both domains and CDN
         # Enable Trusted Types globally and whitelist the policy used in JS
-        f" trusted-types appGeneratePolicy; require-trusted-types-for 'script';"
+        f" trusted-types appGeneratePolicy goog#html dompurify default; require-trusted-types-for 'script';"
     )
 
     # Cache-Control: Prevent caching of sensitive pages

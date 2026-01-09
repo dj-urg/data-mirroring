@@ -3,145 +3,180 @@
 {% block title %}TikTok Dashboard{% endblock %}
 
 {% block content %}
-    <!-- Inline styles moved to a <style> block with a nonce -->
-    <style nonce="{{ g.csp_nonce }}">
-        .platform-header { text-align: center; margin-bottom: 30px; }
-        .platform-title { font-size: 24px; font-weight: bold; }
-        .upload-container { padding: 15px; background-color: #f8f9fa; border-radius: 5px; }
-        .loader { display: none; margin-top: 15px; text-align: center; }
-        .d-none { display: none; }
-        .text-center { text-align: center; }
-        .btn-sm { padding: 5px 10px; font-size: 14px; }
-    </style>
+<!-- Inline styles moved to a <style> block with a nonce -->
+<style nonce="{{ g.csp_nonce }}">
+    .platform-header {
+        text-align: center;
+        margin-bottom: 30px;
+    }
 
-    <div class="platform-header text-center mb-4">
-        <img src="https://img.icons8.com/color/96/000000/tiktok.png" alt="TikTok Logo" class="platform-logo">
-        <h1 class="platform-title">TikTok Dashboard</h1>
+    .platform-title {
+        font-size: 24px;
+        font-weight: bold;
+    }
+
+    .upload-container {
+        padding: 15px;
+        background-color: #f8f9fa;
+        border-radius: 5px;
+    }
+
+    .loader {
+        display: none;
+        margin-top: 15px;
+        text-align: center;
+    }
+
+    .d-none {
+        display: none;
+    }
+
+    .text-center {
+        text-align: center;
+    }
+
+    .btn-sm {
+        padding: 5px 10px;
+        font-size: 14px;
+    }
+</style>
+
+<div class="platform-header text-center mb-4">
+    <img src="https://img.icons8.com/color/96/000000/tiktok.png" alt="TikTok Logo" class="platform-logo">
+    <h1 class="platform-title">TikTok Dashboard</h1>
+</div>
+
+<div class="container mt-5">
+
+    <!-- Upload Form -->
+    <div class="upload-container mt-3">
+        <div class="card-body">
+            <p class="text-center mb-2">
+                Please upload your downloaded TikTok data in <strong>JSON format</strong>.
+            </p>
+            <div class="loader-overlay d-none"></div>
+            <div class="loader d-none"></div>
+
+            <form id="uploadForm" action="{{ url_for('routes.dashboard_tiktok') }}" method="post"
+                enctype="multipart/form-data">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="file" name="file" id="fileInput" accept=".json" multiple required
+                    class="form-control mb-2">
+                <button type="submit" id="uploadButton" class="btn btn-primary btn-sm">Upload Data</button>
+            </form>
+        </div>
     </div>
 
-    <div class="container mt-5">
+</div>
 
-        <!-- Upload Form -->
-        <div class="upload-container mt-3">
-            <div class="card-body">
-                <p class="text-center mb-2">
-                    Please upload your downloaded TikTok data in <strong>JSON format</strong>.
-                </p>
-                <div class="loader-overlay d-none"></div>
-                <div class="loader d-none"></div>
-                
-                <form id="uploadForm" action="{{ url_for('routes.dashboard_tiktok') }}" method="post" enctype="multipart/form-data">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <input type="file" name="file" id="fileInput" accept=".json" multiple required class="form-control mb-2">
-                    <button type="submit" id="uploadButton" class="btn btn-primary btn-sm">Upload Data</button>
-                </form>                       
-            </div>
+<!-- Insights Section -->
+{% if insights %}
+<div class="card mt-3" id="insights">
+    <div class="card-body">
+        <h2>Overview</h2>
+        <p class="small-text">Total Videos: <strong>{{ insights.total_videos }}</strong></p>
+        <p class="small-text">Time Range:
+            <strong>{{ insights.time_frame_start }}</strong> to
+            <strong>{{ insights.time_frame_end }}</strong>
+        </p>
+    </div>
+</div>
+{% endif %}
+
+<!-- CSV Data Preview Section -->
+{% if preview_data %}
+<div class="card mt-3">
+    <div class="card-body">
+        <h2>CSV Data Preview (including additional variables)</h2>
+        <div class="table-responsive">
+            <table class="table table-striped table-sm">
+                <thead>
+                    <tr>
+                        {% for column in preview_data.columns %}
+                        <th>{{ column }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in preview_data.rows %}
+                    <tr>
+                        {% for cell in row %}
+                        <td>{{ cell }}</td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
+    </div>
+</div>
+{% endif %}
 
+<!-- CSV, Excel, and URLs Download -->
+{% if has_valid_data %}
+<div class="card mt-3">
+    <div class="card-body text-center">
+        <p>Download your processed data in <strong>CSV, Excel, or URL list format</strong>. The URL list can be used for
+            further data collection with tools like 4CAT.</p>
+        <div class="d-flex justify-content-center">
+            {% if csv_file_name %}
+            <a href="{{ url_for('routes.download_csv', filename=csv_file_name) }}"
+                class="btn btn-primary btn-sm mx-2">Download CSV</a>
+            {% endif %}
+            {% if excel_file_name %}
+            <a href="{{ url_for('routes.download_excel', filename=excel_file_name) }}"
+                class="btn btn-success btn-sm mx-2">Download Excel</a>
+            {% endif %}
+            {% if url_file_name %}
+            <a href="{{ url_for('routes.download_txt', filename=url_file_name) }}"
+                class="btn btn-info btn-sm mx-2">Download URLs</a>
+            {% endif %}
         </div>
+    </div>
+</div>
+{% endif %}
 
-        <!-- Insights Section -->
-        {% if insights %}
-        <div class="card mt-3" id="insights">
-            <div class="card-body">
-                <h2>Overview</h2>
-                <p class="small-text">Total Videos: <strong>{{ insights.total_videos }}</strong></p>
-                <p class="small-text">Time Range: 
-                    <strong>{{ insights.time_frame_start }}</strong> to 
-                    <strong>{{ insights.time_frame_end }}</strong>
-                </p>
-            </div>
+<!-- Month Heatmap -->
+{% if month_heatmap_name %}
+<div class="card mt-3" id="month-heatmap">
+    <div class="card-body text-center">
+        <h2>Video Consumption by Month and Year</h2>
+        <div class="d-flex justify-content-center">
+            <img src="{{ url_for('routes.download_image', filename=month_heatmap_name) }}" alt="Month Heatmap"
+                class="img-fluid">
         </div>
-        {% endif %}
+    </div>
+</div>
+{% endif %}
 
-        <!-- CSV Data Preview Section -->
-        {% if preview_data %}
-        <div class="card mt-3">
-            <div class="card-body">
-                <h2>CSV Data Preview (including additional variables)</h2>
-                <div class="table-responsive">
-                    <table class="table table-striped table-sm">
-                        <thead>
-                            <tr>
-                                {% for column in preview_data.columns %}
-                                <th>{{ column }}</th>
-                                {% endfor %}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for row in preview_data.rows %}
-                            <tr>
-                                {% for cell in row %}
-                                <td>{{ cell }}</td>
-                                {% endfor %}
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+<!-- Day of Week Heatmap -->
+{% if day_heatmap_name %}
+<div class="card mt-3" id="day-heatmap">
+    <div class="card-body text-center">
+        <h2>Video Consumption Per Day of the Week</h2>
+        <div class="d-flex justify-content-center">
+            <img src="{{ url_for('routes.download_image', filename=day_heatmap_name) }}" alt="Day of Week Heatmap"
+                class="img-fluid">
         </div>
-        {% endif %}
+    </div>
+</div>
+{% endif %}
 
-        <!-- CSV, Excel, and URLs Download -->
-        {% if has_valid_data %}
-        <div class="card mt-3">
-            <div class="card-body text-center">
-                <p>Download your processed data in <strong>CSV, Excel, or URL list format</strong>. The URL list can be used for further data collection with tools like 4CAT.</p>
-                <div class="d-flex justify-content-center">
-                    {% if csv_file_name %}
-                    <a href="{{ url_for('routes.download_csv', filename=csv_file_name) }}" class="btn btn-primary btn-sm mx-2">Download CSV</a>
-                    {% endif %}
-                    {% if excel_file_name %}
-                    <a href="{{ url_for('routes.download_excel', filename=excel_file_name) }}" class="btn btn-success btn-sm mx-2">Download Excel</a>
-                    {% endif %}
-                    {% if url_file_name %}
-                    <a href="{{ url_for('routes.download_txt', filename=url_file_name) }}" class="btn btn-info btn-sm mx-2">Download URLs</a>
-                    {% endif %}
-                </div>
-            </div>
-        </div>  
-        {% endif %}
-
-        <!-- Month Heatmap -->
-        {% if month_heatmap_name %}
-        <div class="card mt-3" id="month-heatmap">
-            <div class="card-body text-center">
-                <h2>Video Consumption by Month and Year</h2>
-                <div class="d-flex justify-content-center">
-                    <img src="{{ url_for('routes.download_image', filename=month_heatmap_name) }}" alt="Month Heatmap" class="img-fluid">
-                </div>
-            </div>
+<!-- Time of Day Heatmap -->
+{% if time_heatmap_name %}
+<div class="card mt-3" id="time-heatmap">
+    <div class="card-body text-center">
+        <h2>Video Consumption by Time of Day</h2>
+        <div class="d-flex justify-content-center">
+            <img src="{{ url_for('routes.download_image', filename=time_heatmap_name) }}" alt="Time of Day Heatmap"
+                class="img-fluid">
         </div>
-        {% endif %}
+    </div>
+</div>
+{% endif %}
 
-        <!-- Day of Week Heatmap -->
-        {% if day_heatmap_name %}
-        <div class="card mt-3" id="day-heatmap">
-            <div class="card-body text-center">
-                <h2>Video Consumption Per Day of the Week</h2>
-                <div class="d-flex justify-content-center">
-                    <img src="{{ url_for('routes.download_image', filename=day_heatmap_name) }}" alt="Day of Week Heatmap" class="img-fluid">
-                </div>
-            </div>
-        </div>
-        {% endif %}
-
-        <!-- Time of Day Heatmap -->
-        {% if time_heatmap_name %}
-        <div class="card mt-3" id="time-heatmap">
-            <div class="card-body text-center">
-                <h2>Video Consumption by Time of Day</h2>
-                <div class="d-flex justify-content-center">
-                    <img src="{{ url_for('routes.download_image', filename=time_heatmap_name) }}" alt="Time of Day Heatmap" class="img-fluid">
-                </div>
-            </div>
-        </div>
-        {% endif %}
-
-    <!-- Link to external JS -->
-    <script src="{{ url_for('static', filename='js/tiktok_dashboard.js') }}" 
-        integrity="sha384-OFSJr0HiS+7Wn8HjKLE8KJ8bYWpc8krvClqoNOY+haEn3b3sBT00vcRROp" 
-        crossorigin="anonymous" 
-        defer></script>
+<!-- Link to external JS -->
+<script src="{{ url_for('static', filename='js/tiktok_dashboard.js') }}" nonce="{{ csp_nonce }}"
+    integrity="sha384-OFSJr0HiS+7Wn8HjKLE8KJ8bYWpc8krvClqoNOY+haEn3b3sBT00vcRROp" crossorigin="anonymous"
+    defer></script>
 {% endblock %}

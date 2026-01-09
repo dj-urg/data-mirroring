@@ -189,8 +189,8 @@
 </div>
 {% endif %}
 
-    <!-- Link to external JS -->
-<script src="{{ url_for('static', filename='js/youtube_dashboard.js') }}"
-    integrity="sha384-TZ+GoegLbh7cN/hdH3rGfMIxVFGrOtKwsAw0xrPjirumP6Rm9RPmcYXw34UZeEhi" crossorigin="anonymous"
+<!-- Link to external JS -->
+<script src="{{ url_for('static', filename='js/youtube_dashboard.js') }}" nonce="{{ csp_nonce }}"
+    integrity="sha384-TrDfUrFVCSmoKj8+nIaJ6gxivTvCViTDYOAwb4FcKKje3XoSW0d0hgAQiBQMMKyG" crossorigin="anonymous"
     defer></script>
 {% endblock %}

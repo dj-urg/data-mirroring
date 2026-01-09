@@ -14,7 +14,12 @@ document.addEventListener('DOMContentLoaded', function () {
         cleanupTriggered = true;
 
         // Send cleanup request to server
-        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+        if (!csrfMeta) {
+            console.warn('CSRF token not found. Skipping session cleanup.');
+            return;
+        }
+        const csrfToken = csrfMeta.getAttribute('content');
 
         fetch('/cleanup-session', {
             method: 'POST',
