@@ -370,7 +370,7 @@ def generate_author_treemap(df: pd.DataFrame) -> matplotlib.figure.Figure:
 
 # --- Data Processing Functions ---
 
-def parse_instagram_item(item: Dict[str, Any], category: str) -> Optional[Dict[str, Any]]:
+def parse_instagram_item(item: Dict[str, Any], category: str, filename: str) -> Optional[Dict[str, Any]]:
     """Extracts timestamp, author, etc. from a single Instagram JSON item."""
     timestamp = None
     href = "N/A"
@@ -384,7 +384,7 @@ def parse_instagram_item(item: Dict[str, Any], category: str) -> Optional[Dict[s
                 href = saved_on.get('href', '')
                 author = item.get('title', 'Unknown')
         
-        elif category in ['Liked Media']:
+        elif category in ['Liked Media', 'Following']:
             if 'string_list_data' in item and item['string_list_data']:
                 data_point = item['string_list_data'][0]
                 timestamp = data_point.get('timestamp')
@@ -401,6 +401,24 @@ def parse_instagram_item(item: Dict[str, Any], category: str) -> Optional[Dict[s
         elif category == 'Chaining Seen':
             if 'string_list_data' in item and item['string_list_data']:
                 timestamp = item['string_list_data'][0].get('timestamp')
+            elif 'string_map_data' in item:
+                map_data = item['string_map_data']
+                timestamp = map_data.get('Time', {}).get('timestamp')
+                author = map_data.get('Username', {}).get('value', 'Unknown')
+        
+        elif category == 'Suggested Profiles':
+            if 'string_list_data' in item and item['string_list_data']:
+                data_point = item['string_list_data'][0]
+                timestamp = data_point.get('timestamp')
+                href = data_point.get('href', '')
+                author = item.get('title', 'Unknown')
+            elif 'string_map_data' in item:
+                map_data = item['string_map_data']
+                timestamp = map_data.get('Time', {}).get('timestamp')
+                # Try 'Username', then 'Author', then 'value'
+                author = map_data.get('Username', {}).get('value')
+                if not author:
+                     author = map_data.get('Author', {}).get('value', 'Unknown')
 
         if timestamp is None:
             return None
@@ -417,6 +435,7 @@ def parse_instagram_item(item: Dict[str, Any], category: str) -> Optional[Dict[s
             'href': href,
             'timestamp': ts_dt,
             'category': category,
+            'filename': filename,
             'author': author
         }
     except Exception:
@@ -434,7 +453,9 @@ def process_instagram_file(files: List[FileStorage]) -> Tuple[pd.DataFrame, str,
             'likes_media_likes': 'Liked Media',
             'impressions_history_posts_seen': 'Posts Seen',
             'impressions_history_chaining_seen': 'Chaining Seen',
-            'impressions_history_videos_watched': 'Videos Watched'
+            'impressions_history_videos_watched': 'Videos Watched',
+            'relationships_following': 'Following',
+            'impressions_history_suggested_profiles_viewed': 'Suggested Profiles'
         }
 
         for file in files:
@@ -448,7 +469,7 @@ def process_instagram_file(files: List[FileStorage]) -> Tuple[pd.DataFrame, str,
             for key, category in category_map.items():
                 if key in data:
                     for item in data[key]:
-                        extracted = parse_instagram_item(item, category)
+                        extracted = parse_instagram_item(item, category, file_name)
                         if extracted:
                             all_data.append(extracted)
 
@@ -465,6 +486,10 @@ def process_instagram_file(files: List[FileStorage]) -> Tuple[pd.DataFrame, str,
         # Convert timestamp to date for main analysis (was overwriting 'timestamp' before)
         df['analysis_date'] = pd.to_datetime(df['timestamp']).dt.date
         df = df.dropna(subset=['analysis_date'])
+
+        # Add Unix timestamp for export and preview
+        if 'timestamp' in df.columns:
+            df['unix_timestamp'] = df['timestamp'].astype('int64') // 10**9
 
         if df.empty:
              return pd.DataFrame(), "", {}, "", "", "", None, {}, False
@@ -507,6 +532,14 @@ def process_instagram_file(files: List[FileStorage]) -> Tuple[pd.DataFrame, str,
         month_heatmap_name = save_image_temp_file(generate_month_heatmap(df)) if not df.empty else ""
         time_heatmap_name = save_image_temp_file(generate_time_of_day_heatmap(df_with_time)) if not df_with_time.empty else None
 
+        # Prepare DataFrame for Preview and Export
+        if 'analysis_date' in df.columns:
+            df = df.drop(columns=['analysis_date'])
+            
+        # Swap category for filename in export per user request
+        if 'category' in df.columns and 'filename' in df.columns:
+             df = df.drop(columns=['category'])
+
         # Preview Data
         preview_data = {
             'columns': df.columns.tolist(),
@@ -516,9 +549,7 @@ def process_instagram_file(files: List[FileStorage]) -> Tuple[pd.DataFrame, str,
         # CSV Export
         df_csv = df.copy()
         
-        # Add Unix timestamp ONLY for export
-        if 'timestamp' in df_csv.columns:
-             df_csv['unix_timestamp'] = df_csv['timestamp'].astype('int64') // 10**9
+        # Format object columns for spreadsheet safety
              
         for col in df_csv.select_dtypes(include=['object']):
             df_csv[col] = df_csv[col].apply(sanitize_for_spreadsheet)

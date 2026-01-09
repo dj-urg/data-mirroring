@@ -130,7 +130,7 @@
 </div>
 
 <!-- Scripts -->
-<script src="{{ url_for('static', filename='js/generate_synthetic_data.js') }}"
+<script src="{{ url_for('static', filename='js/generate_synthetic_data.js') }}" nonce="{{ csp_nonce }}"
     integrity="sha384-FgyZDT426KC1ApCk3YDn8QT7WHnrb5HbL3UD7UpGIVtPo3igIY4MXxrosPNNMYhe" crossorigin="anonymous"
     defer></script>
 {% endblock %}

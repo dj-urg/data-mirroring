@@ -23,6 +23,10 @@ routes_bp.after_request(apply_security_headers)
 def robots():
     return current_app.send_static_file('robots.txt')
 
+@routes_bp.route('/favicon.ico')
+def favicon():
+    return current_app.send_static_file('favicon.ico')
+
 @limiter.limit("10 per minute", key_func=lambda: session.get('user_id', request.remote_addr))
 @routes_bp.route('/')
 @requires_authentication
@@ -328,7 +332,27 @@ def download_csv(filename):
             # Protect the file from immediate deletion
             TemporaryFileManager.protect_file_for_download(temp_file_path)
                 
-            response = send_file(temp_file_path, as_attachment=True, download_name=safe_filename, mimetype="text/csv")
+            # Determine the download filename
+            custom_name = request.args.get('custom_name')
+            if custom_name:
+                # Basic cleanup of the custom name (alphanumeric + underscore/dash)
+                clean_name = re.sub(r'[^a-zA-Z0-9_\-]', '', custom_name)
+                if not clean_name:
+                    clean_name = "User" # Fallback if name becomes empty after cleanup
+                
+                # Create timestamp and hash
+                from datetime import datetime
+                timestamp = datetime.utcnow().strftime('%Y%m%d_%H%M%S')
+                
+                # Use the first 8 chars of the UUID filename as a short hash
+                # Assuming safe_filename is a uuid.csv, we split to get the uuid part
+                file_hash = safe_filename.split('.')[0][:8]
+                
+                download_name = f"{clean_name}_{timestamp}_{file_hash}.csv"
+            else:
+                download_name = safe_filename
+
+            response = send_file(temp_file_path, as_attachment=True, download_name=download_name, mimetype="text/csv")
 
             # Still try to delete after the response is sent (primary cleanup)
             @response.call_on_close

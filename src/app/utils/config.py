@@ -36,7 +36,7 @@ def configure_app(app):
             SESSION_COOKIE_SAMESITE='Strict',
             REMEMBER_COOKIE_SAMESITE='Strict',
             SESSION_PERMANENT=False,
-            PERMANENT_SESSION_LIFETIME=timedelta(minutes=30),
+            PERMANENT_SESSION_LIFETIME=timedelta(hours=2),
             WTF_CSRF_CHECK_REFERRER=True,
             WTF_CSRF_SSL_STRICT=True,
             MAX_CONTENT_LENGTH=16 * 1024 * 1024,
@@ -46,7 +46,7 @@ def configure_app(app):
         )
         app.logger.info(
             "Production configuration applied: "
-            "Secure session cookies, CSRF strict enabled, session lifetime of 30 minutes, "
+            "Secure session cookies, CSRF strict enabled, session lifetime of 2 hours, "
             "max content length 16MB, form limits 500KB/1000 parts, trusted hosts configured."
         )
     else:

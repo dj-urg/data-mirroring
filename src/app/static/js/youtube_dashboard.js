@@ -69,7 +69,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         const closeButton = document.createElement('button');
         closeButton.classList.add('close-enlarged-image');
-        closeButton.innerHTML = '&times;'; // Use an "X"
+        closeButton.textContent = '×'; // Use the multiplication sign directly
 
         closeButton.addEventListener('click', closeEnlargedImage);
         enlargedOverlay.addEventListener('click', function (event) {

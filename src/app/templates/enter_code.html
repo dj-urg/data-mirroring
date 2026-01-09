@@ -8,6 +8,25 @@
         .hidden {
             display: none !important;
         }
+
+        .info-text {
+            font-size: 0.95rem;
+            color: #666;
+            margin-bottom: 1.5rem;
+            line-height: 1.5;
+            text-align: center;
+        }
+
+        .info-text a {
+            color: #E50914;
+            /* Netflix red to match theme if applicable, or just a nice link color */
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .info-text a:hover {
+            text-decoration: underline;
+        }
     </style>
 
     <!-- Cookie Banner Card -->
@@ -25,7 +44,14 @@
     <!-- Access Code Form Card (initially hidden) -->
     <div id="access-code-section" class="login-card hidden">
         <h1 class="login-title">Enter Access Code</h1>
-        <p class="login-subtitle">Please authenticate to continue</p>
+        <p class="info-text">
+            This website uses an access code to retain computational resources.
+            <br>
+            If you have received access, please enter the code below.
+            <br>
+            If not, visit the <a href="https://github.com/dj-urg/data-mirroring" target="_blank"
+                rel="noopener noreferrer">GitHub project</a> to learn more about Data Mirroring.
+        </p>
 
         <form method="POST" class="login-form">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -53,6 +79,6 @@
 
 <!-- Link to external JS file -->
 <script src="{{ url_for('static', filename='js/enter_code.js') }}"
-    integrity="sha384-kUdWo88ybckya38s8bM/j1rKFL+bUPCpOBs7C5Iqtx0Nwxkkh9J/Nks2rLTY2YL3" crossorigin="anonymous"
+    integrity="sha384-bq6LwfokGuKkJBYOORP0gNg4wMnDz+BYmxFYcwwZ44qPNECJPS8nefOXOEF9SUlO" crossorigin="anonymous"
     nonce="{{ csp_nonce }}" defer></script>
 {% endblock %}

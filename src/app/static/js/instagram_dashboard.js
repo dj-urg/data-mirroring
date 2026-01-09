@@ -17,8 +17,8 @@ document.addEventListener("DOMContentLoaded", function () {
     const selectedFiles = new Map(); // Map to store selected files by unique ID
     const supportedFiles = [
         'liked_posts.json',
-        'media.json',
-        'profile.json',
+        'following.json',
+        'suggested_profiles_viewed.json',
         'saved_posts.json',
         'videos_watched.json',
         'posts_viewed.json'
@@ -254,10 +254,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
         const closeButton = document.createElement('button');
         closeButton.classList.add('close-enlarged-image');
-        closeButton.innerHTML = '&times;'; // Use an "X"
+        closeButton.textContent = '×'; // Use the multiplication sign directly
 
         closeButton.addEventListener('click', closeEnlargedImage);
-        enlargedOverlay.addEventListener('click', function(event) {
+        enlargedOverlay.addEventListener('click', function (event) {
             if (event.target === this) { // Close if clicked outside the image
                 closeEnlargedImage();
             }
@@ -285,5 +285,24 @@ document.addEventListener("DOMContentLoaded", function () {
                 }
             }, 300); // Match the CSS transition duration
         }
+    }
+
+    // --- Dynamic CSV Filename Logic ---
+    const pseudonymInput = document.getElementById('pseudonymInput');
+    const downloadCsvBtn = document.getElementById('downloadCsvBtn');
+
+    if (pseudonymInput && downloadCsvBtn) {
+        const originalHref = downloadCsvBtn.href;
+
+        pseudonymInput.addEventListener('input', function () {
+            const customName = this.value.trim();
+            if (customName) {
+                const url = new URL(originalHref, window.location.origin); // Ensure absolute URL handling
+                url.searchParams.set('custom_name', customName);
+                downloadCsvBtn.href = url.toString();
+            } else {
+                downloadCsvBtn.href = originalHref;
+            }
+        });
     }
 });

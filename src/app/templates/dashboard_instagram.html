@@ -19,8 +19,9 @@
             <p class="upload-instructions">
                 We'd love to help you gain insights from your Instagram data! Please upload your downloaded Instagram
                 JSON files using the form below. You can include any of these files: <strong>liked_posts.json</strong>,
-                <strong>saved_posts.json</strong>, <strong>videos_watched.json</strong>, or
-                <strong>posts_viewed.json</strong>. If you are not sure where to find these files, please refer to our
+                <strong>saved_posts.json</strong>, <strong>videos_watched.json</strong>,
+                <strong>posts_viewed.json</strong>, <strong>suggested_profiles_viewed.json</strong>, or
+                <strong>following.json</strong>. If you are not sure where to find these files, please refer to our
                 <a href="https://github.com/dj-urg/data-mirroring/wiki/Uploading-Data-From-Digital-Platforms"
                     target="_blank" rel="noopener noreferrer">GitHub Wiki</a> for instructions on how to upload your
                 data.
@@ -182,8 +183,14 @@
                 Please adjust for your local timezone if necessary.
             </div>
 
+            <div class="d-flex justify-content-center mb-3">
+                <input type="text" id="pseudonymInput" class="form-control w-50"
+                    placeholder="Pseudonym / Name (Optional)" maxlength="50">
+            </div>
+
             <div class="d-flex justify-content-center"></div>
-            <a href="{{ url_for('routes.download_csv', filename=csv_file_name) }}" class="btn btn-success">
+            <a href="{{ url_for('routes.download_csv', filename=csv_file_name) }}" class="btn btn-success"
+                id="downloadCsvBtn">
                 <i class="fas fa-download"></i> Download CSV
             </a>
         </div>
@@ -192,8 +199,8 @@
 {% endif %}
 
 {# ----- Script Link ----- #}
-<script src="{{ url_for('static', filename='js/instagram_dashboard.js') }}"
-    integrity="sha384-tvbqMH+6gPf04f3AOde7lPlh1qUTLzIFSswxCuxGBD1l8M7yrF9NaC26+FB3Jr2o" crossorigin="anonymous"
+<script src="{{ url_for('static', filename='js/instagram_dashboard.js') }}" nonce="{{ csp_nonce }}"
+    integrity="sha384-3t27//KNsghP7/LHtoeDv5rqBVo63akhkGnC9PG4ckMqC/vcuCVc5XsJcUrHcCbQ" crossorigin="anonymous"
     defer></script>
 
 {# ----- Zoom Overlay (Hidden by default) ----- #}
