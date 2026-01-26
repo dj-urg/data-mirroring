@@ -3,7 +3,7 @@ Flask-Cors==6.0.2
 Flask-Limiter==4.1.1
 Flask-Session==0.8.0
 Flask-WTF==1.2.2
-gunicorn==23.0.0
+gunicorn==24.1.1
 matplotlib==3.10.8
 numpy==2.4.0
 pandas==2.3.3
