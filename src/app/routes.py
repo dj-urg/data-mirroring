@@ -245,7 +245,7 @@ def dashboard_netflix():
 
 @routes_bp.route('/download_image/<filename>', methods=['GET'])
 @requires_authentication
-@limiter.exempt
+@limiter.limit("60 per minute")
 def download_image(filename):
     """Serve the requested image file for download and delete it after sending."""
     
@@ -307,7 +307,7 @@ def download_image(filename):
 
 @routes_bp.route('/download_csv/<filename>', methods=['GET'])
 @requires_authentication
-@limiter.exempt
+@limiter.limit("60 per minute")
 def download_csv(filename):
     """Serve the requested CSV file for download and delete it immediately after."""
 
@@ -463,7 +463,7 @@ def cleanup_session():
 
 @routes_bp.route('/download_excel/<filename>', methods=['GET'])
 @requires_authentication
-@limiter.exempt
+@limiter.limit("60 per minute")
 def download_excel(filename):
     """Serve the requested Excel file for download and delete it immediately after."""
 
@@ -525,7 +525,7 @@ def download_excel(filename):
 
 @routes_bp.route('/download_txt/<filename>', methods=['GET'])
 @requires_authentication
-@limiter.exempt
+@limiter.limit("60 per minute")
 def download_txt(filename):
     """Serve the requested text file for download and delete it immediately after."""
 
@@ -646,7 +646,7 @@ def generate_synthetic_data_api():
 
 @routes_bp.route('/download/<filename>', methods=['GET'])
 @requires_authentication
-@limiter.exempt
+@limiter.limit("60 per minute")
 def download_generated_file(filename):
     """Serve the generated file for download."""
     # Sanitize filename to prevent directory traversal attacks

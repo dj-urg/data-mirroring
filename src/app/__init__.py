@@ -11,6 +11,7 @@ from app.utils.extensions import limiter
 from app.utils.logging_config import setup_logging
 from app.utils.security import enforce_https, apply_security_headers
 from app.utils.file_manager import TemporaryFileManager
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 load_dotenv()
 logger = logging.getLogger(__name__)
@@ -92,5 +93,8 @@ def create_app(config_name=None):
         app.logger.info("Rate limiter initialized with in-memory storage")
     except Exception as e:
         app.logger.error(f"Failed to initialize rate limiter: {e}")
+
+    # Apply ProxyFix so rate limiting and HTTPS redirects work correctly behind reverse proxies
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
     return app
