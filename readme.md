@@ -7,9 +7,9 @@
 [![Vrije Universiteit Brussel](https://img.shields.io/badge/University-Vrije_Universiteit_Brussel-0089CF)](https://www.vub.be/nl)
 [![imec-SMIT](https://img.shields.io/badge/Research-imec--SMIT-red)](https://smit.research.vub.be/en)
 
-> A privacy-first web application for transforming social media Data Download Packages (DDPs) into human-readable formats with visualizations and insights.
+> A user-friendly web application for transforming social media Data Download Packages (DDPs) into human-readable formats with visualizations and insights.
 >
-> This project is under active development. Users are encouraged to critically assess all outcomes and results.
+> This project is under active development. Users and researchers are strongly encouraged to critically assess all outcomes and results.
 
 <p align="center">
   <img width="32%" alt="YouTube Dashboard" src="https://github.com/user-attachments/assets/0aec8e38-c616-447d-a58c-1e19f1c8d745" />
@@ -99,10 +99,10 @@ This Flask-based web application empowers social media users to:
 
 | Platform            | Data Types Supported                           | File Format |
 | ------------------- | ---------------------------------------------- | ----------- |
-| **YouTube**   | Watch history, search history, comments, likes | JSON        |
-| **Instagram** | Posts, stories, messages, followers, likes     | JSON        |
+| **YouTube**   | Watch history | JSON        |
+| **Instagram** | Liked Posts, Saved Posts, Videos Watched, Posts Viewed, Suggested Profiles Viewed.json, or Following     | JSON        |
 | **TikTok**    | Video history, likes, comments, browsing data  | JSON        |
-| **Netflix**   | Viewing history, watch patterns                | CSV         |
+| **Netflix**   | Viewing history                | CSV         |
 
 > **Note**: Each platform's DDP structure may vary. The application is designed to handle the most common formats as of 2025.
 
@@ -379,6 +379,7 @@ We welcome contributions from the community! Here's how you can help:
    - Follow the existing code style
    - Add tests if applicable
    - Update documentation as needed
+     
 4. **Test your changes**
 
    ```bash
@@ -437,17 +438,6 @@ See [LICENSE](LICENSE) for the full license text.
 
 If you use this software in your research, please cite:
 
-```bibtex
-@software{jurg_data_mirroring_2025,
-  author = {Jurg, Daniel and Vis, Sarah and Picone, Ike},
-  title = {Data Mirroring: Privacy-First Social Media Data Processing},
-  year = {2025},
-  publisher = {Zenodo},
-  doi = {10.5281/zenodo.15102049},
-  url = {https://github.com/dj-urg/data-mirroring}
-}
-```
-
 **DOI**: [10.5281/zenodo.15102049](https://doi.org/10.5281/zenodo.15102049)
 
 ---
@@ -469,8 +459,6 @@ This project leverages modern AI tools to aid development. Portions of the code 
 - **Claude**: Brainstorming, code generation, refinement, and debugging
 - **ChatGPT**: Code generation, refinement, and problem-solving
 - **GitHub Copilot**: Real-time code suggestions and completions
-
-While these tools aided in development, the authors have consulted with an expert to ensure the code's functionality, security, and compliance with best practices.
 
 ### Third-Party Libraries
 
